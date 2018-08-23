@@ -1,5 +1,5 @@
 script_name('FBI Tools')
-script_version('2.5')
+script_version('2.6')
 script_author('Sesh Jefferson and Thomas Lawson') -- код биндера от DonHomka
 local sf = require 'sampfuncs'
 local key = require "vkeys"
@@ -21,6 +21,7 @@ local fpwindow = imgui.ImBool(false)
 local akwindow = imgui.ImBool(false)
 local shpwindow = imgui.ImBool(false)
 local ftthelp = imgui.ImBool(false)
+local dlstatus = require('moonloader').download_status
 encoding.default = 'CP1251' -- указываем кодировку по умолчанию, она должна совпадать с кодировкой файла. CP1251 - это Windows-1251
 u8 = encoding.UTF8
 hk._SETTINGS.noKeysMessage = u8("Нет")
@@ -2419,6 +2420,7 @@ function main()
   fpf()
   akf()
   shpf()
+  update()
 	for k, v in pairs(tBindList) do
 		 rkeys.registerHotKey(v.v, true, onHotKey)
 	end
@@ -5236,4 +5238,37 @@ function gppc()
   local x, y, z = getCharCoordinates(playerPed)
   sampAddChatMessage(string.format('%d %d %d', x, y, z), -1)
   print(string.format('%d %d %d', x, y, z))
+end
+
+function update()
+	local fpath = os.getenv('TEMP') .. '\\weather-version.json'
+	downloadUrlToFile('https://raw.githubusercontent.com/WhackerH/kirya/master/ftulsupd.json', fpath, function(id, status, p1, p2)
+		if status == dlstatus.STATUS_ENDDOWNLOADDATA then
+		local f = io.open(fpath, 'r')
+		if f then
+			local info = decodeJson(f:read('*a'))
+			updatelink = info.updateurl
+			if info and info.latest then
+				version = tonumber(info.latest)
+				if version > tonumber(thisScript().version) then
+					lua_thread.create(goupdate)
+				else
+					update = false
+				end
+			end
+		end
+	end
+end)
+end
+--скачивание актуальной версии
+function goupdate()
+sampAddChatMessage(('{9966CC}FBI Tools{ffffff} | Обнаружено обновление. AutoReload может конфликтовать. Обновляюсь..', -1), color)
+sampAddChatMessage(('{9966CC}FBI Tools{ffffff} | Текущая версия: {9966cc}'..thisScript().version.."{ffffff]. Новая версия: {9966cc}"..version, -1), color)
+wait(300)
+downloadUrlToFile(updatelink, thisScript().path, function(id3, status1, p13, p23)
+	if status1 == dlstatus.STATUS_ENDDOWNLOADDATA then
+	sampAddChatMessage(('{9966CC}FBI Tools{ffffff} | Обновление завершено! Подробнее об обновлении - /weatherlog.', -1), color)
+	thisScript():reload()
+end
+end)
 end
