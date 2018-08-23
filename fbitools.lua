@@ -5262,7 +5262,7 @@ end)
 end
 --скачивание актуальной версии
 function goupdate()
-sampAddChatMessage(('{9966CC}FBI Tools{ffffff} | Обнаружено обновление. AutoReload может конфликтовать. Обновляюсь..', -1)
+sampAddChatMessage(('{9966CC}FBI Tools{ffffff} | Обнаружено обновление. AutoReload может конфликтовать. Обновляюсь..'), -1)
 sampAddChatMessage(('{9966CC}FBI Tools{ffffff} | Текущая версия: {9966cc}'..thisScript().version.."{ffffff]. Новая версия: {9966cc}"..version), -1)
 wait(300)
 downloadUrlToFile(updatelink, thisScript().path, function(id3, status1, p13, p23)
