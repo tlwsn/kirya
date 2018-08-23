@@ -5262,12 +5262,12 @@ end)
 end
 --скачивание актуальной версии
 function goupdate()
-sampAddChatMessage(('{9966CC}FBI Tools{ffffff} | Обнаружено обновление. AutoReload может конфликтовать. Обновляюсь..', -1), color)
-sampAddChatMessage(('{9966CC}FBI Tools{ffffff} | Текущая версия: {9966cc}'..thisScript().version.."{ffffff]. Новая версия: {9966cc}"..version, -1), color)
+sampAddChatMessage(('{9966CC}FBI Tools{ffffff} | Обнаружено обновление. AutoReload может конфликтовать. Обновляюсь..', -1)
+sampAddChatMessage(('{9966CC}FBI Tools{ffffff} | Текущая версия: {9966cc}'..thisScript().version.."{ffffff]. Новая версия: {9966cc}"..version), -1)
 wait(300)
 downloadUrlToFile(updatelink, thisScript().path, function(id3, status1, p13, p23)
 	if status1 == dlstatus.STATUS_ENDDOWNLOADDATA then
-	sampAddChatMessage(('{9966CC}FBI Tools{ffffff} | Обновление завершено! Подробнее об обновлении - /weatherlog.', -1), color)
+	sampAddChatMessage(('{9966CC}FBI Tools{ffffff} | Обновление завершено! Подробнее об обновлении - /weatherlog.'), -1)
 	thisScript():reload()
 end
 end)
