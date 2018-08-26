@@ -1,5 +1,5 @@
 script_name('FBI Tools')
-script_version('2.5.1')
+script_version('2.51')
 script_author('Sesh Jefferson and Thomas Lawson') -- код биндера от DonHomka
 require 'lib.moonloader'
 require 'lib.sampfuncs'
