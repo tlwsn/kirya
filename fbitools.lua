@@ -1,6 +1,8 @@
 script_name('FBI Tools')
-script_version('2.6')
+script_version('2.5.1')
 script_author('Sesh Jefferson and Thomas Lawson') -- код биндера от DonHomka
+require 'lib.moonloader'
+require 'lib.sampfuncs'
 local sf = require 'sampfuncs'
 local key = require "vkeys"
 local inicfg = require 'inicfg'
@@ -21,12 +23,13 @@ local fpwindow = imgui.ImBool(false)
 local akwindow = imgui.ImBool(false)
 local shpwindow = imgui.ImBool(false)
 local ftthelp = imgui.ImBool(false)
+local changetextpos = false
 local dlstatus = require('moonloader').download_status
 encoding.default = 'CP1251' -- указываем кодировку по умолчанию, она должна совпадать с кодировкой файла. CP1251 - это Windows-1251
 u8 = encoding.UTF8
 hk._SETTINGS.noKeysMessage = u8("Нет")
-require 'lib.sampfuncs'
 seshsps = 1
+mcheckb = false
 tazer = false
 nikk = nil
 tdmg = nil
@@ -44,6 +47,58 @@ end
 
 function Sphere.onExitSphere(id)
     post = nil
+end
+
+function imgui.TextColoredRGB(text)
+  local style = imgui.GetStyle()
+  local colors = style.Colors
+  local ImVec4 = imgui.ImVec4
+
+  local explode_argb = function(argb)
+      local a = bit.band(bit.rshift(argb, 24), 0xFF)
+      local r = bit.band(bit.rshift(argb, 16), 0xFF)
+      local g = bit.band(bit.rshift(argb, 8), 0xFF)
+      local b = bit.band(argb, 0xFF)
+      return a, r, g, b
+  end
+
+  local getcolor = function(color)
+      if color:sub(1, 6):upper() == 'SSSSSS' then
+          local r, g, b = colors[1].x, colors[1].y, colors[1].z
+          local a = tonumber(color:sub(7, 8), 16) or colors[1].w * 255
+          return ImVec4(r, g, b, a / 255)
+      end
+      local color = type(color) == 'string' and tonumber(color, 16) or color
+      if type(color) ~= 'number' then return end
+      local r, g, b, a = explode_argb(color)
+      return imgui.ImColor(r, g, b, a):GetVec4()
+  end
+
+  local render_text = function(text_)
+      for w in text_:gmatch('[^\r\n]+') do
+          local text, colors_, m = {}, {}, 1
+          w = w:gsub('{(......)}', '{%1FF}')
+          while w:find('{........}') do
+              local n, k = w:find('{........}')
+              local color = getcolor(w:sub(n + 1, k - 1))
+              if color then
+                  text[#text], text[#text + 1] = w:sub(m, n - 1), w:sub(k + 1, #w)
+                  colors_[#colors_ + 1] = color
+                  m = n
+              end
+              w = w:sub(1, n - 1) .. w:sub(k + 1, #w)
+          end
+          if text[0] then
+              for i = 0, #text do
+                  imgui.TextColored(colors_[i] or colors[1], u8(text[i]))
+                  imgui.SameLine(nil, 0)
+              end
+              imgui.NewLine()
+          else imgui.Text(u8(w)) end
+      end
+  end
+
+  render_text(text)
 end
 
 local fthelpsub =
@@ -827,6 +882,14 @@ function ykf()
 		file:close()
 		file = nil
 	end
+end
+
+function mcheckf()
+  if not doesFileExist('moonloader/fbitools/mcheck.txt') then
+		local file = io.open("moonloader/fbitools/mcheck.txt", "w")
+		file:close()
+		file = nil
+  end
 end
 
 local file = getWorkingDirectory() .. "\\config\\binds.bind"
@@ -2414,12 +2477,16 @@ function main()
   sampRegisterChatCommand('cc', cc)
   sampRegisterChatCommand('dkld', dkld)
   sampRegisterChatCommand('mcheck', mcheck)
+  sampRegisterChatCommand('ftinfo', ftinfo)
+  sampRegisterChatCommand('hudpos', hudpos)
   sampfuncsRegisterConsoleCommand('gppc', gppc)
+  sampfuncsRegisterConsoleCommand('did', did)
   local font = renderCreateFont("Tahoma", 14, 5)
 	ykf()
   fpf()
   akf()
   shpf()
+  mcheckf()
   update()
 	for k, v in pairs(tBindList) do
 		 rkeys.registerHotKey(v.v, true, onHotKey)
@@ -2427,13 +2494,23 @@ function main()
   while true do wait(0)
     imgui.Process = first_window.v or second_window.v or third_window.v or command_window.v or bMainWindow.v or ykwindow.v or fpwindow.v or akwindow.v or shpwindow.v or ftthelp.v
     local myskin = getCharModel(PLAYER_PED)
-    if myskin ==280 or myskin == 265 or myskin == 266 or myskin == 267 or myskin == 281 or myskin == 282 or myskin == 288 or myskin == 284 or myskin == 285 or myskin == 304 or myskin == 305 or myskin == 306 or myskin == 307 or myskin == 309 or myskin == 283 or myskin == 286 or myskin == 287 or myskin == 252 or myskin == 279 or myskin == 163 or myskin == 164 or myskin == 165 or myskin == 166 then
+    if myskin == 280 or myskin == 265 or myskin == 266 or myskin == 267 or myskin == 281 or myskin == 282 or myskin == 288 or myskin == 284 or myskin == 285 or myskin == 304 or myskin == 305 or myskin == 306 or myskin == 307 or myskin == 309 or myskin == 283 or myskin == 286 or myskin == 287 or myskin == 252 or myskin == 279 or myskin == 163 or myskin == 164 or myskin == 165 or myskin == 166 then
       rabden = true
     end
     if nikk == nil then
       if aroop == true then aroop = false end
       if zaproop == true then zaproop = false end
       if dmoop == true then dmoop = false end
+    end
+    if changetextpos then
+      sampToggleCursor(true)
+      local CPX, CPY = getCursorPos()
+      cfg.main.posX = CPX
+      cfg.main.posY = CPY
+    end
+    if isKeyJustPressed(key.VK_LBUTTON) and changetextpos then
+      sampToggleCursor(false)
+      changetextpos = false
     end
     local myhp = getCharHealth(PLAYER_PED)
     if myhp == 0 then
@@ -2867,6 +2944,40 @@ function main()
   end
 end
 
+function update()
+	local fpath = os.getenv('TEMP') .. '\\ftulsupd.json'
+	downloadUrlToFile('https://raw.githubusercontent.com/WhackerH/kirya/master/ftulsupd.json', fpath, function(id, status, p1, p2)
+		if status == dlstatus.STATUS_ENDDOWNLOADDATA then
+		local f = io.open(fpath, 'r')
+		if f then
+			local info = decodeJson(f:read('*a'))
+			updatelink = info.updateurl
+			if info and info.latest then
+				version = tonumber(info.latest)
+				if version > tonumber(thisScript().version) then
+					lua_thread.create(goupdate)
+        else
+          sampAddChatMessage('{9966CC}FBI Tools{ffffff} | Обновлений скрипта не обнаружено. Приятной игры.', -1)
+          update = false
+				end
+			end
+		end
+	end
+end)
+end
+--скачивание актуальной версии
+function goupdate()
+sampAddChatMessage('{9966CC}FBI Tools{ffffff} | Обнаружено обновление. Обновляюсь..', -1)
+sampAddChatMessage('{9966CC}FBI Tools{ffffff} | Текущая версия: {9966cc}'..thisScript().version.."{ffffff}. Новая версия: {9966cc}"..version, -1)
+wait(300)
+downloadUrlToFile(updatelink, thisScript().path, function(id3, status1, p13, p23)
+	if status1 == dlstatus.STATUS_ENDDOWNLOADDATA then
+	sampAddChatMessage('{9966CC}FBI Tools{ffffff} | Обновление завершено! Подробнее об обновлении - {9966cc}/ftinfo.', -1)
+	thisScript():reload()
+end
+end)
+end
+
 function apply_custom_style()
   imgui.SwitchContext()
   local style = imgui.GetStyle()
@@ -3036,8 +3147,8 @@ function imgui.OnDrawFrame()
 		   imgui.SameLine()
 		   if imgui.Button(u8"Перезагрузить скрипт") then
 		    	showCursor(false)
-      			thisScript():reload()
-		   end
+      		thisScript():reload()
+       end
 		imgui.End()
 	end
   if command_window.v then
@@ -3173,7 +3284,7 @@ function imgui.OnDrawFrame()
     local myweaponammo = getAmmoInCharWeapon(PLAYER_PED, myweapon)
     local valid, ped = getCharPlayerIsTargeting(PLAYER_HANDLE) -- получить хендл персонажа, в которого целится игрок
     local myweaponname = getweaponname(myweapon)
-    imgui.SetNextWindowPos(imgui.ImVec2(cfg.main.posX, cfg.main.posY), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5)) -- в центре будет выводиться твое окно
+    imgui.SetNextWindowPos(imgui.ImVec2(cfg.main.posX, cfg.main.posY), imgui.ImVec2(0.5, 0.5)) -- в центре будет выводиться твое окно
     imgui.SetNextWindowSize(imgui.ImVec2(cfg.main.widehud, 180), imgui.Cond.FirstUseEver)
     imgui.Begin('FBI Tools', first_window, imgui.WindowFlags.NoResize + imgui.WindowFlags.NoCollapse + imgui.WindowFlags.NoTitleBar)
     imgui.SetCursorPosX((275- imgui.CalcTextSize(u8('FBI Tools')).x)/2) -- ШИРИНА - это ширина окна.
@@ -4419,14 +4530,57 @@ function nwanted()
 end
 
 function sampev.onServerMessage(color, text)
+  if mcheckb then
+    if text:find('---======== МОБИЛЬНЫЙ КОМПЬЮТЕР ДАННЫХ ========---') then
+      local open = io.open("moonloader/fbitools/mcheck.txt", 'a')
+      open:write(string.format('%s\n', text))
+      open:close()
+    end
+    if text:find('Имя:') then
+      local open = io.open("moonloader/fbitools/mcheck.txt", 'a')
+      open:write(string.format('%s\n', text))
+      open:close()
+    end
+    if text:find('Организация:') then
+      local open = io.open("moonloader/fbitools/mcheck.txt", 'a')
+      open:write(string.format('%s\n', text))
+      open:close()
+    end
+    if text:find('Преступление:') then
+      local open = io.open("moonloader/fbitools/mcheck.txt", 'a')
+      open:write(string.format('%s\n', text))
+      open:close()
+    end
+    if text:find('Сообщил:') then
+      local open = io.open("moonloader/fbitools/mcheck.txt", 'a')
+      open:write(string.format('%s\n', text))
+      open:close()
+    end
+    if text:find('Уровень розыска:') then
+      local open = io.open("moonloader/fbitools/mcheck.txt", 'a')
+      open:write(string.format('%s\n', text))
+      open:close()
+    end
+    if text:find('---============================================---') then
+      local open = io.open("moonloader/fbitools/mcheck.txt", 'a')
+      open:write(string.format('%s\n', text))
+      open:write(' \n')
+      open:close()
+    end
+  end
   if zaproop then
     if nikk ~= nil then
-      if text:find(nikk) and color == '-8224086' then
+      if text:find(nikk) and color == -8224086 then
         local _, myid = sampGetPlayerIdByCharHandle(PLAYER_PED)
         local myname = sampGetPlayerNickname(myid)
         if text:find(myname) then
         else
-          sampAddChatMessage('{9966cc}FBI Tools {ffffff}| Команду выполнил другой сотрудник.', -1)
+          lua_thread.create(function()
+            zaproop = false
+            nikk = nil
+            wait(100)
+            sampAddChatMessage('{9966cc}FBI Tools {ffffff}| Команду выполнил другой сотрудник.', -1)
+          end)
         end
       end
     end
@@ -5224,9 +5378,11 @@ function mcheck()
           local mx, my, mz = getCharCoordinates(PLAYER_PED)
           local dist = getDistanceBetweenCoords3d(mx, my, mz, x, y, z)
           if dist <= 200 then
+            mcheckb = true
             _ , idofplayercar = sampGetPlayerIdByCharHandle(hm)
             sampSendChat('/mdc '..idofplayercar)
             wait(1200)
+            mcheckb = false
           end
         end
       end
@@ -5240,35 +5396,29 @@ function gppc()
   print(string.format('%d %d %d', x, y, z))
 end
 
-function update()
-	local fpath = os.getenv('TEMP') .. '\\weather-version.json'
-	downloadUrlToFile('https://raw.githubusercontent.com/WhackerH/kirya/master/ftulsupd.json', fpath, function(id, status, p1, p2)
-		if status == dlstatus.STATUS_ENDDOWNLOADDATA then
-		local f = io.open(fpath, 'r')
-		if f then
-			local info = decodeJson(f:read('*a'))
-			updatelink = info.updateurl
-			if info and info.latest then
-				version = tonumber(info.latest)
-				if version > tonumber(thisScript().version) then
-					lua_thread.create(goupdate)
-				else
-					update = false
-				end
-			end
-		end
-	end
-end)
+function ftinfo()
+  local ftinfoone = [[
+  {9966cc}1 {ffffff}- Автообновление скрипта
+  {9966cc}2 {Ffffff}- Автодоклады (команда /dkld)
+  {9966cc}3 {ffffff}- Автодоклады о пересечении юрисдикции (команда /dkld)
+  {9966cc}4 {ffffff}- Полностью переписан /fthelp
+  {9966cc}5 {ffffff}- Команды /fst и /fsw для изменения погоды и времени
+  {9966cc}6 {ffffff}- Команды /yk /ak /fp /shp для открытия шпор
+  {9966cc}7 {ffffff}- Команды /fyk /fak /fp /fshp для поиска по шпоре
+  {9966cc}8 {ffffff}- Добавлен внутриигровой биндер
+  {9966cc}9 {ffffff}- Добавлен автоклист при смерти
+  {9966cc}10 {ffffff}- При использовании /st без ввода ID отправляет просто просьбу остановиться с тэгом вашей фракции
+  {9966cc}11 {ffffff}- Команда /cc для очистки чата
+  {9966cc}12 {ffffff}- Теперь названия автомобилей в /st всегда отображаются корректно
+  {9966cc}13 {ffffff}- Команда /mcheck которая пробивает всех игроков по /mdc, которые находятся в 200 метров от вас
+  ]]
+  sampShowDialog(346253, "{9966cc}FBI Tools {ffffff}| Обновление", ftinfoone, "»", "x", 0)
 end
---скачивание актуальной версии
-function goupdate()
-sampAddChatMessage('{9966CC}FBI Tools{ffffff} | Обнаружено обновление. AutoReload может конфликтовать. Обновляюсь..', -1)
-sampAddChatMessage('{9966CC}FBI Tools{ffffff} | Текущая версия: {9966cc}'..thisScript().version.."{ffffff]. Новая версия: {9966cc}"..version, -1)
-wait(300)
-downloadUrlToFile(updatelink, thisScript().path, function(id3, status1, p13, p23)
-	if status1 == dlstatus.STATUS_ENDDOWNLOADDATA then
-	sampAddChatMessage('{9966CC}FBI Tools{ffffff} | Обновление завершено! Подробнее об обновлении - /weatherlog.', -1)
-	thisScript():reload()
+
+function hudpos()
+  changetextpos = not changetextpos
 end
-end)
+
+function did()
+  sampAddChatMessage(sampGetCurrentDialogId(), -1)
 end
