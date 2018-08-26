@@ -1,5 +1,5 @@
 script_name('FBI Tools')
-script_version('2.5')
+script_version('2.52')
 script_author('Sesh Jefferson and Thomas Lawson') -- код биндера от DonHomka
 require 'lib.moonloader'
 require 'lib.sampfuncs'
@@ -29,6 +29,8 @@ encoding.default = 'CP1251' -- указываем кодировку по умолчанию, она должна совп
 u8 = encoding.UTF8
 hk._SETTINGS.noKeysMessage = u8("Нет")
 seshsps = 1
+warnst = false
+wfrac = nil
 mcheckb = false
 tazer = false
 nikk = nil
@@ -4124,23 +4126,18 @@ function gr(pam)
 end
 
 function warn(pam)
-  local id, dep = string.match(pam, '(%d+)%s*(%d*)')
-  if frac == 'FBI' then
+  local id = tonumber(pam)
+  if frac = 'FBI' then
     if dep == nil or id == nil then
-      sampAddChatMessage("{9966CC}FBI Tools {FFFFFF}| Введите: /warn ID Департамент", -1)
-      sampAddChatMessage("{9966CC}FBI Tools {FFFFFF}| 1 - LSPD | 2 - SFPD | 3 - LVPD",-1)
+      sampAddChatMessage('{9966CC}FBI Tools {FFFFFF}| Введите /warn ID', -1)
     end
     if id ~= nil and sampIsPlayerConnected(id) then
-      if dep == "" or dep < "1" or dep > "3" then
-        sampAddChatMessage("{9966CC}FBI Tools {FFFFFF}| Введите: /warn ID Департамент", -1)
-        sampAddChatMessage("{9966CC}FBI Tools {FFFFFF}| 1 - LSPD | 2 - SFPD | 3 - LVPD",-1)
-      elseif dep == "1" then
-        sampSendChat("/d LSPD, "..sampGetPlayerNickname(id):gsub('_', ' ')..", получает предупреждение за неправильную подачу в розыск.")
-      elseif dep == '2' then
-        sampSendChat("/d SFPD, "..sampGetPlayerNickname(id):gsub('_', ' ')..", получает предупреждение за неправильную подачу в розыск.")
-      elseif dep == '3' then
-        sampSendChat("/d LVPD, "..sampGetPlayerNickname(id):gsub('_', ' ')..", получает предупреждение за неправильную подачу в розыск.")
-      end
+      warnst = true
+      sampSendChat('/mdc '..id)
+      wait(1200)
+      sampSendChat(string.format('/d %s, %s получает предупреждение за неправильную подачу в розыск.', wfrac, sampGetPlayerNickname(id):gsub('_', ' ')))
+      wfrac = nil
+      warnst = false
     end
   else
     sampAddChatMessage("{9966CC}FBI Tools {ffffff}| Вы не сотрудник ФБР", -1)
@@ -4496,6 +4493,12 @@ function nwanted()
 end
 
 function sampev.onServerMessage(color, text)
+  if warnst then
+    if text:find('Организация:') then
+      local wcfrac = text:match('Организация: (.+)')
+      wfrac = wcfrac
+    end
+  end
   if mcheckb then
     if text:find('---======== МОБИЛЬНЫЙ КОМПЬЮТЕР ДАННЫХ ========---') then
       local open = io.open("moonloader/fbitools/mcheck.txt", 'a')
