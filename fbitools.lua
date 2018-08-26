@@ -1,5 +1,5 @@
 script_name('FBI Tools')
-script_version('2.51')
+script_version('2.5')
 script_author('Sesh Jefferson and Thomas Lawson') -- код биндера от DonHomka
 require 'lib.moonloader'
 require 'lib.sampfuncs'
@@ -2944,40 +2944,6 @@ function main()
   end
 end
 
-function update()
-	local fpath = os.getenv('TEMP') .. '\\ftulsupd.json'
-	downloadUrlToFile('https://raw.githubusercontent.com/WhackerH/kirya/master/ftulsupd.json', fpath, function(id, status, p1, p2)
-		if status == dlstatus.STATUS_ENDDOWNLOADDATA then
-		local f = io.open(fpath, 'r')
-		if f then
-			local info = decodeJson(f:read('*a'))
-			updatelink = info.updateurl
-			if info and info.latest then
-				version = tonumber(info.latest)
-				if version > tonumber(thisScript().version) then
-					lua_thread.create(goupdate)
-        else
-          sampAddChatMessage('{9966CC}FBI Tools{ffffff} | Обновлений скрипта не обнаружено. Приятной игры.', -1)
-          update = false
-				end
-			end
-		end
-	end
-end)
-end
---скачивание актуальной версии
-function goupdate()
-sampAddChatMessage('{9966CC}FBI Tools{ffffff} | Обнаружено обновление. Обновляюсь..', -1)
-sampAddChatMessage('{9966CC}FBI Tools{ffffff} | Текущая версия: {9966cc}'..thisScript().version.."{ffffff}. Новая версия: {9966cc}"..version, -1)
-wait(300)
-downloadUrlToFile(updatelink, thisScript().path, function(id3, status1, p13, p23)
-	if status1 == dlstatus.STATUS_ENDDOWNLOADDATA then
-	sampAddChatMessage('{9966CC}FBI Tools{ffffff} | Обновление завершено! Подробнее об обновлении - {9966cc}/ftinfo.', -1)
-	thisScript():reload()
-end
-end)
-end
-
 function apply_custom_style()
   imgui.SwitchContext()
   local style = imgui.GetStyle()
@@ -5421,4 +5387,38 @@ end
 
 function did()
   sampAddChatMessage(sampGetCurrentDialogId(), -1)
+end
+
+function update()
+	local fpath = os.getenv('TEMP') .. '\\ftulspd.json'
+	downloadUrlToFile('https://raw.githubusercontent.com/WhackerH/kirya/master/ftulsupd.json', fpath, function(id, status, p1, p2)
+		if status == dlstatus.STATUS_ENDDOWNLOADDATA then
+		local f = io.open(fpath, 'r')
+		if f then
+			local info = decodeJson(f:read('*a'))
+			updatelink = info.updateurl
+			if info and info.latest then
+				version = tonumber(info.latest)
+				if version > tonumber(thisScript().version) then
+					lua_thread.create(goupdate)
+        else
+          sampAddChatMessage('{9966CC}FBI Tools{ffffff} | Обновлений скрипта не обнаружено. Приятной игры.', -1)
+          update = false
+				end
+			end
+		end
+	end
+end)
+end
+--скачивание актуальной версии
+function goupdate()
+sampAddChatMessage('{9966CC}FBI Tools{ffffff} | Обнаружено обновление. Обновляюсь..', -1)
+sampAddChatMessage('{9966CC}FBI Tools{ffffff} | Текущая версия: {9966cc}'..thisScript().version.."{ffffff}. Новая версия: {9966cc}"..version, -1)
+wait(300)
+downloadUrlToFile(updatelink, thisScript().path, function(id3, status1, p13, p23)
+	if status1 == dlstatus.STATUS_ENDDOWNLOADDATA then
+	sampAddChatMessage('{9966CC}FBI Tools{ffffff} | Обновление завершено! Подробнее об обновлении - {9966cc}/ftinfo.', -1)
+	thisScript():reload()
+end
+end)
 end
