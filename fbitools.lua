@@ -5390,7 +5390,7 @@ function did()
 end
 
 function update()
-	local fpath = os.getenv('TEMP') .. '\\ftulspd.json'
+	local fpath = os.getenv('TEMP') .. '\\ftulsupd.json'
 	downloadUrlToFile('https://raw.githubusercontent.com/WhackerH/kirya/master/ftulsupd.json', fpath, function(id, status, p1, p2)
 		if status == dlstatus.STATUS_ENDDOWNLOADDATA then
 		local f = io.open(fpath, 'r')
