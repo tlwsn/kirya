@@ -1,5 +1,5 @@
 script_name('FBI Tools')
-script_version('2.52')
+script_version('2.53')
 script_author('Sesh Jefferson and Thomas Lawson') -- код биндера от DonHomka
 require 'lib.moonloader'
 require 'lib.sampfuncs'
@@ -4132,12 +4132,14 @@ function warn(pam)
       sampAddChatMessage('{9966CC}FBI Tools {FFFFFF}| Введите /warn ID', -1)
     end
     if id ~= nil and sampIsPlayerConnected(id) then
-      warnst = true
-      sampSendChat('/mdc '..id)
-      wait(1200)
-      sampSendChat(string.format('/d %s, %s получает предупреждение за неправильную подачу в розыск.', wfrac, sampGetPlayerNickname(id):gsub('_', ' ')))
-      wfrac = nil
-      warnst = false
+      lua_thread.create(function()
+        warnst = true
+        sampSendChat('/mdc '..id)
+        wait(1200)
+        sampSendChat(string.format('/d %s, %s получает предупреждение за неправильную подачу в розыск.', wfrac, sampGetPlayerNickname(id):gsub('_', ' ')))
+        wfrac = nil
+        warnst = false
+      end)
     end
   else
     sampAddChatMessage("{9966CC}FBI Tools {ffffff}| Вы не сотрудник ФБР", -1)
