@@ -1,5 +1,5 @@
 script_name('FBI Tools')
-script_version('2.52')
+script_version('2.5')
 script_author('Sesh Jefferson and Thomas Lawson') -- код биндера от DonHomka
 require 'lib.moonloader'
 require 'lib.sampfuncs'
@@ -4127,7 +4127,7 @@ end
 
 function warn(pam)
   local id = tonumber(pam)
-  if frac = 'FBI' then
+  if frac == 'FBI' then
     if dep == nil or id == nil then
       sampAddChatMessage('{9966CC}FBI Tools {FFFFFF}| ¬ведите /warn ID', -1)
     end
