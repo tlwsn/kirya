@@ -1,4 +1,6 @@
 {
   "latest": "2.5",
   "updateurl": "https://raw.githubusercontent.com/WhackerH/kirya/master/fbitools.lua"
+  "updlist": [[ 1. Автообновления
+  2. Стробоскопы ]]
 }
