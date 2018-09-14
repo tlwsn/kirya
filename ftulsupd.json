@@ -1,7 +1,7 @@
 {
   "latest": "2.5",
   "updateurl": "https://raw.githubusercontent.com/WhackerH/kirya/master/fbitools.lua",
-  "updlist": "1 - Автообновление скрипта
+  "updlist": " 1 - Автообновление скрипта
   2 - Автодоклады (команда /dkld)
   3 - Автодоклады о пересечении юрисдикции (команда /dkld)
   4 - Полностью переписан /fthelp
