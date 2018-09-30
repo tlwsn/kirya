@@ -1,6 +1,6 @@
 {
-  "latest": "2.52",
+  "latest": "2.53",
   "updateurl": "https://raw.githubusercontent.com/WhackerH/kirya/master/fbitools.lua",
   "updlist": "
-  Cput fix"
+  Добавлена проверка статистики"
 }
