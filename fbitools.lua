@@ -1,5 +1,5 @@
 script_name('FBI Tools')
-script_version('2.53')
+script_version('2.5.1')
 script_author('Sesh Jefferson and Thomas Lawson') -- код биндера от DonHomka
 require 'lib.moonloader'
 require 'lib.sampfuncs'
@@ -12,16 +12,19 @@ local encoding = require 'encoding' -- загружаем библиотеку
 local rkeys = require 'rkeys'
 local Sphere = require 'Sphere'
 local hk = require 'lib.imcustom.hotkey'
+local memory = require "memory"
 local wm = require 'lib.windows.message'
 local gk = require 'game.keys'
 local first_window = imgui.ImBool(false)
 local second_window = imgui.ImBool(false)
 local third_window = imgui.ImBool(false)
 local command_window = imgui.ImBool(false)
+local sp_windows = imgui.ImBool(false)
 local ykwindow = imgui.ImBool(false)
 local fpwindow = imgui.ImBool(false)
 local akwindow = imgui.ImBool(false)
 local shpwindow = imgui.ImBool(false)
+local updwindows = imgui.ImBool(false)
 local ftthelp = imgui.ImBool(false)
 local changetextpos = false
 local dlstatus = require('moonloader').download_status
@@ -29,6 +32,8 @@ encoding.default = 'CP1251' -- указываем кодировку по умолчанию, она должна совп
 u8 = encoding.UTF8
 hk._SETTINGS.noKeysMessage = u8("Нет")
 seshsps = 1
+spspeed = nil
+spfuel = nil
 warnst = false
 wfrac = nil
 mcheckb = false
@@ -127,7 +132,7 @@ local fthelpsub =
     end
   },
   {
-    title = '{9966cc}/warn [id] [departament]{ffffff} - Предупредить игрока в волну департамента о нарушении подачи в розыск',
+    title = '{9966cc}/warn [id]{ffffff} - Предупредить игрока в волну департамента о нарушении подачи в розыск',
     onclick = function()
       sampSetChatInputEnabled(true)
       sampSetChatInputText('/warn ')
@@ -1277,11 +1282,12 @@ local fbitools =
     posY = 974,
     widehud = 320,
     male = true,
-    wanted == false,
-    clear == false,
+    wanted = false,
+    clear = false,
     hud = false,
     tar = nil,
-		clist = 0,
+    spzamen = false,
+    clist = 0,
   },
   commands =
   {
@@ -1290,7 +1296,7 @@ local fbitools =
     ceject = true,
     tazer = true,
     deject = true,
-    ftazer = true
+    ftazer = true,
   },
   keys =
   {
@@ -1541,9 +1547,9 @@ function getCarNamebyModel(model)
     [593] = 'Dodo',
     [594] = 'RC Cam',
     [595] = 'Launch',
-    [596] = 'Police LSPD',
-    [597] = 'Police SFPD',
-    [598] = 'Police LVPD',
+    [596] = 'Police Car LS',
+    [597] = 'Police Car SF',
+    [598] = 'Police Car LV',
     [599] = 'Police Ranger',
     [600] = 'Picador',
     [601] = 'S.W.A.T.',
@@ -2376,8 +2382,6 @@ function main()
   while not sampIsLocalPlayerSpawned() do wait(0) end
   wait(500)
   local _, myid = sampGetPlayerIdByCharHandle(playerPed)
-  local name, surname = string.match(sampGetPlayerNickname(myid), '(.+)_(.+)')
-  sip, sport = sampGetCurrentServerAddress()
   sampSendChat('/stats')
   while not sampIsDialogActive() do wait(0) end
   proverkk = sampGetDialogText()
@@ -2388,16 +2392,6 @@ function main()
   sampCloseCurrentDialogWithButton(1)
   print(frakc)
   print(rang)
-  --[[sip, sport = sampGetCurrentServerAddress()
-  if sip == '185.169.134.67' then
-    sampAddChatMessage('{9966cc}FBI Tools {ffffff}| Загружены настройки для: '..sampGetCurrentServerName(), -1)
-  elseif sip =='185.169.134.68' then
-    sampAddChatMessage('{9966cc}FBI Tools {ffffff}| Загружены настройки для: '..sampGetCurrentServerName(), -1)
-  elseif sip ~= '185.169.134.68' and sip ~= '185.169.134.68' then
-    sampAddChatMessage('{9966cc}FBI Tools {ffffff}| Скрипт FBI Tools предназначен для серверов Evolve RP.', -1)
-    thisScript():unload()
-  end]]
-  local spawned = sampIsLocalPlayerSpawned()
   Sphere.createSphere(-1984.6375732422, 106.85540008545, 27.42943572998, 50.0)-- -1984.6375732422 106.85540008545 27.42943572998 -- АВСФ [1]
   Sphere.createSphere(-2055.283203125, -84.472702026367, 35.064281463623, 50.0)-- -2055.283203125 -84.472702026367 35.064281463623 -- АШ [2]
   Sphere.createSphere(-1521.4412841797, 503.20678710938, 6.7215604782104, 40.0)-- -1521.4412841797 503.20678710938 6.7215604782104 -- СФа [3]
@@ -2494,10 +2488,76 @@ function main()
 		 rkeys.registerHotKey(v.v, true, onHotKey)
 	end
   while true do wait(0)
-    imgui.Process = first_window.v or second_window.v or third_window.v or command_window.v or bMainWindow.v or ykwindow.v or fpwindow.v or akwindow.v or shpwindow.v or ftthelp.v
+    imgui.Process = first_window.v or sp_windows.v or second_window.v or third_window.v or command_window.v or bMainWindow.v or ykwindow.v or fpwindow.v or akwindow.v or shpwindow.v or ftthelp.v or updwindows.v
     local myskin = getCharModel(PLAYER_PED)
     if myskin == 280 or myskin == 265 or myskin == 266 or myskin == 267 or myskin == 281 or myskin == 282 or myskin == 288 or myskin == 284 or myskin == 285 or myskin == 304 or myskin == 305 or myskin == 306 or myskin == 307 or myskin == 309 or myskin == 283 or myskin == 286 or myskin == 287 or myskin == 252 or myskin == 279 or myskin == 163 or myskin == 164 or myskin == 165 or myskin == 166 then
       rabden = true
+    end
+    stext, sprefix, scolor, spcolor = sampGetChatString(99)
+    if zaproop then
+      if nikk ~= nil then
+        if stext:find(nikk) and scolor == 4294935170 then
+          local _, myid = sampGetPlayerIdByCharHandle(PLAYER_PED)
+          local myname = sampGetPlayerNickname(myid)
+          if stext:find(myname) then
+          else
+            zaproop = false
+            nikk = nil
+            wait(100)
+            sampAddChatMessage('{9966cc}FBI Tools {ffffff}| Команду выполнил другой сотрудник.', -1)
+          end
+        end
+      end
+    end
+    if rank ~= 'Кадет' and rank ~= 'Офицер' and rank ~= 'Мл.Сержант' and  rank ~= 'Сержант' and  rank ~= 'Прапорщик' then
+      if stext:find('Дело .+ рассмотрению не подлежит - ООП.') then
+        local name = stext:match('Дело (.+) рассмотрению не подлежит - ООП.')
+        zaproop = true
+        nikk = name
+        if nikk ~= nil then
+          wait(50)
+          sampAddChatMessage(string.format("{9966CC}FBI Tools {FFFFFF}| Поступил запрос на объявление ООП игрока {9966cc}%s", nikk:gsub('_', ' ')), -1)
+          sampAddChatMessage('{9966cc}FBI Tools {ffffff}| Подтвердить: {9966cc}'..key.id_to_name(cfg.keys.oopda)..'{ffffff} | Отменить: {9966cc}'..key.id_to_name(cfg.keys.oopnet), -1)
+        else
+          zaproop = false
+        end
+      end
+      if stext:find('Дело на имя .+ %(%d+%) рассмотрению не подлежит, ООП, объявите.') then
+        local name, id = stext:match('Дело на имя (.+) %((%d+)%) рассмотрению не подлежит, ООП, объявите.')
+        zaproop = true
+        nikk = name
+        if nikk ~= nil then
+          wait(50)
+          sampAddChatMessage(string.format("{9966CC}FBI Tools {FFFFFF}| Поступил запрос на объявление ООП игрока {9966cc}%s", nikk:gsub('_', ' ')), -1)
+          sampAddChatMessage('{9966cc}FBI Tools {ffffff}| Подтвердить: {9966cc}'..key.id_to_name(cfg.keys.oopda)..'{ffffff} | Отменить: {9966cc}'..key.id_to_name(cfg.keys.oopnet), -1)
+        else
+          zaproop = false
+        end
+      end
+      if stext:find('Дело №%d+ на имя .+ рассмотрению не подлежит, ООП, объявите.') then 
+        local id, name = stext:match('Дело №(%d+) на имя (.+) рассмотрению не подлежит, ООП, объявите.')
+        zaproop = true
+        nikk = name
+        if nikk ~= nil then
+          wait(50)
+          sampAddChatMessage(string.format("{9966CC}FBI Tools {FFFFFF}| Поступил запрос на объявление ООП игрока {9966cc}%s", nikk:gsub('_', ' ')), -1)
+          sampAddChatMessage('{9966cc}FBI Tools {ffffff}| Подтвердить: {9966cc}'..key.id_to_name(cfg.keys.oopda)..'{ffffff} | Отменить: {9966cc}'..key.id_to_name(cfg.keys.oopnet), -1)
+        else
+          zaproop = false
+        end
+      end
+      if stext:find('Дело на имя .+ рассмотрению не подлежит, ООП, объявите.')  then
+        local name = stext:match('Дело на имя (.+) рассмотрению не подлежит, ООП, объявите.')
+        zaproop = true
+        nikk = name
+        if nikk ~= nil then
+          wait(50)
+          sampAddChatMessage(string.format("{9966CC}FBI Tools {FFFFFF}| Поступил запрос на объявление ООП игрока {9966cc}%s", nikk:gsub('_', ' ')), -1)
+          sampAddChatMessage('{9966cc}FBI Tools {ffffff}| Подтвердить: {9966cc}'..key.id_to_name(cfg.keys.oopda)..'{ffffff} | Отменить: {9966cc}'..key.id_to_name(cfg.keys.oopnet), -1)
+        else
+          zaproop = false
+        end
+      end
     end
     if nikk == nil then
       if aroop == true then aroop = false end
@@ -2509,10 +2569,6 @@ function main()
       local CPX, CPY = getCursorPos()
       cfg.main.posX = CPX
       cfg.main.posY = CPY
-    end
-    if isKeyJustPressed(key.VK_LBUTTON) and changetextpos then
-      sampToggleCursor(false)
-      changetextpos = false
     end
     local myhp = getCharHealth(PLAYER_PED)
     if myhp == 0 then
@@ -2538,6 +2594,9 @@ function main()
       first_window.v = false
       imgui.ShowCursor = false
     end
+    if sp_windows.v then
+      imgui.ShowCursor = false
+    end
     if second_window.v == true then
       imgui.ShowCursor = true
     end
@@ -2561,6 +2620,10 @@ function main()
     if shpwindow.v == true then
       imgui.ShowCursor = true
     end
+    if updwindows.v == true then
+      imgui.ShowCursor = true
+      imgui.LockPlayer = true
+    end
     if wasKeyPressed(cfg.keys.fastmenu) and not sampIsDialogActive() and not sampIsChatInputActive() then
       if cfg.main.tar == nil then
         lua_thread.create(function()
@@ -2578,7 +2641,7 @@ function main()
     end
     if wasKeyPressed(cfg.keys.oopda) then
       if zaproop == true then
-        sampSendChat('/d Mayor, дело на имя '..nikk..' рассмотрению не подлежит, ООП.')
+        sampSendChat(string.format('/d Mayor, дело на имя %s рассмотрению не подлежит, ООП', nikk:gsub('_', ' ')))
         nikk = nil
         zaproop = false
       end
@@ -2586,16 +2649,16 @@ function main()
         if frac == 'FBI' or frac == 'LSPD' or frac == 'SFPD' or frac == 'LVPD' then
           if rank == 'Кадет' or rank == 'Офицер' or rank == 'Мл.Сержант' or  rank == 'Сержант' or  rank == 'Прапорщик' then
             if cfg.main.tar == nil then
-              sampSendChat('/r Дело на имя '..nikk:gsub('_', ' ')..' рассмотрению не подлежит, ООП, объявите.')
+              sampSendChat(string.format('/r Дело на имя %s рассмотрению не подлежит, ООП, объявите.', nikk:gsub('_', ' ')))
               dmoop = false
               nikk = false
             else
-              sampSendChat('/r '..cfg.main.tar..' Дело на имя '..nikk:gsub('_', ' ')..' рассмотрению не подлежит, ООП, объявите.')
+              sampSendChat(string.format('/r %s Дело на имя %s рассмотрению не подлежит, ООП, объявите.', cfg.main.tar, nikk:gsub('_', ' ')))
               dmoop = false
               nikk = false
             end
           else
-            sampSendChat('/d Mayor, дело на имя '..nikk:gsub('_', ' ')..' рассмотрению не подлежит, ООП КПЗ LSPD.')
+            sampSendChat(string.format('/d Mayor, дело на имя %s рассмотрению не подлежит, ООП КПЗ LSPD.', nikk:gsub('_', ' ')))
             dmoop = false
             nikk = false
           end
@@ -2605,30 +2668,30 @@ function main()
         if frac == 'FBI' or frac == 'LSPD' or frac == 'SFPD' or frac == 'LVPD' then
           if rank == 'Кадет' or rank == 'Офицер' or rank == 'Мл.Сержант' or  rank == 'Сержант' or  rank == 'Прапорщик' then
             if cfg.main.tar == nil then
-              sampSendChat('/r Дело на имя '..nikk:gsub('_', ' ')..' рассмотрению не подлежит, ООП, объявите.')
+              sampSendChat(string.format('/r Дело на имя %s рассмотрению не подлежит, ООП, объявите.', nikk:gsub('_', ' ')))
               aroop = false
               nikk = false
             else
-              sampSendChat('/r '..cfg.main.tar..' Дело на имя '..nikk:gsub('_', ' ')..' рассмотрению не подлежит, ООП, объявите.')
+              sampSendChat(string.format('/r Дело на имя %s рассмотрению не подлежит, ООП, объявите.', cfg.main.tar, nikk:gsub('_', ' ')))
               aroop = false
               nikk = false
             end
           else
             gint = getActiveInterior()
             if gint == 21 then
-              sampSendChat("/d Mayor, дело на имя "..nikk:gsub('_', ' ').." рассмотрению не подлежит, ООП КПЗ LSPD.")
+              sampSendChat(string.format("/d Mayor, дело на имя %s рассмотрению не подлежит, ООП КПЗ LSPD.", nikk:gsub('_', ' ')))
               aroop = false
               nikk = false
             elseif gint == 10 then
-              sampSendChat("/d Mayor, дело на имя "..nikk:gsub('_', ' ').." рассмотрению не подлежит, ООП КПЗ SFPD.")
+              sampSendChat(string.format("/d Mayor, дело на имя %s рассмотрению не подлежит, ООП КПЗ SFPD.", nikk:gsub('_', ' ')))
               aroop = false
               nikk = false
             elseif gint == 3 then
-              sampSendChat("/d Mayor, дело на имя "..nikk:gsub('_', ' ').." рассмотрению не подлежит, ООП КПЗ LVPD.")
+              sampSendChat(string.format("/d Mayor, дело на имя %s рассмотрению не подлежит, ООП КПЗ LVPD.", nikk:gsub('_', ' ')))
               aroop = false
               nikk = false
             elseif gint ~= 21 and gint ~= 10 and gint ~= 3 then
-              sampSendChat("/d Mayor, дело на имя "..nikk:gsub('_', ' ').." рассмотрению не подлежит, ООП.")
+              sampSendChat(string.format("/d Mayor, дело на имя %s рассмотрению не подлежит, ООП.", nikk:gsub('_', ' ')))
               aroop = false
               nikk = false
             end
@@ -2946,14 +3009,14 @@ function main()
   end
 end
 
+local ttt = nil
+
 function apply_custom_style()
   imgui.SwitchContext()
   local style = imgui.GetStyle()
   local colors = style.Colors
   local clr = imgui.Col
   local ImVec4 = imgui.ImVec4
-
-  style.WindowRounding = 2.0
   style.WindowTitleAlign = imgui.ImVec2(0.5, 0.84)
   style.ChildWindowRounding = 2.0
   style.FrameRounding = 2.0
@@ -2962,7 +3025,6 @@ function apply_custom_style()
   style.ScrollbarRounding = 0
   style.GrabMinSize = 8.0
   style.GrabRounding = 1.0
-
   colors[clr.Text]                   = ImVec4(1.00, 1.00, 1.00, 1.00)
   colors[clr.TextDisabled]           = ImVec4(0.50, 0.50, 0.50, 1.00)
   colors[clr.WindowBg]               = ImVec4(0.06, 0.06, 0.06, 0.94)
@@ -3009,10 +3071,33 @@ function apply_custom_style()
 end
 apply_custom_style()
 
-do
-
 function imgui.OnDrawFrame()
-	local tLastKeys = {}
+  local tLastKeys = {}
+  if updwindows.v then
+    local updlist = ttt
+    local iScreenWidth, iScreenHeight = getScreenResolution()
+    imgui.SetNextWindowPos(imgui.ImVec2(iScreenWidth / 2, iScreenHeight / 2), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
+    imgui.SetNextWindowSize(imgui.ImVec2(700, 290), imgui.Cond.FirstUseEver)
+    imgui.Begin(u8('FBI Tools | Обновление'), updwindows, imgui.WindowFlags.NoCollapse + imgui.WindowFlags.NoResize)
+    imgui.Text(u8('Вышло обновление скрипта FBI Tools! Что бы обновиться нажмите кнопку внизу. Список изменений:'))
+    imgui.Separator()
+    imgui.BeginChild("uuupdate", imgui.ImVec2(690, 200))
+    for line in ttt:gmatch('[^\r\n]+') do
+      imgui.Text(line)
+    end
+    imgui.EndChild()
+    imgui.Separator()
+    imgui.PushItemWidth(305)
+    if imgui.Button(u8("Обновить"), imgui.ImVec2(339, 25)) then
+      lua_thread.create(goupdate)
+      updwindows.v = false
+    end
+    imgui.SameLine()
+    if imgui.Button(u8("Отложить обновление"), imgui.ImVec2(339, 25)) then
+      updwindows.v = false
+    end
+    imgui.End()
+  end
   if shpwindow.v then
     local iScreenWidth, iScreenHeight = getScreenResolution()
     imgui.SetNextWindowPos(imgui.ImVec2(iScreenWidth / 2, iScreenHeight / 2), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
@@ -3267,7 +3352,8 @@ function imgui.OnDrawFrame()
       local carspeed = getCarSpeed(vHandle)
       local speed = math.floor(carspeed)
       local vehName = getCarNamebyModel(getCarModel(storeCarCharIsInNoSave(playerPed)))
-      imgui.Text('Vehicle: '..vehName..'['..vID..'] | HP: '..vHP..' | Speed: '..speed*2)
+      local ncspeed = math.floor(carspeed*2)
+      imgui.Text('Vehicle: '..vehName..'['..vID..'] | HP: '..vHP..' | Speed: '..ncspeed)
     else
       imgui.Text('Vehicle: No')
     end
@@ -3301,7 +3387,7 @@ function imgui.OnDrawFrame()
     local btn_size = imgui.ImVec2(-0.1, 0)
     imgui.SetNextWindowPos(imgui.ImVec2(x/2, y/2), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
     imgui.SetNextWindowSize(imgui.ImVec2(300, 300), imgui.Cond.FirstUseEver)
-    imgui.Begin('FBI Tools | Main Menu | Version: '..thisScript().version, second_window, imgui.WindowFlags.NoResize)
+    imgui.Begin('FBI Tools | Main Menu | Version: '..thisScript().version, second_window)
 		if imgui.Button(u8'Биндер', btn_size) then
 			bMainWindow.v = not bMainWindow.v
 		end
@@ -3321,6 +3407,25 @@ function imgui.OnDrawFrame()
           wait(100)
           inicfg.save(cfg, 'fbitools/config.ini')
           sampAddChatMessage('{9966CC}FBI Tools {ffffff}| Инфо-бар включен.', -1)
+        end)
+      end
+    end
+    if cfg.main.spzamen == true then
+      if imgui.Button(u8'Выключить спидометр', btn_size) then
+        lua_thread.create(function()
+          cfg.main.spzamen = false
+          wait(100)
+          inicfg.save(cfg, 'fbitools/config.ini')
+          sampAddChatMessage('{9966CC}FBI Tools {ffffff}| спидометр выключен.', -1)
+        end)
+      end
+    elseif cfg.main.spzamen == false then
+      if imgui.Button(u8'Включить спидометр', btn_size) then
+        lua_thread.create(function()
+          cfg.main.spzamen = true
+          wait(100)
+          inicfg.save(cfg, 'fbitools/config.ini')
+          sampAddChatMessage('{9966CC}FBI Tools {ffffff}| спидометр включен.', -1)
         end)
       end
     end
@@ -3366,10 +3471,9 @@ function imgui.OnDrawFrame()
       showCursor(false)
       thisScript():reload()
     end
+    --imgui.ShowStyleEditor()
     imgui.End()
   end
-end
-
 end
 
 function sumenu(args)
@@ -3704,7 +3808,6 @@ function pr()
     sampSendChat("Вы арестованы, у вас есть право хранить молчание. Всё, что вы скажете, может и будет использовано против вас в суде.")
     wait(4000)
     sampSendChat("У вас есть право на адвоката и на один телефонный звонок. Вам понятны ваши права?")
-    wait(1200)
   end)
 end
 
@@ -3834,6 +3937,10 @@ function cput(par)
         end
       end
     end
+  else
+    if #pam ~= nil then
+      sampSendChat('/cput '..par)
+    end
   end
 end
 
@@ -3879,6 +3986,10 @@ function ceject(par)
           end)
         end
       end
+    end
+  else
+    if #par ~= nil then
+      sampSendChat('/ceject '..par)
     end
   end
 end
@@ -4088,6 +4199,10 @@ function deject(par)
         end
       end
     end
+  else
+    if #par ~= nil then
+      sampSendChat('/deject '..par)
+    end
   end
 end
 
@@ -4136,7 +4251,11 @@ function warn(pam)
         warnst = true
         sampSendChat('/mdc '..id)
         wait(1200)
-        sampSendChat(string.format('/d %s, %s получает предупреждение за неправильную подачу в розыск.', wfrac, sampGetPlayerNickname(id):gsub('_', ' ')))
+        if wfrac == 'LSPD' or wfrac == 'SFPD' or wfrac == 'LVPD' then
+          sampSendChat(string.format('/d %s, %s получает предупреждение за неправильную подачу в розыск.', wfrac, sampGetPlayerNickname(id):gsub('_', ' ')))
+        else
+          sampAddChatMessage('{9966cc}FBI Tools {ffffff}| Человек не является сотрудником PD', -1)
+        end
         wfrac = nil
         warnst = false
       end)
@@ -4154,7 +4273,6 @@ end
 
 function ms(par)
   local _, myid = sampGetPlayerIdByCharHandle(PLAYER_PED)
-  if frac == 'FBI' then
     if cfg.main.male == true then
       if par == "" or par < "0" or par > "3" or par == nil then
         sampAddChatMessage("{9966CC}FBI Tools {FFFFFF}| Введите: /ms Тип", -1)
@@ -4267,9 +4385,6 @@ function ms(par)
         end)
       end
     end
-  else
-    sampAddChatMessage("{9966CC}FBI Tools {ffffff}| Вы не сотрудник ФБР", -1)
-  end
 end
 
 function ar(id)
@@ -4334,12 +4449,12 @@ function kmdc(args)
 end
 
 function ftazer(id)
-  if cfg.commands.ftazer == true then
-    if cfg.main.male == true then
-      if id == "" or id < "1" or id > "4" or id == nil then
-        sampAddChatMessage("{9966CC}FBI Tools {ffffff}| Введите: /ftazer [1-3]", -1)
+  if cfg.command.ftazer then
+    if cfg.main.male then
+      if id == '' or id < '1' or id > '4' or id == nil then
+        sampAddChatMessage("{9966CC}FBI Tools {ffffff}| Введите: /ftazer [1-4]", -1)
         sampAddChatMessage("{9966CC}FBI Tools {ffffff}| 1 - Всех | 2 - Гос.Сотрудников | 3 - Гражданских | 4 - Кейс", -1)
-      elseif id == "1" then
+      elseif id == '1' then
         lua_thread.create(function()
           sampSendChat("/me достал из внутреннего кармана беруши")
           wait(1200)
@@ -4349,7 +4464,7 @@ function ftazer(id)
           wait(1200)
           sampSendChat("/ftazer 1", -1)
         end)
-      elseif id == "2" then
+      elseif id == '2' then
         lua_thread.create(function()
           sampSendChat("/me достал из внутреннего кармана беруши")
           wait(1200)
@@ -4359,7 +4474,7 @@ function ftazer(id)
           wait(1200)
           sampSendChat("/ftazer 2", -1)
         end)
-      elseif id == "3" then
+      elseif id == '3' then
         lua_thread.create(function()
           sampSendChat("/me достал из внутреннего кармана беруши")
           wait(1200)
@@ -4369,7 +4484,7 @@ function ftazer(id)
           wait(1200)
           sampSendChat("/ftazer 3", -1)
         end)
-      elseif id == "4" then
+      elseif id == '4' then
         lua_thread.create(function()
           sampSendChat('/me медленно ложит кейс на землю')
           wait(1500)
@@ -4384,12 +4499,11 @@ function ftazer(id)
           sampSendChat('/ftazer 3')
         end)
       end
-    end
-    if cfg.main.male == false then
-      if id == "" or id < "1" or id > "3" or id == nil then
-        sampAddChatMessage("{9966CC}FBI Tools {ffffff}| Введите: /ftzer [1-3]", -1)
-        sampAddChatMessage("{9966CC}FBI Tools {ffffff}| 1 - Всех | 2 - Гос.Сотрудников | 3 - Гражданских", -1)
-      elseif id == "1" then
+    else
+      if id == '' or id < '1' or id > '4' or id == nil then
+        sampAddChatMessage("{9966CC}FBI Tools {ffffff}| Введите: /ftazer [1-4]", -1)
+        sampAddChatMessage("{9966CC}FBI Tools {ffffff}| 1 - Всех | 2 - Гос.Сотрудников | 3 - Гражданских | 4 - Кейс", -1)
+      elseif id == '1' then
         lua_thread.create(function()
           sampSendChat("/me достала из внутреннего кармана беруши")
           wait(1200)
@@ -4399,7 +4513,7 @@ function ftazer(id)
           wait(1200)
           sampSendChat("/ftazer 1", -1)
         end)
-      elseif id == "2" then
+      elseif id == '2' then
         lua_thread.create(function()
           sampSendChat("/me достала из внутреннего кармана беруши")
           wait(1200)
@@ -4409,7 +4523,7 @@ function ftazer(id)
           wait(1200)
           sampSendChat("/ftazer 2", -1)
         end)
-      elseif id == "3" then
+      elseif id == '3' then
         lua_thread.create(function()
           sampSendChat("/me достала из внутреннего кармана беруши")
           wait(1200)
@@ -4419,7 +4533,7 @@ function ftazer(id)
           wait(1200)
           sampSendChat("/ftazer 3", -1)
         end)
-      elseif id == "4" then
+      elseif id == '4' then
         lua_thread.create(function()
           sampSendChat('/me медленно ложит кейс на землю')
           wait(1500)
@@ -4436,15 +4550,41 @@ function ftazer(id)
       end
     end
   else
-    if id == "" or id < "1" or id > "3" or id == nil then
-      sampAddChatMessage("{9966CC}FBI Tools {ffffff}| Введите: /ftazer [1-3]", -1)
-      sampAddChatMessage("{9966CC}FBI Tools {ffffff}| 1 - Всех | 2 - Гос.Сотрудников | 3 - Гражданских", -1)
-    elseif id == '1' then
-      sampSendChat('/ftazer 1')
-    elseif id == '2' then
-      sampSendChat('/fatzer 2')
-    elseif id == '3' then
-      sampSendChat('/ftazer 3')
+    if id == '' or id < '1' or id > '4' or id == nil then
+      sampAddChatMessage("{9966CC}FBI Tools {ffffff}| Введите: /ftazer [1-4]", -1)
+      sampAddChatMessage("{9966CC}FBI Tools {ffffff}| 1 - Всех | 2 - Гос.Сотрудников | 3 - Гражданских | 4 - Кейс", -1)
+    elseif id == '1' or id == '2' or id == '3' then
+      sampSendChat('/ftazer '..id)
+    elseif id == '4' then
+      if cfg.main.male then
+        lua_thread.create(function()
+          sampSendChat('/me медленно ложит кейс на землю')
+          wait(1500)
+          sampSendChat('/me развернул кейс от себя')
+          wait(1500)
+          sampSendChat('/me ввёл пароль')
+          wait(1500)
+          sampSendChat('/me резко открыл кейс')
+          wait(1500)
+          sampSendChat('/do При взрыве кейса зворвалась светошумовая граната.')
+          wait(1500)
+          sampSendChat('/ftazer 3')
+        end)
+      else
+        lua_thread.create(function()
+          sampSendChat('/me медленно ложит кейс на землю')
+          wait(1500)
+          sampSendChat('/me развернула кейс от себя')
+          wait(1500)
+          sampSendChat('/me ввела пароль')
+          wait(1500)
+          sampSendChat('/me резко открыла кейс')
+          wait(1500)
+          sampSendChat('/do При взрыве кейса зворвалась светошумовая граната.')
+          wait(1500)
+          sampSendChat('/ftazer 3')
+        end)
+      end
     end
   end
 end
@@ -4495,10 +4635,35 @@ function nwanted()
 end
 
 function sampev.onServerMessage(color, text)
+  if text:find('Вы посадили в тюрьму') then
+    local nik, sek = text:match('Вы посадили в тюрьму (.+) на (.+) секунд')
+    if sek == '3600' or sek == '3000'  then
+      nikk = nik:gsub('_', ' ')
+      aroop = true
+      wait(3000)
+      sampAddChatMessage(string.format("{9966cc}FBI Tools {ffffff}| Запретить рассмотр дела на имя %s", nikk:gsub('_', ' ')), -1)
+      sampAddChatMessage('{9966cc}FBI Tools {ffffff}| Подтвердить: {9966cc}'..key.id_to_name(cfg.keys.oopda)..'{ffffff} | Отменить: {9966cc}'..key.id_to_name(cfg.keys.oopnet), -1)
+    end
+  end
+  if text:find('Вы посадили преступника на') then
+    local sekk = text:match('Вы посадили преступника на (.+) секунд!')
+    if sekk == '3000' or sekk == '3600' then
+      lua_thread.create(function()
+        local nickk = sampGetPlayerNickname(tdmg)
+        nikk = nickk
+        dmoop = true
+        wait(50)
+        sampAddChatMessage(string.format("{9966cc}FBI Tools {ffffff}| Запретить рассмотр дела на имя %s", nikk:gsub('_', ' ')), -1)
+        sampAddChatMessage('{9966cc}FBI Tools {ffffff}| Подтвердить: {9966cc}'..key.id_to_name(cfg.keys.oopda)..'{ffffff} | Отменить: {9966cc}'..key.id_to_name(cfg.keys.oopnet), -1)
+      end)
+    end
+  end
   if warnst then
     if text:find('Организация:') then
       local wcfrac = text:match('Организация: (.+)')
-      wfrac = wcfrac
+      if wcfrac == 'Армия СФ' or wcfrac == 'Армия ЛВ' or wcfrac == 'ФБР' then
+        wfrac = longtoshort(wcfrac)
+      end
     end
   end
   if mcheckb then
@@ -4539,23 +4704,6 @@ function sampev.onServerMessage(color, text)
       open:close()
     end
   end
-  if zaproop then
-    if nikk ~= nil then
-      if text:find(nikk) and color == -8224086 then
-        local _, myid = sampGetPlayerIdByCharHandle(PLAYER_PED)
-        local myname = sampGetPlayerNickname(myid)
-        if text:find(myname) then
-        else
-          lua_thread.create(function()
-            zaproop = false
-            nikk = nil
-            wait(100)
-            sampAddChatMessage('{9966cc}FBI Tools {ffffff}| Команду выполнил другой сотрудник.', -1)
-          end)
-        end
-      end
-    end
-  end
   if text:find('Рабочий день начат') then
     if cfg.main.clist == nil then end
     if cfg.main.clist ~= nil then
@@ -4568,31 +4716,6 @@ function sampev.onServerMessage(color, text)
   end
   if text:find('Рабочий день окончен') then
     rabden = false
-  end
-  if text:find('Вы посадили в тюрьму') then
-    local nik, sek = text:match('Вы посадили в тюрьму (.+) на (.+) секунд')
-    if sek == '3600' or sek == '3000'  then
-      lua_thread.create(function()
-        nikk = nik:gsub('_', ' ')
-        aroop = true
-        wait(3000)
-        sampAddChatMessage("{9966cc}FBI Tools {ffffff}| Запретить рассмотр дела на имя "..nikk:gsub('_', ' '), -1)
-        sampAddChatMessage('{9966cc}FBI Tools {ffffff}| Подтвердить: {9966cc}'..key.id_to_name(cfg.keys.oopda)..'{ffffff} | Отменить: {9966cc}'..key.id_to_name(cfg.keys.oopnet), -1)
-      end)
-    end
-  end
-  if text:find('Вы посадили преступника на') then
-    local sekk = text:match('Вы посадили преступника на (.+) секунд!')
-    if sekk == '3000' or sekk == '3600' then
-      lua_thread.create(function()
-        local nickk = sampGetPlayerNickname(tdmg)
-        nikk = nickk
-        dmoop = true
-        wait(50)
-        sampAddChatMessage("{9966cc}FBI Tools {ffffff}| Запретить рассмотр дела на имя "..nikk:gsub('_', ' '), -1)
-        sampAddChatMessage('{9966cc}FBI Tools {ffffff}| Подтвердить: {9966cc}'..key.id_to_name(cfg.keys.oopda)..'{ffffff} | Отменить: {9966cc}'..key.id_to_name(cfg.keys.oopnet), -1)
-      end)
-    end
   end
   if cfg.main.nclear == true then
     if text:find('удалил из розыскиваемых') then
@@ -4609,86 +4732,87 @@ function sampev.onServerMessage(color, text)
       local chist, jertva = text:match('%[Clear%] (.+) удалил из розыскиваемых (.+)')
       return {0xFFFFFFFF, ' {9966CC}[{ffffff}Clear{9966cc}] '..chist..'{ffffff} удалил из розыскиваемых {9966cc}'..jertva}
     end
-        if text:find('начал преследование за преступником') then
-            local polic, prest, yrvn = text:match('Полицейский (.+) начал преследование за преступником (.+) %(Уровень розыска: (.+)%)')
-            return {0xFFFFFFFF, ' Полицейский {9966cc}'..polic..' {ffffff}начал преследование за {9966cc}'..prest..' {ffffff}(Уровень розыска: {9966cc}'..yrvn..'{ffffff})'}
-        end
-        if text:find('<<') and text:find('Офицер') and text:find('арестовал') and text:find('>>') then
-          local arr, arre = text:match('<< Офицер (.+) арестовал (.+) >>')
-          return {0xFFFFFFFF, '« Офицер {9966CC}'..arr..' {ffffff}арестовал {9966cc}'..arre..' {ffffff}»'}
-        end
-        if text:find('<<') and text:find('Агент FBI') and text:find('арестовал') and text:find('>>') then
-          local arrr, arrre = text:match('<< Агент FBI (.+) арестовал (.+) >>')
-          return {0xFFFFFFFF, '« Агент FBI {9966CC}'..arrr..' {ffffff}арестовал {9966cc}'..arrre..' {ffffff}»'}
-        end
-        if text:find('Вы посадили преступника на') then
-          local sekund = text:match('Вы посадили преступника на (%d+) секунд!')
-          return {0xFFFFFFFF, ' Вы посадили преступника на {9966cc}'..sekund..' {ffffff}секунд!'}
-        end
+    if text:find('начал преследование за преступником') then
+      local polic, prest, yrvn = text:match('Полицейский (.+) начал преследование за преступником (.+) %(Уровень розыска: (.+)%)')
+      return {0xFFFFFFFF, ' Полицейский {9966cc}'..polic..' {ffffff}начал преследование за {9966cc}'..prest..' {ffffff}(Уровень розыска: {9966cc}'..yrvn..'{ffffff})'}
     end
-    if text:find('Вы поменяли пули на резиновые') then
-      tazer = true
+    if text:find('<<') and text:find('Офицер') and text:find('арестовал') and text:find('>>') then
+      local arr, arre = text:match('<< Офицер (.+) арестовал (.+) >>')
+      return {0xFFFFFFFF, '« Офицер {9966CC}'..arr..' {ffffff}арестовал {9966cc}'..arre..' {ffffff}»'}
     end
+    if text:find('<<') and text:find('Агент FBI') and text:find('арестовал') and text:find('>>') then
+      local arrr, arrre = text:match('<< Агент FBI (.+) арестовал (.+) >>')
+      return {0xFFFFFFFF, '« Агент FBI {9966CC}'..arrr..' {ffffff}арестовал {9966cc}'..arrre..' {ffffff}»'}
+    end
+    if text:find('Вы посадили преступника на') then
+      local sekund = text:match('Вы посадили преступника на (%d+) секунд!')
+      return {0xFFFFFFFF, ' Вы посадили преступника на {9966cc}'..sekund..' {ffffff}секунд!'}
+    end
+  end
+  if text:find('Вы поменяли пули на резиновые') then
+    tazer = true
+  end
   if text:find('Вы поменяли пули на обычные') then
     tazer = false
   end
-  if rank ~= 'Кадет' or rank ~= 'Офицер' or rank ~= 'Мл.Сержант' or  rank ~= 'Сержант' or  rank ~= 'Прапорщик' then
-    if text:match('Дело .+ рассмотрению не подлежит - ООП.') and color == -1920073984 then
-      local name = text:match('Дело (.+) рассмотрению не подлежит - ООП.')
-      zaproop = true
-      nikk = name
-      lua_thread.create(function()
-        wait(50)
-        sampAddChatMessage("{9966CC}FBI Tools {FFFFFF}| Поступил запрос на объявление ООП игрока {9966cc}"..nikk, -1)
-        sampAddChatMessage('{9966cc}FBI Tools {ffffff}| Подтвердить: {9966cc}'..key.id_to_name(cfg.keys.oopda)..'{ffffff} | Отменить: {9966cc}'..key.id_to_name(cfg.keys.oopnet), -1)
-      end)
-    end
-    if text:match('Дело на имя .+ %(%d+%) рассмотрению не подлежит, ООП, объявите.') and color == -1920073984 then
-      local name, id = text:match('Дело на имя (.+) %((%d+)%) рассмотрению не подлежит, ООП, объявите.')
-      zaproop = true
-      nikk = name
-      lua_thread.create(function()
-        wait(50)
-        sampAddChatMessage("{9966CC}FBI Tools {FFFFFF}| Поступил запрос на объявление ООП игрока {9966cc}"..nikk, -1)
-        sampAddChatMessage('{9966cc}FBI Tools {ffffff}| Подтвердить: {9966cc}'..key.id_to_name(cfg.keys.oopda)..'{ffffff} | Отменить: {9966cc}'..key.id_to_name(cfg.keys.oopnet), -1)
-      end)
-    end
-    if text:match('Дело №%d+ на имя .+ рассмотрению не подлежит, ООП, объявите.') and color == -1920073984 then 
-      local id, name = text:match('Дело №(%d+) на имя (.+) рассмотрению не подлежит, ООП, объявите.')
-      zaproop = true
-      nikk = name
-      lua_thread.create(function()
-        wait(50)
-        sampAddChatMessage("{9966CC}FBI Tools {FFFFFF}| Поступил запрос на объявление ООП игрока {9966cc}"..nikk, -1)
-        sampAddChatMessage('{9966cc}FBI Tools {ffffff}| Подтвердить: {9966cc}'..key.id_to_name(cfg.keys.oopda)..'{ffffff} | Отменить: {9966cc}'..key.id_to_name(cfg.keys.oopnet), -1)
-      end)
-    end
-  end
+end
+
+function longtoshort(long)
+  local short = 
+  {
+    ['Армия ЛВ'] = 'LVa',
+    ['Армия СФ'] = 'SFa',
+    ['ФБР'] = 'FBI'
+  }
+  return short[long]
 end
 
 function fvz(pam)
-  local id, dep = string.match(pam, '(%d+)%s*(%d*)')
+  local id = tonumber(pam)
   local _, myid = sampGetPlayerIdByCharHandle(playerPed)
   if frac == 'FBI' then
-    if dep == nil or id == nil then
-      sampAddChatMessage("{9966CC}FBI Tools {FFFFFF}| Введите: /fvz ID Организация", -1)
-      sampAddChatMessage("{9966CC}FBI Tools {FFFFFF}| 1 - LSPD | 2 - SFPD | 3 - LVPD | 4 - LVa | 5 - SFa",-1)
+    if id == nil then
+      sampAddChatMessage("{9966CC}FBI Tools {FFFFFF}| Введите: /fvz ID", -1)
     end
     if id ~= nil and sampIsPlayerConnected(id) then
-      if dep == "" or dep < "1" or dep > "5" then
-        sampAddChatMessage("{9966CC}FBI Tools {FFFFFF}| Введите: /fvz ID Организация", -1)
-        sampAddChatMessage("{9966CC}FBI Tools {FFFFFF}| 1 - LSPD | 2 - SFPD | 3 - LVPD",-1)
-      elseif dep == "1" then
-        sampSendChat("/d LSPD, "..sampGetPlayerNickname(id):gsub('_', ' ')..", явитесь в офис ФБР со старшими. Как приняли? Ответ на пдж."..myid)
-      elseif dep == '2' then
-        sampSendChat("/d SFPD, "..sampGetPlayerNickname(id):gsub('_', ' ')..", явитесь в офис ФБР со старшими. Как приняли? Ответ на пдж."..myid)
-      elseif dep == '3' then
-        sampSendChat("/d LVPD, "..sampGetPlayerNickname(id):gsub('_', ' ')..", явитесь в офис ФБР со старшими. Как приняли? Ответ на пдж."..myid)
-      elseif dep == '4' then
-        sampSendChat("/d LVa, "..sampGetPlayerNickname(id):gsub('_', ' ')..", явитесь в офис ФБР со старшими. Как приняли? Ответ на пдж."..myid)
-      elseif dep == '5' then
-        sampSendChat("/d SFa, "..sampGetPlayerNickname(id):gsub('_', ' ')..", явитесь в офис ФБР со старшими. Как приняли? Ответ на пдж."..myid)
-      end
+      lua_thread.create(function()
+        warnst = true
+        sampSendChat('/mdc '..id)
+        wait(1200)
+        if wfrac == 'LSPD' or wfrac == 'SFPD' or wfrac == 'LVPD' or wfrac == 'LVa' or wfrac == 'SFa' then
+          sampSendChat(string.format('/d %s, %s, явитесь в офис ФБР со старшими. Как приняли? Ответ на пдж.%s', wfrac, sampGetPlayerNickname(id):gsub('_', ' '), myid))
+        else
+          sampAddChatMessage('{9966cc}FBI Tools {ffffff}| Человек не является сотрудников PD/Army', -1)
+        end
+        warnst = false
+        wfrac = nil
+      end)
+    end
+  else
+    sampAddChatMessage("{9966CC}FBI Tools {ffffff}| Вы не сотрудник ФБР", -1)
+  end
+end
+
+function fbd(pam)
+  local id = tonumber(pam)
+  if frac == 'FBI' then
+    if id == nil then
+      sampAddChatMessage("{9966CC}FBI Tools {FFFFFF}| Введите: /fbd ID", -1)
+    end
+    if id ~= nil and sampIsPlayerConnected(id) then
+      lua_thread.create(function()
+        local _, myid = sampGetPlayerIdByCharHandle(playerPed)
+        warnst = true
+        sampSendChat('/mdc '..id)
+        wait(1200)
+        if wfrac == 'LSPD' or wfrac == 'SFPD' or wfrac == 'LVPD' or wfrac == 'LVa' or wfrac == 'SFa' then
+          sampSendChat(string.format('/d %s, %s, Причина изменения БД на п.%s', wfrac, sampGetPlayerNickname(id):gsub('_', ' '), myid))
+        else
+          sampAddChatMessage('{9966cc}FBI Tools {ffffff}| Человек не является сотрудников PD/Army', -1)
+        end
+        warnst = false
+        wfrac = nil
+      end)
     end
   else
     sampAddChatMessage("{9966CC}FBI Tools {ffffff}| Вы не сотрудник ФБР", -1)
@@ -4697,32 +4821,7 @@ end
 
 function gc()
   local posX, posY = getCursorPos()
-  sampAddChatMessage(string.format("%s %s", posX, posY), -1)
-end
-
-function fbd(pam)
-  local id, dep = string.match(pam, '(%d+)%s*(%d*)')
-  local _, myid = sampGetPlayerIdByCharHandle(playerPed)
-  if frac == 'FBI' then
-    if dep == nil or id == nil then
-      sampAddChatMessage("{9966CC}FBI Tools {FFFFFF}| Введите: /fbd ID Департамент", -1)
-      sampAddChatMessage("{9966CC}FBI Tools {FFFFFF}| 1 - LSPD | 2 - SFPD | 3 - LVPD",-1)
-    end
-    if id ~= nil and sampIsPlayerConnected(id) then
-      if dep == "" or dep < "1" or dep > "3" then
-        sampAddChatMessage("{9966CC}FBI Tools {FFFFFF}| Enter: /fbd ID DEPARTAMENT", -1)
-        sampAddChatMessage("{9966CC}FBI Tools {FFFFFF}| 1 - LSPD | 2 - SFPD | 3 - LVPD",-1)
-      elseif dep == "1" then
-        sampSendChat("/d LSPD, "..sampGetPlayerNickname(id):gsub('_', ' ')..", Причина изменения БД на п."..myid)
-      elseif dep == '2' then
-        sampSendChat("/d SFPD, "..sampGetPlayerNickname(id):gsub('_', ' ')..", Причина изменения БД на п."..myid)
-      elseif dep == '3' then
-        sampSendChat("/d LVPD, "..sampGetPlayerNickname(id):gsub('_', ' ')..", Причина изменения БД на п."..myid)
-      end
-    end
-  else
-    sampAddChatMessage("{9966CC}FBI Tools {ffffff}| Вы не сотрудник ФБР", -1)
-  end
+  sampAddChatMessage(string.format("Координата X:%s | Координата Y:%s", posX, posY), -1)
 end
 
 function fstate()
@@ -4763,57 +4862,46 @@ end
 
 function ticket(pam)
   local id, sum, prich = string.match(pam, '(%d+)%s+(%d+)%s+(.+)')
-  if id == nil then
-    sampAddChatMessage("{9966cc}FBI Tools {ffffff}| Введите: /ticket ID Сумма Причина", -1)
-  end
-  if id ~= nil and not sampIsPlayerConnected(id) then
-    sampAddChatMessage("{9966CC}FBI Tools {ffffff}| Игрок с ID: "..id.." не подключен к серверу.", -1)
-  end
-  if id ~= nil and sampIsPlayerConnected(id) then
-    if sum == nil then
-      sampAddChatMessage("{9966cc}FBI Tools {ffffff}| Введите: /ticket ID Сумма Причина", -1)
-    end
-    if sum ~= nil then
-      if prich == nil then
-        sampAddChatMessage("{9966cc}FBI Tools {ffffff}| Введите: /ticket ID Сумма Причина", -1)
-      end
-      if prich ~= nil then
-        if cfg.commands.ticket == true then
-          if cfg.main.male == true then
-            lua_thread.create(function()
-              sampSendChat("/me достал бланк и ручку")
-              wait(1200)
-              sampSendChat("/do Бланк и ручка в руках.")
-              wait(1200)
-              sampSendChat("/me начинает заполнять бланк")
-              wait(1200)
-              sampSendChat("/do Бланк заполнен.")
-              wait(1200)
-              sampSendChat("/me передал бланк нарушителю")
-              wait(1200)
-              sampSendChat(string.format("/ticket %s %s %s", id, sum, prich))
-            end)
-          end
-          if cfg.main.male == false then
-            lua_thread.create(function()
-              sampSendChat("/me достала бланк и ручку")
-              wait(1200)
-              sampSendChat("/do Бланк и ручка в руках.")
-              wait(1200)
-              sampSendChat("/me начинает заполнять бланк")
-              wait(1200)
-              sampSendChat("/do Бланк заполнен.")
-              wait(1200)
-              sampSendChat("/me передала бланк нарушителю")
-              wait(1200)
-              sampSendChat(string.format("/ticket %s %s %s", id, sum, prich))
-            end)
-          end
+  if id and sum and prich then
+    if sampIsPlayerConnected(id) then
+      if cfg.commands.ticket then
+        if cfg.main.male then
+          lua_thread.create(function()
+            sampSendChat("/me достал бланк и ручку")
+            wait(1200)
+            sampSendChat("/do Бланк и ручка в руках.")
+            wait(1200)
+            sampSendChat("/me начинает заполнять бланк")
+            wait(1200)
+            sampSendChat("/do Бланк заполнен.")
+            wait(1200)
+            sampSendChat("/me передал бланк нарушителю")
+            wait(1200)
+            sampSendChat(string.format("/ticket %s %s %s", id, sum, prich))
+          end)
         else
-          sampSendChat(string.format("/ticket %s %s %s", id, sum, prich))
+          lua_thread.create(function()
+            sampSendChat("/me достала бланк и ручку")
+            wait(1200)
+            sampSendChat("/do Бланк и ручка в руках.")
+            wait(1200)
+            sampSendChat("/me начинает заполнять бланк")
+            wait(1200)
+            sampSendChat("/do Бланк заполнен.")
+            wait(1200)
+            sampSendChat("/me передала бланк нарушителю")
+            wait(1200)
+            sampSendChat(string.format("/ticket %s %s %s", id, sum, prich))
+          end)
         end
+      else
+        sampSendChat(string.format("/ticket %s %s %s", id, sum, prich))
       end
+    else
+      sampAddChatMessage("{9966CC}FBI Tools {ffffff}| Игрок с ID: "..id.." не подключен к серверу.", -1)
     end
+  else
+    sampAddChatMessage("{9966cc}FBI Tools {ffffff}| Введите: /ticket ID Сумма Причина", -1)
   end
 end
 
@@ -5000,7 +5088,7 @@ function fst(param)
     patch_samp_time_set(true)
     if time then
       setTimeOfDay(time, 0)
-      sampAddChatMessage('{9966CC}FBI Tools {ffffff}| Время изменено на: '..time, -1)
+      sampAddChatMessage('{9966CC}FBI Tools {ffffff}| Время изменено на: {9966cc}'..time, -1)
     end
   else
   	sampAddChatMessage('{9966CC}FBI Tools {ffffff}| Значение времени должно быть в диапазоне от 0 до 23.', -1)
@@ -5013,7 +5101,7 @@ function fsw(param)
   local weather = tonumber(param)
   if weather ~= nil and weather >= 0 and weather <= 45 then
     forceWeatherNow(weather)
-    sampAddChatMessage('{9966CC}FBI Tools {ffffff}| Погода изменена на: '..weather, -1)
+    sampAddChatMessage('{9966CC}FBI Tools {ffffff}| Погода изменена на: {9966cc}'..weather, -1)
   else
   	sampAddChatMessage('{9966CC}FBI Tools {ffffff}| Значение погоды должно быть в диапазоне от 0 до 45.', -1)
   end
@@ -5367,25 +5455,6 @@ function gppc()
   print(string.format('%d %d %d', x, y, z))
 end
 
-function ftinfo()
-  local ftinfoone = [[
-  {9966cc}1 {ffffff}- Автообновление скрипта
-  {9966cc}2 {Ffffff}- Автодоклады (команда /dkld)
-  {9966cc}3 {ffffff}- Автодоклады о пересечении юрисдикции (команда /dkld)
-  {9966cc}4 {ffffff}- Полностью переписан /fthelp
-  {9966cc}5 {ffffff}- Команды /fst и /fsw для изменения погоды и времени
-  {9966cc}6 {ffffff}- Команды /yk /ak /fp /shp для открытия шпор
-  {9966cc}7 {ffffff}- Команды /fyk /fak /fp /fshp для поиска по шпоре
-  {9966cc}8 {ffffff}- Добавлен внутриигровой биндер
-  {9966cc}9 {ffffff}- Добавлен автоклист при смерти
-  {9966cc}10 {ffffff}- При использовании /st без ввода ID отправляет просто просьбу остановиться с тэгом вашей фракции
-  {9966cc}11 {ffffff}- Команда /cc для очистки чата
-  {9966cc}12 {ffffff}- Теперь названия автомобилей в /st всегда отображаются корректно
-  {9966cc}13 {ffffff}- Команда /mcheck которая пробивает всех игроков по /mdc, которые находятся в 200 метров от вас
-  ]]
-  sampShowDialog(346253, "{9966cc}FBI Tools {ffffff}| Обновление", ftinfoone, "»", "x", 0)
-end
-
 function hudpos()
   changetextpos = not changetextpos
 end
@@ -5401,11 +5470,13 @@ function update()
 		local f = io.open(fpath, 'r')
 		if f then
 			local info = decodeJson(f:read('*a'))
-			updatelink = info.updateurl
+      updatelink = info.updateurl
+      updlist1 = info.updlist
+      ttt = updlist1
 			if info and info.latest then
 				version = tonumber(info.latest)
 				if version > tonumber(thisScript().version) then
-					lua_thread.create(goupdate)
+					updwindows.v = true
         else
           sampAddChatMessage('{9966CC}FBI Tools{ffffff} | Обновлений скрипта не обнаружено. Приятной игры.', -1)
           update = false
@@ -5415,15 +5486,14 @@ function update()
 	end
 end)
 end
+
 --скачивание актуальной версии
 function goupdate()
-sampAddChatMessage('{9966CC}FBI Tools{ffffff} | Обнаружено обновление. Обновляюсь..', -1)
-sampAddChatMessage('{9966CC}FBI Tools{ffffff} | Текущая версия: {9966cc}'..thisScript().version.."{ffffff}. Новая версия: {9966cc}"..version, -1)
-wait(300)
-downloadUrlToFile(updatelink, thisScript().path, function(id3, status1, p13, p23)
+  sampAddChatMessage('{9966CC}FBI Tools{ffffff} | Началось скачивание обновления. Скрипт перезагрузится через пару секунд.', -1)
+  wait(300)
+  downloadUrlToFile(updatelink, thisScript().path, function(id3, status1, p13, p23)
 	if status1 == dlstatus.STATUS_ENDDOWNLOADDATA then
-	sampAddChatMessage('{9966CC}FBI Tools{ffffff} | Обновление завершено! Подробнее об обновлении - {9966cc}/ftinfo.', -1)
-	thisScript():reload()
-end
+	  thisScript():reload()
+  end
 end)
 end
