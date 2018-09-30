@@ -1,5 +1,5 @@
 script_name('FBI Tools')
-script_version('2.51')
+script_version('2.52')
 script_author('Sesh Jefferson and Thomas Lawson') -- код биндера от DonHomka
 require 'lib.moonloader'
 require 'lib.sampfuncs'
@@ -3938,7 +3938,7 @@ function cput(par)
       end
     end
   else
-    if #pam ~= nil then
+    if #par ~= nil then
       sampSendChat('/cput '..par)
     end
   end
