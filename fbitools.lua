@@ -1,5 +1,5 @@
 script_name('FBI Tools')
-script_version('2.52')
+script_version('2.53')
 script_author('Sesh Jefferson and Thomas Lawson') -- код биндера от DonHomka
 require 'lib.moonloader'
 require 'lib.sampfuncs'
@@ -54,6 +54,19 @@ end
 
 function Sphere.onExitSphere(id)
     post = nil
+end
+
+function checkstat()
+  sampSendChat('/stats')
+  while not sampIsDialogActive() do wait(0) end
+  proverkk = sampGetDialogText()
+  local frakc = proverkk:match('.+Организация%:%s+(.+)%s+Ранг')
+  local rang = proverkk:match('.+Ранг%:%s+(.+)%s+Работа')
+  rank = rang
+  frac = frakc
+  sampCloseCurrentDialogWithButton(1)
+  print(frakc)
+  print(rang)
 end
 
 function imgui.TextColoredRGB(text)
@@ -2381,17 +2394,14 @@ function main()
   end
   while not sampIsLocalPlayerSpawned() do wait(0) end
   wait(500)
+  lua_thread.create(checkstat)
+  wait(100)
+  if rank == nil and frak == nil then
+    sampAddChatMessage('{9966cc}FBI Tools {ffffff}| Не удалось определить статистику персонажа. Повторить попытку?', -1)
+    sampAddChatMessage('{9966cc}FBI Tools {ffffff}| Подтвердить: {9966cc}'..key.id_to_name(cfg.keys.oopda)..'{ffffff} | Отменить: {9966cc}'..key.id_to_name(cfg.keys.oopnet), -1)
+    opyatstat = true
+  end
   local _, myid = sampGetPlayerIdByCharHandle(playerPed)
-  sampSendChat('/stats')
-  while not sampIsDialogActive() do wait(0) end
-  proverkk = sampGetDialogText()
-  local frakc = proverkk:match('.+Организация%:%s+(.+)%s+Ранг')
-  local rang = proverkk:match('.+Ранг%:%s+(.+)%s+Работа')
-  rank = rang
-  frac = frakc
-  sampCloseCurrentDialogWithButton(1)
-  print(frakc)
-  print(rang)
   Sphere.createSphere(-1984.6375732422, 106.85540008545, 27.42943572998, 50.0)-- -1984.6375732422 106.85540008545 27.42943572998 -- АВСФ [1]
   Sphere.createSphere(-2055.283203125, -84.472702026367, 35.064281463623, 50.0)-- -2055.283203125 -84.472702026367 35.064281463623 -- АШ [2]
   Sphere.createSphere(-1521.4412841797, 503.20678710938, 6.7215604782104, 40.0)-- -1521.4412841797 503.20678710938 6.7215604782104 -- СФа [3]
@@ -2640,6 +2650,10 @@ function main()
       wait(1200)
     end
     if wasKeyPressed(cfg.keys.oopda) then
+      if opyatstat then
+        lua_thread.create(checkstat)
+        opyatstat = false
+      end
       if zaproop == true then
         sampSendChat(string.format('/d Mayor, дело на имя %s рассмотрению не подлежит, ООП', nikk:gsub('_', ' ')))
         nikk = nil
@@ -2700,6 +2714,9 @@ function main()
       end
     end
     if wasKeyPressed(cfg.keys.oopnet) then
+      if opyatstat then
+        opyatstat = false
+      end
       if dmoop == true then
         dmoop = false
         nikk = nil
