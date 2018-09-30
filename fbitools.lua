@@ -1,5 +1,5 @@
 script_name('FBI Tools')
-script_version('2.53')
+script_version('2.54')
 script_author('Sesh Jefferson and Thomas Lawson') -- код биндера от DonHomka
 require 'lib.moonloader'
 require 'lib.sampfuncs'
@@ -3851,10 +3851,10 @@ function cput(par)
   local id, seat = string.match(par, '(%d+)%s*(%d*)')
   if cfg.commands.cput == true then
     if cfg.main.male == true then
-          if id == nil or seat == nil then
+      if id == nil or seat == nil then
         sampAddChatMessage("{9966CC}FBI Tools {FFFFFF}| Введите: /cput ID SEAT", -1)
-          end
-        if id ~= nil and sampIsPlayerConnected(id) then
+      end
+      if id ~= nil and sampIsPlayerConnected(id) then
         if seat == "" or seat < "1" or seat > "3" then
           sampAddChatMessage("{9966CC}FBI Tools {FFFFFF}| Введите: /cput ID SEAT", -1)
         elseif seat == "1" then
@@ -3902,55 +3902,55 @@ function cput(par)
         end
       end
     end
-  end
-  if cfg.main.male == false then
-    if id == nil or seat == nil then
-      sampAddChatMessage("{9966CC}FBI Tools {FFFFFF}| Введите: /cput ID SEAT", -1)
-    end
-    if id ~= nil and sampIsPlayerConnected(id) then
-      if seat == "" or seat < "1" or seat > "3" then
-        sampAddChatMessage("{9966CC}FBI Tools {FFFFFF}| Enter: /cput ID SEAT", -1)
-      elseif seat == "1" then
-        if isCharOnAnyBike(playerPed) then
-          lua_thread.create(function()
-            sampSendChat("/me посадила "..sampGetPlayerNickname(id).." на сиденье мотоцикла")
-            wait(1200)
-            sampSendChat("/cput "..id.." 1", -1)
-          end)
-        else
-          lua_thread.create(function()
-            sampSendChat("/me открыла дверь автомобиля и затолкнула туда "..sampGetPlayerNickname(id))
-            wait(1200)
-            sampSendChat("/cput "..id.." 1", -1)
-          end)
-        end
-      elseif seat =="2" then
-        if isCharOnAnyBike(playerPed) then
-          lua_thread.create(function()
-            sampSendChat("/me посадила "..sampGetPlayerNickname(id).." на сиденье мотоцикла")
-            wait(1200)
-            sampSendChat("/cput "..id.." 1", -1)
-          end)
-        else
-          lua_thread.create(function()
-            sampSendChat("/me открыла дверь автомобиля и затолкнула туда "..sampGetPlayerNickname(id))
-            wait(1200)
-            sampSendChat("/cput "..id.." 2", -1)
-          end)
-        end
-      elseif seat == "3" then
-        if isCharOnAnyBike(playerPed) then
-          lua_thread.create(function()
-            sampSendChat("/me посадила "..sampGetPlayerNickname(id).." на сиденье мотоцикла")
-            wait(1200)
-            sampSendChat("/cput "..id.." 1", -1)
-          end)
-        else
-          lua_thread.create(function()
-            sampSendChat("/me открыла дверь автомобиля и затолкнула туда "..sampGetPlayerNickname(id))
-            wait(1200)
-            sampSendChat("/cput "..id.." 3", -1)
-          end)
+    if cfg.main.male == false then
+      if id == nil or seat == nil then
+        sampAddChatMessage("{9966CC}FBI Tools {FFFFFF}| Введите: /cput ID SEAT", -1)
+      end
+      if id ~= nil and sampIsPlayerConnected(id) then
+        if seat == "" or seat < "1" or seat > "3" then
+          sampAddChatMessage("{9966CC}FBI Tools {FFFFFF}| Enter: /cput ID SEAT", -1)
+        elseif seat == "1" then
+          if isCharOnAnyBike(playerPed) then
+            lua_thread.create(function()
+              sampSendChat("/me посадила "..sampGetPlayerNickname(id).." на сиденье мотоцикла")
+              wait(1200)
+              sampSendChat("/cput "..id.." 1", -1)
+            end)
+          else
+            lua_thread.create(function()
+              sampSendChat("/me открыла дверь автомобиля и затолкнула туда "..sampGetPlayerNickname(id))
+              wait(1200)
+              sampSendChat("/cput "..id.." 1", -1)
+            end)
+          end
+        elseif seat =="2" then
+          if isCharOnAnyBike(playerPed) then
+            lua_thread.create(function()
+              sampSendChat("/me посадила "..sampGetPlayerNickname(id).." на сиденье мотоцикла")
+              wait(1200)
+              sampSendChat("/cput "..id.." 1", -1)
+            end)
+          else
+            lua_thread.create(function()
+              sampSendChat("/me открыла дверь автомобиля и затолкнула туда "..sampGetPlayerNickname(id))
+              wait(1200)
+              sampSendChat("/cput "..id.." 2", -1)
+            end)
+          end
+        elseif seat == "3" then
+          if isCharOnAnyBike(playerPed) then
+            lua_thread.create(function()
+              sampSendChat("/me посадила "..sampGetPlayerNickname(id).." на сиденье мотоцикла")
+              wait(1200)
+              sampSendChat("/cput "..id.." 1", -1)
+            end)
+          else
+            lua_thread.create(function()
+              sampSendChat("/me открыла дверь автомобиля и затолкнула туда "..sampGetPlayerNickname(id))
+              wait(1200)
+              sampSendChat("/cput "..id.." 3", -1)
+            end)
+          end
         end
       end
     end
