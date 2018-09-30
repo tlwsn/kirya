@@ -1,6 +1,6 @@
 {
-  "latest": "2.51",
+  "latest": "2.52",
   "updateurl": "https://raw.githubusercontent.com/WhackerH/kirya/master/fbitools.lua",
   "updlist": "
-  Фикс ООП при звании ниже Ст.Прапора"
+  Cput fix"
 }
