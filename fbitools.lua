@@ -1,5 +1,5 @@
 script_name('FBI Tools')
-script_version('2.1')
+script_version('2.2')
 script_author('Sesh Jefferson and Thomas Lawson') -- код биндера от DonHomka
 require 'lib.moonloader'
 require 'lib.sampfuncs'
@@ -1052,7 +1052,8 @@ function goupdate()
     ftext('Началось скачивание обновления. Скрипт перезагрузится через пару секунд.', -1)
     wait(300)
     downloadUrlToFile(updatelink, thisScript().path, function(id3, status1, p13, p23)
-	if status1 == dlstatus.STATUS_ENDDOWNLOADDATA then
+    if status1 == dlstatus.STATUS_ENDDOWNLOADDATA then
+        showCursor(false)
 	    thisScript():reload()
     end
 end)
@@ -2635,6 +2636,13 @@ local fthelpsub =
       sampSetChatInputEnabled(true)
       sampSetChatInputText('/df')
     end
+  },
+  {
+      title = '{9966cc}/dmb{ffffff} - Открыть /members в диалоге',
+      onclick = function()
+        sampSetChatInputText('/dmb')
+        sampSetChatInputEnabled(true)
+      end
   },
   {
     title = '{ffffff}Продолжение',
@@ -4669,42 +4677,58 @@ function patch_samp_time_set(enable)
 end
 ------------
 function fshp(pam)
-    local f = io.open('moonloader\\fbitools\\shp.txt')
-    for line in f:lines() do
-        if string.find(line, pam) or string.rlower(line):find(pam) or string.rupper(line):find(pam) then
-            sampAddChatMessage(line, -1)
+    if #pam ~= 0 then
+        local f = io.open('moonloader\\fbitools\\shp.txt')
+        for line in f:lines() do
+            if string.find(line, pam) or string.rlower(line):find(pam) or string.rupper(line):find(pam) then
+                sampAddChatMessage(' '..line, -1)
+            end
         end
+        f:close()
+    else
+        ftext('Введите /fshp [текст]')
     end
-    f:close()
 end
 function fyk(pam)
-    local f = io.open('moonloader\\fbitools\\yk.txt')
-    for line in f:lines() do
-      if string.find(line, pam) or string.rlower(line):find(pam) or string.rupper(line):find(pam) then
-            sampAddChatMessage(line, -1)
-      end
+    if #pam ~= 0 then
+        local f = io.open('moonloader\\fbitools\\yk.txt')
+        for line in f:lines() do
+            if string.find(line, pam) or string.rlower(line):find(pam) or string.rupper(line):find(pam) then
+                sampAddChatMessage(' '..line, -1)
+            end
+        end
+        f:close()
+    else
+        ftext('Введите /fyk [текст]')
     end
-    f:close()
 end
 
 function ffp(pam)
-    local f = io.open('moonloader\\fbitools\\fp.txt')
-    for line in f:lines() do
-      if string.find(line, pam) or string.rlower(line):find(pam) or string.rupper(line):find(pam) then
-            sampAddChatMessage(line, -1)
-      end
+    if #pam ~= 0 then
+        local f = io.open('moonloader\\fbitools\\fp.txt')
+        for line in f:lines() do
+            if string.find(line, pam) or string.rlower(line):find(pam) or string.rupper(line):find(pam) then
+                sampAddChatMessage(' '..line, -1)
+            end
+        end
+        f:close()
+    else
+        ftext('Введите /ffp [текст]')
     end
-    f:close()
 end
 
 function fak(pam)
-    local f = io.open('moonloader\\fbitools\\ak.txt')
-    for line in f:lines() do
-      if string.find(line, pam) or string.rlower(line):find(pam) or string.rupper(line):find(pam) then
-            sampAddChatMessage(line, -1)
-      end
+    if #pam ~= 0 then
+        local f = io.open('moonloader\\fbitools\\ak.txt')
+        for line in f:lines() do
+            if string.find(line, pam) or string.rlower(line):find(pam) or string.rupper(line):find(pam) then
+                sampAddChatMessage(' '..line, -1)
+            end
+        end
+        f:close()
+    else
+        ftext('Введите /fak [текст]')
     end
-    f:close()
 end
 players1 = {'{ffffff}Ник\t{ffffff}Ранг'}
 players2 = {'{ffffff}Ник\t{ffffff}Ранг\t{ffffff}Статус'}
