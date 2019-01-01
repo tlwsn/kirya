@@ -1,7 +1,7 @@
 {
-  "latest": "2.1",
+  "latest": "2.2",
   "updateurl": "https://raw.githubusercontent.com/WhackerH/kirya/master/fbitools.lua",
   "updlist": "
-  /fyk /ffp /fak теперь не зависят от регистра.
-  Ну и сразу тест автообновления :)"
+  /fyk /ffp /fak пофикшен баг когда писало весь ук/ак/фп в чат когда не вводили текст для поиска.
+  Добавил команду /dmb в список /fthelp"
 }
