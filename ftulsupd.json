@@ -1,6 +1,7 @@
 {
-  "latest": "2",
+  "latest": "2.1",
   "updateurl": "https://raw.githubusercontent.com/WhackerH/kirya/master/fbitools.lua",
   "updlist": "
-  Юра бан по причине пид..."
+  /fyk /ffp /fak теперь не зависят от регистра.
+  Ну и сразу тест автообновления :)"
 }
