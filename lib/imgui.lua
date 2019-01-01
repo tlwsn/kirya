@@ -1,16 +1,15 @@
 -- This file is part of MoonImGui library
 -- Copyright (c) 2017, FYP <blast.hk>
 
-assert(getMoonloaderVersion() >= 026, 'Moon ImGui requires MoonLoader v.026 or greater.')
+assert(getMoonloaderVersion() >= 025, 'Moon ImGui requires MoonLoader v.025 or greater.')
 
 local imgui = require 'MoonImGui'
 local hwnd = readMemory(0x00C8CF88, 4, false)
 local renderer = imgui.ImGuiRenderer(getD3DDevicePtr(), hwnd)
 local winmsg = require 'windows.message'
 local bitex = require 'bitex'
-local memory = require 'memory'
 
-imgui._VERSION = '1.1.3'
+imgui._VERSION = '1.1.2'
 imgui.BeforeDrawFrame = nil
 imgui.OnDrawFrame = nil
 imgui.Process = false
@@ -1414,9 +1413,6 @@ local function on_window_message(msg, wparam, lparam)
 		end
 	end
 end
-
--- shift key bug fix
-memory.fill(0x00531155, 0x90, 5, true)
 
 -- initialization
 addEventHandler('onD3DDeviceLost', on_lost_device)
