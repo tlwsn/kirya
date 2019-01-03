@@ -1036,6 +1036,8 @@ function update()
 			    if info and info.latest then
                     version = tonumber(info.latest)
                     if version > tonumber(thisScript().version) then
+                        ftext('Обнаружено обновление {9966cc}FBI Tools{ffffff}. Для обновления нажмите кнопку в окошке.')
+                        ftext('Примечание: Если у вас не появилось окошко введите /ft')
 					    updwindows.v = true
                     else
                         ftext('Обновлений скрипта не обнаружено. Приятной игры.', -1)
@@ -1531,7 +1533,7 @@ function sumenu(args)
           local result = isCharInAnyCar(PLAYER_PED)
           if result then
             sampSendChat("/clear "..args)
-            wait(1200)
+            wait(cfg.commands.zaderjka)
             sampSendChat("/su "..args.." 1 Чистосердечное признание")
           else
             sampAddChatMessage("{9966CC}FBI Tools {FFFFFF}| You have to be in the car", -1)
@@ -1636,12 +1638,12 @@ function pkmmenu(id)
         onclick = function()
           if cfg.main.male == true then
             sampSendChat("/me заломал руки "..sampGetPlayerNickname(id).." и достал наручники")
-            wait(1200)
+            wait(cfg.commands.zaderjka)
             sampSendChat("/cuff "..id)
           end
           if cfg.main.male == false then
             sampSendChat("/me заломала руки "..sampGetPlayerNickname(id).." и достала наручники")
-            wait(1200)
+            wait(cfg.commands.zaderjka)
             sampSendChat("/cuff "..id)
           end
         end
@@ -1651,12 +1653,12 @@ function pkmmenu(id)
         onclick = function()
           if cfg.main.male == true then
             sampSendChat("/me пристегнул один из концов наручников к себе, после чего повел за собой "..sampGetPlayerNickname(id))
-            wait(1200)
+            wait(cfg.commands.zaderjka)
             sampSendChat("/follow "..id)
           end
           if cfg.main.male == false then
             sampSendChat("/me пристегнула один из концов наручников к себе, после чего повела за собой "..sampGetPlayerNickname(id))
-            wait(1200)
+            wait(cfg.commands.zaderjka)
             sampSendChat("/follow "..id)
           end
         end
@@ -1666,12 +1668,12 @@ function pkmmenu(id)
         onclick = function()
           if cfg.main.male == true then
             sampSendChat("/me надев перчатки, провел руками по торсу")
-            wait(1200)
+            wait(cfg.commands.zaderjka)
             sampSendChat("/take "..id)
           end
           if cfg.main.male == false then
             sampSendChat("/me надев перчатки, провела руками по торсу")
-            wait(1200)
+            wait(cfg.commands.zaderjka)
             sampSendChat("/take "..id)
           end
         end
@@ -1681,20 +1683,20 @@ function pkmmenu(id)
         onclick = function()
           if cfg.main.male == true then
             sampSendChat("/me достал ключи от камеры, открыв ее")
-            wait(1200)
+            wait(cfg.commands.zaderjka)
             sampSendChat("/me затолкнул "..sampGetPlayerNickname(id).." в камеру")
-            wait(1200)
+            wait(cfg.commands.zaderjka)
             sampSendChat("/arrest "..id)
-            wait(1200)
+            wait(cfg.commands.zaderjka)
             sampSendChat("/me закрыл камеру, убрав ключи в карман")
           end
           if cfg.main.male == false then
             sampSendChat("/me достала ключи от камеры, открыв ее")
-            wait(1200)
+            wait(cfg.commands.zaderjka)
             sampSendChat("/me затолкнула "..sampGetPlayerNickname(id).." в камеру")
-            wait(1200)
+            wait(cfg.commands.zaderjka)
             sampSendChat("/arrest "..id)
-            wait(1200)
+            wait(cfg.commands.zaderjka)
             sampSendChat("/me закрыла камеру, убрав ключи в карман")
           end
         end
@@ -1704,12 +1706,12 @@ function pkmmenu(id)
         onclick = function()
           if cfg.main.male == true then
             sampSendChat("/me снял наручники с "..sampGetPlayerNickname(id))
-            wait(1200)
+            wait(cfg.commands.zaderjka)
             sampSendChat("/uncuff "..id)
           end
           if cfg.main.male == false then
             sampSendChat("/me сняла наручники с "..sampGetPlayerNickname(id))
-            wait(1200)
+            wait(cfg.commands.zaderjka)
             sampSendChat("/uncuff "..id)
           end
         end
@@ -1737,16 +1739,16 @@ function pkmmenu(id)
         onclick = function()
           if cfg.main.male == true then
             sampSendChat("/su "..id.." 2 Продажа наркотиков")
-            wait(1200)
+            wait(cfg.commands.zaderjka)
             sampSendChat("/me заломал руки "..sampGetPlayerNickname(id).." и достал наручники")
-            wait(1200)
+            wait(cfg.commands.zaderjka)
             sampSendChat("/cuff "..id)
           end
           if cfg.main.male == false then
             sampSendChat("/su "..id.." 2 Продажа наркотиков")
-            wait(1200)
+            wait(cfg.commands.zaderjka)
             sampSendChat("/me заломала руки "..sampGetPlayerNickname(id).." и достала наручники")
-            wait(1200)
+            wait(cfg.commands.zaderjka)
             sampSendChat("/cuff "..id)
           end
         end
@@ -1804,7 +1806,6 @@ function commands()
     sampRegisterChatCommand('dkld', dkld)
     sampRegisterChatCommand('fvz', fvz)
     sampRegisterChatCommand('fbd', fbd)
-    sampRegisterChatCommand('1231', aaa)
     sampRegisterChatCommand('blg', blg)
     sampRegisterChatCommand('cc', cc)
     sampRegisterChatCommand('df', df)
@@ -1823,7 +1824,7 @@ function commands()
                 ftext('По завешению введите команду еще раз.')
             else
                 changetextpos = false
-                inicfg.save(cfg, 'fbitools/config.ini')
+                inicfg.save(fbitools, 'fbitools/config.ini')
             end
         else
             ftext('Для начала включите инфо-бар.')
@@ -2423,12 +2424,12 @@ local osnova =
       local _, myid = sampGetPlayerIdByCharHandle(PLAYER_PED)
       if cfg.main.male == true then
         sampSendChat("/r Переоделся в сотрудника лаборатории.")
-        wait(1200)
+        wait(cfg.commands.zaderjka)
         sampSendChat("/rb "..myid)
       end
       if cfg.main.male == false then
         sampSendChat("/r Переоделась в сотрудника лаборатории.")
-        wait(1200)
+        wait(cfg.commands.zaderjka)
         sampSendChat("/rb "..myid)
       end
     end
@@ -2978,7 +2979,7 @@ end
 function sp.onSendSpawn()
     if cfg.main.clistb and rabden then
         lua_thread.create(function()
-            wait(1200)
+            wait(cfg.commands.zaderjka)
             ftext(cfg.main.clist)
             sampSendChat('/clist '..cfg.main.clist)
         end)
@@ -3216,6 +3217,7 @@ local fbitools =
     ceject = true,
     deject = true,
     ftazer = true,
+    zaderjka = 1200
   },
   keys =
   {
@@ -3225,7 +3227,6 @@ local fbitools =
     oopnet = key.VK_F11
   }
 }
-cfg = inicfg.load(nil, 'fbitools/config.ini')
 local fthmenu = {
     {
         title = '{ffffff}» Запросить поддержку в текущий квадрат',
@@ -3260,13 +3261,7 @@ function main()
     if not doesDirectoryExist('moonloader\\config') then createDirectory('moonloader\\config') end
     if not doesDirectoryExist('moonloader\\config\\fbitools') then createDirectory('moonloader\\config\\fbitools') end
     if not doesDirectoryExist('moonloader/fbitools') then createDirectory('moonloader/fbitools') end
-    if cfg == nil then
-        ftext("Отсутсвует файл конфига, создаем.", -1)
-        if inicfg.save(fbitools, 'fbitools/config.ini') then
-            ftext("Файл конфига успешно создан.", -1)
-            cfg = inicfg.load(nil, 'fbitools/config.ini')
-        end
-    end
+    cfg = inicfg.load(fbitools, 'fbitools/config.ini')
     if not doesDirectoryExist('moonloader/lib/imcustom') then createDirectory('moonloader/lib/imcustom') end
     for k, v in pairs(libs) do
         if not doesFileExist('moonloader/lib/'..v) then
@@ -3348,17 +3343,19 @@ function main()
     fpf()
     update()
     wait(1000)
-    if not sampIsDialogActive() then
+    --[[if not sampIsDialogActive() then
         checkStats()
     else
         while sampIsDialogActive() do wait(0) end
         checkStats()
-    end
+    end]]
 	for k, v in pairs(tBindList) do
 		rkeys.registerHotKey(v.v, true, onHotKey)
     end
     nizfont = renderCreateFont('Ariel', 10, 9)
     while true do wait(0)
+        infbar = imgui.ImBool(cfg.main.hud)
+        imgui.Process = mainwin.v or infbar.v or shpwindow.v or ykwindow.v or fpwindow.v or akwindow.v
         function imgui.CentrText(text)
             local width = imgui.GetWindowWidth()
             local calc = imgui.CalcTextSize(text)
@@ -3366,6 +3363,53 @@ function main()
             imgui.Text(text)
         end
         function imgui.OnDrawFrame()
+            if infbar.v then
+                imgui.ShowCursor = false
+                _, myid = sampGetPlayerIdByCharHandle(PLAYER_PED)
+                local myname = sampGetPlayerNickname(myid)
+                local myping = sampGetPlayerPing(myid)
+                local myweapon = getCurrentCharWeapon(PLAYER_PED)
+                local myweaponammo = getAmmoInCharWeapon(PLAYER_PED, myweapon)
+                local valid, ped = getCharPlayerIsTargeting(PLAYER_HANDLE)
+                local myweaponname = getweaponname(myweapon)
+                imgui.SetNextWindowPos(imgui.ImVec2(cfg.main.posX, cfg.main.posY), imgui.ImVec2(0.5, 0.5))
+                imgui.SetNextWindowSize(imgui.ImVec2(cfg.main.widehud, 160), imgui.Cond.FirstUseEver)
+                imgui.Begin('FBI Tools', infbar, imgui.WindowFlags.NoResize + imgui.WindowFlags.NoCollapse + imgui.WindowFlags.NoTitleBar)
+                imgui.CentrText('FBI Tools')
+                imgui.Separator()
+                imgui.Text('Information: '..myname..'['..myid..'] | Ping: '..myping) -- простой текст внутри этого окна
+                imgui.Text('Current weapon: '..myweaponname..'['..myweaponammo..']')
+                if isCharInAnyCar(playerPed) then
+                    local vHandle = storeCarCharIsInNoSave(playerPed)
+                    local result, vID = sampGetVehicleIdByCarHandle(vHandle)
+                    local vHP = getCarHealth(vHandle)
+                    local carspeed = getCarSpeed(vHandle)
+                    local speed = math.floor(carspeed)
+                    local vehName = getCarNamebyModel(getCarModel(storeCarCharIsInNoSave(playerPed)))
+                    local ncspeed = math.floor(carspeed*2)
+                    imgui.Text('Vehicle: '..vehName..'['..vID..'] | HP: '..vHP..' | Speed: '..ncspeed)
+                else
+                    imgui.Text('Vehicle: No')
+                end
+                if valid and doesCharExist(ped) then -- если цель есть и персонаж существует
+                    local result, id = sampGetPlayerIdByCharHandle(ped) -- получить samp-ид игрока по хендлу персонажа
+                    if result then
+                        local targetname = sampGetPlayerNickname(id) -- проверить, прошло ли получение ида успешно
+                        local targetscore = sampGetPlayerScore(id)
+                        imgui.Text('Target: '..targetname..'['..id..'] | LVL: '..targetscore)
+                    end
+                else
+                    imgui.Text('Target: No')
+                end
+                imgui.Text('Location: '..u8(kvadrat()))
+                imgui.Text('Current Time: '..os.date('%H:%M:%S'))
+                if tazer == true then
+                    imgui.Text('Tazer: ON')
+                else
+                    imgui.Text('Tazer: OFF')
+                end
+                imgui.End()
+            end
             if bMainWindow.v then
                 imgui.LockPlayer = true
                 imgui.ShowCursor = true
@@ -3445,6 +3489,7 @@ function main()
                 local xoopda = imgui.ImInt(cfg.keys.oopda)
                 local xoopnet = imgui.ImInt(cfg.keys.oopnet)
                 local clistbuffer = imgui.ImInt(cfg.main.clist)
+                local waitbuffer = imgui.ImInt(cfg.commands.zaderjka)
                 local clistb = imgui.ImBool(cfg.main.clistb)
                 local parolb = imgui.ImBool(cfg.main.parolb)
                 local offptrlb = imgui.ImBool(cfg.main.offptrl)
@@ -3463,67 +3508,71 @@ function main()
                 if show == 1 then
                     if imgui.Checkbox(u8'Скрывать сообщения о начале преследования', offptrlb) then
                         cfg.main.offptrl = not cfg.main.offptrl
-                        inicfg.save(cfg, 'fbitools/config.ini')
+                        inicfg.save(fbitools, 'fbitools/config.ini')
                     end
                     if imgui.Checkbox(u8'Скрывать сообщения о выдаче розыска', offwntdb) then
                         cfg.main.offwntd = not cfg.main.offwntd
-                        inicfg.save(cfg, 'fbitools/config.ini')
+                        inicfg.save(fbitools, 'fbitools/config.ini')
                     end
                     if imgui.Checkbox(u8'Мужские отыгровки', stateb) then
                         cfg.main.male = not cfg.main.male
-                        inicfg.save(cfg, 'fbitools/config.ini')
+                        inicfg.save(fbitools, 'fbitools/config.ini')
                     end
                     if imgui.Checkbox(u8'Использовать автотег', tagb) then
                         cfg.main.tarb = not cfg.main.tarb
-                        inicfg.save(cfg, 'fbitools/config.ini')
+                        inicfg.save(fbitools, 'fbitools/config.ini')
                     end
                     if tagb.v then
                         if imgui.InputText(u8'Введите ваш Тег.', tagf) then
                             cfg.main.tar = u8:decode(tagf.v)
-                            inicfg.save(cfg, 'fbitools/config.ini')
+                            inicfg.save(fbitools, 'fbitools/config.ini')
                         end
                     end
                     if imgui.Checkbox(u8'Использовать авто логин', parolb) then
                         cfg.main.parolb = not cfg.main.parolb
-                        inicfg.save(cfg, 'fbitools/config.ini')
+                        inicfg.save(fbitools, 'fbitools/config.ini')
                     end
                     if imgui.Checkbox(u8'Использовать автоклист', clistb) then
                         cfg.main.clistb = not cfg.main.clistb
-                        inicfg.save(cfg, 'fbitools/config.ini')
+                        inicfg.save(fbitools, 'fbitools/config.ini')
                     end
                     if clistb.v then
                         if imgui.SliderInt(u8"Выберите значение клиста", clistbuffer, 0, 33) then
                             cfg.main.clist = clistbuffer.v
-                            inicfg.save(cfg, 'fbitools/config.ini')
+                            inicfg.save(fbitools, 'fbitools/config.ini')
                         end
                     end
                     if imgui.InputInt(u8'Введите ид клавиши тазера', xtazer) then
                         cfg.keys.tazer = xtazer.v
-                        inicfg.save(cfg, 'fbitools/config.ini')
+                        inicfg.save(fbitools, 'fbitools/config.ini')
                     end
                     if cfg.keys.tazer ~= nil and key.id_to_name(cfg.keys.tazer) ~= nil then
                         imgui.Text(u8'Текущая клавиша: '..u8(key.id_to_name(cfg.keys.tazer)))
                     end
                     if imgui.InputInt(u8'Введите ид клавиши быстрого меню', xfast) then
                         cfg.keys.fastmenu = xfast.v
-                        inicfg.save(cfg, 'fbitools/config.ini')
+                        inicfg.save(fbitools, 'fbitools/config.ini')
                      end
                     if cfg.keys.fastmenu ~= nil and key.id_to_name(cfg.keys.fastmenu) ~= nil then
                         imgui.Text(u8'Текущая клавиша: '..u8(key.id_to_name(cfg.keys.fastmenu)))
                     end
                     if imgui.InputInt(u8'Введите ид клавиши подтверждения', xoopda) then
                         cfg.keys.oopda = xoopda.v
-                        inicfg.save(cfg, 'fbitools/config.ini')
+                        inicfg.save(fbitools, 'fbitools/config.ini')
                     end
                     if cfg.keys.oopda ~= nil and key.id_to_name(cfg.keys.oopda) ~= nil then
                         imgui.Text(u8'Текущая клавиша: '..u8(key.id_to_name(cfg.keys.oopda)))
                     end
                     if imgui.InputInt(u8'Введите ид клавиши отмены', xoopnet) then
                         cfg.keys.oopnet = xoopnet.v
-                        inicfg.save(cfg, 'fbitools/config.ini')
+                        inicfg.save(fbitools, 'fbitools/config.ini')
                     end
                     if cfg.keys.oopnet ~= nil and key.id_to_name(cfg.keys.oopnet) ~= nil then
                         imgui.Text(u8'Текущая клавиша: '..u8(key.id_to_name(cfg.keys.oopnet)))
+                    end
+                    if imgui.InputInt(u8'Задержка в отыгровках', waitbuffer) then
+                        cfg.commands.zaderjka = waitbuffer.v
+                        inicfg.save(fbitools, 'fbitools/config.ini')
                     end
                     if imgui.Button(u8'Гайд по смене клавиши') then
                         os.execute('explorer "https://docs.google.com/document/d/1R2o0hm9RYWNZNK38EBOyEgqPeiCeDDqWP4HlpUFGLzQ/edit?usp=sharing"')
@@ -3532,78 +3581,31 @@ function main()
                 if show == 2 then
                     if imgui.Checkbox(u8('Отыгровка /cput'), cput) then
                         cfg.commands.cput = not cfg.commands.cput
-                        inicfg.save(cfg, 'fbitools/config.ini')
+                        inicfg.save(fbitools, 'fbitools/config.ini')
                     end
                     if imgui.Checkbox(u8('Отыгровка /ceject'), ceject) then
                         cfg.commands.ceject = not cfg.commands.ceject
-                        inicfg.save(cfg, 'fbitools/config.ini')
+                        inicfg.save(fbitools, 'fbitools/config.ini')
                     end
                     if imgui.Checkbox(u8('Отыгровка /ftazer'), ftazer) then
                         cfg.commands.ftazer = not cfg.commands.ftazer
-                        inicfg.save(cfg, 'fbitools/config.ini')
+                        inicfg.save(fbitools, 'fbitools/config.ini')
                     end
                     if imgui.Checkbox(u8('Отыгровка /deject'), deject) then
                         cfg.commands.deject = not cfg.commands.deject
-                        inicfg.save(cfg, 'fbitools/config.ini')
+                        inicfg.save(fbitools, 'fbitools/config.ini')
                     end
                 end
                 if show == 3 then
                     if imgui.InputText(u8'Введите ваш пароль.', parolf, imgui.InputTextFlags.Password) then
                         cfg.main.parol = u8:decode(parolf.v)
-                        inicfg.save(cfg, 'fbitools/config.ini')
+                        inicfg.save(fbitools, 'fbitools/config.ini')
                     end
                     if imgui.Button(u8'Узнать пароль') then
                         ftext('Ваш пароль: '..cfg.main.parol)
                     end
                 end
                 imgui.EndChild()
-                imgui.End()
-            end
-            if infbar.v then
-                imgui.ShowCursor = false
-                _, myid = sampGetPlayerIdByCharHandle(PLAYER_PED)
-                local myname = sampGetPlayerNickname(myid)
-                local myping = sampGetPlayerPing(myid)
-                local myweapon = getCurrentCharWeapon(PLAYER_PED)
-                local myweaponammo = getAmmoInCharWeapon(PLAYER_PED, myweapon)
-                local valid, ped = getCharPlayerIsTargeting(PLAYER_HANDLE)
-                local myweaponname = getweaponname(myweapon)
-                imgui.SetNextWindowPos(imgui.ImVec2(cfg.main.posX, cfg.main.posY), imgui.ImVec2(0.5, 0.5))
-                imgui.SetNextWindowSize(imgui.ImVec2(cfg.main.widehud, 160), imgui.Cond.FirstUseEver)
-                imgui.Begin('FBI Tools', infbar, imgui.WindowFlags.NoResize + imgui.WindowFlags.NoCollapse + imgui.WindowFlags.NoTitleBar)
-                imgui.CentrText('FBI Tools')
-                imgui.Separator()
-                imgui.Text('Information: '..myname..'['..myid..'] | Ping: '..myping) -- простой текст внутри этого окна
-                imgui.Text('Current weapon: '..myweaponname..'['..myweaponammo..']')
-                if isCharInAnyCar(playerPed) then
-                    local vHandle = storeCarCharIsInNoSave(playerPed)
-                    local result, vID = sampGetVehicleIdByCarHandle(vHandle)
-                    local vHP = getCarHealth(vHandle)
-                    local carspeed = getCarSpeed(vHandle)
-                    local speed = math.floor(carspeed)
-                    local vehName = getCarNamebyModel(getCarModel(storeCarCharIsInNoSave(playerPed)))
-                    local ncspeed = math.floor(carspeed*2)
-                    imgui.Text('Vehicle: '..vehName..'['..vID..'] | HP: '..vHP..' | Speed: '..ncspeed)
-                else
-                    imgui.Text('Vehicle: No')
-                end
-                if valid and doesCharExist(ped) then -- если цель есть и персонаж существует
-                    local result, id = sampGetPlayerIdByCharHandle(ped) -- получить samp-ид игрока по хендлу персонажа
-                    if result then
-                        local targetname = sampGetPlayerNickname(id) -- проверить, прошло ли получение ида успешно
-                        local targetscore = sampGetPlayerScore(id)
-                        imgui.Text('Target: '..targetname..'['..id..'] | LVL: '..targetscore)
-                    end
-                else
-                    imgui.Text('Target: No')
-                end
-                imgui.Text('Location: '..u8(kvadrat()))
-                imgui.Text('Current Time: '..os.date('%H:%M:%S'))
-                if tazer == true then
-                    imgui.Text('Tazer: ON')
-                else
-                    imgui.Text('Tazer: OFF')
-                end
                 imgui.End()
             end
             if mainwin.v then
@@ -3619,17 +3621,17 @@ function main()
                 end
                 if imgui.Button(u8(cfg.main.hud and 'Выключить инфо-бар' or 'Включить инфобар'), btn_size) then
                     cfg.main.hud = not cfg.main.hud
-                    inicfg.save(cfg, 'fbitools/config.ini')
+                    inicfg.save(fbitools, 'fbitools/config.ini')
                     ftext(cfg.main.hud and 'Инфо-бар включен' or 'Инфо-бар выключен')
                 end
                 if imgui.Button(u8(cfg.main.nwanted and 'Выключить обновленный Wanted' or 'Включить обновленный Wanted'), btn_size) then
                     cfg.main.nwanted = not cfg.main.nwanted
-                    inicfg.save(cfg, 'fbitools/config.ini')
+                    inicfg.save(fbitools, 'fbitools/config.ini')
                     ftext(cfg.main.nwanted and 'Обновленый Wanted включен' or 'Обновленый Wanted выключен')
                 end
                 if imgui.Button(u8(cfg.main.nclear and 'Выключить дополненый Clear' or 'Включить дополненый Clear'), btn_size) then --дополненый Clear
                     cfg.main.nclear = not cfg.main.nclear
-                    inicfg.save(cfg, 'fbitools/config.ini')
+                    inicfg.save(fbitools, 'fbitools/config.ini')
                     ftext(cfg.main.nclear and 'Дополненый Clear включен' or 'Дополненый Clear выключен')
                 end
                 if imgui.Button(u8'Настройки скрипта', btn_size) then
@@ -3637,6 +3639,7 @@ function main()
                 end
                 if imgui.Button(u8'Перезагрузить скрипт', btn_size) then
                     showCursor(false)
+                    inicfg.save(fbitools, 'fbitools/config.ini')
                     thisScript():reload()
                 end
                 imgui.End()
@@ -3728,8 +3731,6 @@ function main()
         function Sphere.onExitSphere(id)
               post = nil
         end
-        infbar = imgui.ImBool(cfg.main.hud)
-        imgui.Process = mainwin.v or infbar.v or shpwindow.v or ykwindow.v or fpwindow.v or akwindow.v
         local myskin = getCharModel(PLAYER_PED)
         local mmx, mmy, mmz = getCharCoordinates(PLAYER_PED)
         if megaftimer ~= nil then
@@ -3815,12 +3816,12 @@ function main()
             if button == 1 then
                 if cfg.main.male == true then
                     sampSendChat("/r Переоделся в одежду гражданского. Причина: "..input)
-                    wait(1200)
+                    wait(cfg.commands.zaderjka)
                     sampSendChat("/rb "..myid)
                 end
                 if cfg.main.male == false then
                     sampSendChat("/r Переоделась в одежду гражданского. Причина: "..input)
-                    wait(1200)
+                    wait(cfg.commands.zaderjka)
                     sampSendChat("/rb "..myid)
                 end
             end
@@ -3829,12 +3830,12 @@ function main()
             if button == 1 then
                 if cfg.main.male == true then
                     sampSendChat("/r Переоделся в форму полицейского. Причина: "..input)
-                    wait(1200)
+                    wait(cfg.commands.zaderjka)
                     sampSendChat("/rb "..myid)
                 end
                 if cfg.main.male == false then
                     sampSendChat("/r Переоделась в форму полицейского. Причина: "..input)
-                    wait(1200)
+                    wait(cfg.commands.zaderjka)
                     sampSendChat("/rb "..myid)
                 end
             end
@@ -3843,12 +3844,12 @@ function main()
             if button == 1 then
                 if cfg.main.male == true then
                     sampSendChat("/r Переоделся в форму армейского. Причина: "..input)
-                    wait(1200)
+                    wait(cfg.commands.zaderjka)
                     sampSendChat("/rb "..myid)
                 end
                 if cfg.main.male == false then
                     sampSendChat("/r Переоделась в форму армейского. Причина: "..input)
-                    wait(1200)
+                    wait(cfg.commands.zaderjka)
                     sampSendChat("/rb "..myid)
                 end
             end
@@ -3857,12 +3858,12 @@ function main()
             if button == 1 then
                 if cfg.main.male == true then
                     sampSendChat("/r Переоделся в форму медика. Причина: "..input)
-                    wait(1200)
+                    wait(cfg.commands.zaderjka)
                     sampSendChat("/rb "..myid)
                 end
                 if cfg.main.male == false then
                     sampSendChat("/r Переоделась в форму медика. Причина: "..input)
-                    wait(1200)
+                    wait(cfg.commands.zaderjka)
                     sampSendChat("/rb "..myid)
                 end
             end
@@ -3871,12 +3872,12 @@ function main()
             if button == 1 then
                 if cfg.main.male == true then
                     sampSendChat("/r Переоделся в форму работника мэрии. Причина: "..input)
-                    wait(1200)
+                    wait(cfg.commands.zaderjka)
                     sampSendChat("/rb "..myid)
                 end
                 if cfg.main.male == false then
                     sampSendChat("/r Переоделась в форму работника мэрии. Причина: "..input)
-                    wait(1200)
+                    wait(cfg.commands.zaderjka)
                     sampSendChat("/rb "..myid)
                 end
             end
@@ -3885,12 +3886,12 @@ function main()
             if button == 1 then
                 if cfg.main.male == true then
                     sampSendChat("/r Переоделся в форму работника автошколы. Причина: "..input)
-                    wait(1200)
+                    wait(cfg.commands.zaderjka)
                     sampSendChat("/rb "..myid)
                 end
                 if cfg.main.male == false then
                     sampSendChat("/r Переоделась в форму работника автошколы. Причина: "..input)
-                    wait(1200)
+                    wait(cfg.commands.zaderjka)
                     sampSendChat("/rb "..myid)
                 end
             end
@@ -3899,12 +3900,12 @@ function main()
             if button == 1 then
                 if cfg.main.male == true then
                     sampSendChat("/r Переоделся в форму работника новостей. Причина: "..input)
-                    wait(1200)
+                    wait(cfg.commands.zaderjka)
                     sampSendChat("/rb "..myid)
                 end
                 if cfg.main.male == false then
                     sampSendChat("/r Переоделась в форму работника новостей. Причина: "..input)
-                    wait(1200)
+                    wait(cfg.commands.zaderjka)
                     sampSendChat("/rb "..myid)
                 end
             end
@@ -3913,12 +3914,12 @@ function main()
             if button == 1 then
                 if cfg.main.male == true then
                     sampSendChat("/r Переоделся в форму ЧОП LCN. Причина: "..input)
-                    wait(1200)
+                    wait(cfg.commands.zaderjka)
                     sampSendChat("/rb "..myid)
                 end
                 if cfg.main.male == false then
                     sampSendChat("/r Переоделась в форму ЧОП LCN. Причина: "..input)
-                    wait(1200)
+                    wait(cfg.commands.zaderjka)
                     sampSendChat("/rb "..myid)
                 end
             end
@@ -3927,12 +3928,12 @@ function main()
             if button == 1 then
                 if cfg.main.male == true then
                     sampSendChat("/r Переоделся в форму ЧОП Yakuza. Причина: "..input)
-                    wait(1200)
+                    wait(cfg.commands.zaderjka)
                     sampSendChat("/rb "..myid)
                 end
                 if cfg.main.male == false then
                     sampSendChat("/r Переоделась в форму ЧОП Yakuza. Причина: "..input)
-                    wait(1200)
+                    wait(cfg.commands.zaderjka)
                     sampSendChat("/rb "..myid)
                 end
             end
@@ -3941,12 +3942,12 @@ function main()
             if button == 1 then
                 if cfg.main.male == true then
                     sampSendChat("/r Переоделся в форму ЧОП РМ. Причина: "..input)
-                    wait(1200)
+                    wait(cfg.commands.zaderjka)
                     sampSendChat("/rb "..myid)
                 end
                 if cfg.main.male == false then
                     sampSendChat("/r Переоделась в форму ЧОП РМ. Причина: "..input)
-                    wait(1200)
+                    wait(cfg.commands.zaderjka)
                     sampSendChat("/rb "..myid)
                 end
             end
@@ -3955,12 +3956,12 @@ function main()
             if button == 1 then
                 if cfg.main.male == true then
                     sampSendChat("/r Переоделся в форму БК Rifa. Причина: "..input)
-                    wait(1200)
+                    wait(cfg.commands.zaderjka)
                     sampSendChat("/rb "..myid)
                 end
                 if cfg.main.male == false then
                     sampSendChat("/r Переоделась в форму БК Rifa. Причина: "..input)
-                    wait(1200)
+                    wait(cfg.commands.zaderjka)
                     sampSendChat("/rb "..myid)
                 end
             end
@@ -3969,12 +3970,12 @@ function main()
             if button == 1 then
                 if cfg.main.male == true then
                     sampSendChat("/r Переоделся в форму БК Grove. Причина: "..input)
-                    wait(1200)
+                    wait(cfg.commands.zaderjka)
                     sampSendChat("/rb "..myid)
                 end
                 if cfg.main.male == false then
                     sampSendChat("/r Переоделась в форму БК Grove. Причина: "..input)
-                    wait(1200)
+                    wait(cfg.commands.zaderjka)
                     sampSendChat("/rb "..myid)
                 end
             end
@@ -3983,12 +3984,12 @@ function main()
             if button == 1 then
                 if cfg.main.male == true then
                     sampSendChat("/r Переоделся в форму БК Ballas. Причина: "..input)
-                    wait(1200)
+                    wait(cfg.commands.zaderjka)
                     sampSendChat("/rb "..myid)
                 end
                 if cfg.main.male == false then
                     sampSendChat("/r Переоделась в форму БК Ballas. Причина: "..input)
-                    wait(1200)
+                    wait(cfg.commands.zaderjka)
                     sampSendChat("/rb "..myid)
                 end
             end
@@ -3997,12 +3998,12 @@ function main()
             if button == 1 then
                 if cfg.main.male == true then
                     sampSendChat("/r Переоделся в форму БК Vagos. Причина: "..input)
-                    wait(1200)
+                    wait(cfg.commands.zaderjka)
                     sampSendChat("/rb "..myid)
                 end
                 if cfg.main.male == false then
                     sampSendChat("/r Переоделась в форму БК Vagos. Причина: "..input)
-                    wait(1200)
+                    wait(cfg.commands.zaderjka)
                     sampSendChat("/rb "..myid)
                 end
             end
@@ -4011,12 +4012,12 @@ function main()
             if button == 1 then
                 if cfg.main.male == true then
                     sampSendChat("/r Переоделся в форму БК Aztec. Причина: "..input)
-                    wait(1200)
+                    wait(cfg.commands.zaderjka)
                     sampSendChat("/rb "..myid)
                 end
                 if cfg.main.male == false then
                     sampSendChat("/r Переоделся в форму БК Aztec. Причина: "..input)
-                    wait(1200)
+                    wait(cfg.commands.zaderjka)
                     sampSendChat("/rb "..myid)
                 end
             end
@@ -4025,12 +4026,12 @@ function main()
             if button == 1 then
                 if cfg.main.male == true then
                     sampSendChat("/r Переоделся в одежду байкеров. Причина: "..input)
-                    wait(1200)
+                    wait(cfg.commands.zaderjka)
                     sampSendChat("/rb "..myid)
                 end
                 if cfg.main.male == false then
                     sampSendChat("/r Переоделась в одежду байкеров. Причина: "..input)
-                    wait(1200)
+                    wait(cfg.commands.zaderjka)
                     sampSendChat("/rb "..myid)
                 end
             end
@@ -4081,14 +4082,14 @@ function tazer()
     if cfg.main.male == true then
         lua_thread.create(function()
             sampSendChat("/tazer")
-            wait(1200)
+            wait(cfg.commands.zaderjka)
             sampSendChat("/me сменил тип патронов")
         end)
     end
     if cfg.main.male == false then
         lua_thread.create(function()
             sampSendChat("/tazer")
-            wait(1200)
+            wait(cfg.commands.zaderjka)
             sampSendChat("/me сменила тип патронов")
         end)
     end
@@ -4097,19 +4098,19 @@ function keys()
     if cfg.main.male == true then
         lua_thread.create(function()
             sampSendChat("/me взял ключ")
-            wait(1200)
+            wait(cfg.commands.zaderjka)
             sampSendChat("/me сравнивает ключ с ключом от КПЗ")
-            wait(1200)
+            wait(cfg.commands.zaderjka)
             sampSendChat("/try обнаружил, что ключи идентичны")
-            wait(1200)
+            wait(cfg.commands.zaderjka)
         end)
     end
     if cfg.main.male == false then
         lua_thread.create(function()
             sampSendChat("/me взяла ключ")
-            wait(1200)
+            wait(cfg.commands.zaderjka)
             sampSendChat("/me сравнивает ключ с ключом от КПЗ")
-            wait(1200)
+            wait(cfg.commands.zaderjka)
             sampSendChat("/try обнаружила, что ключи идентичны")
         end)
     end
@@ -4159,13 +4160,13 @@ function cput(pam)
                     if isCharOnAnyBike(playerPed) then
                         lua_thread.create(function()
                             sampSendChat("/me посадил "..sampGetPlayerNickname(id).." на сиденье мотоцикла")
-                            wait(1200)
+                            wait(cfg.commands.zaderjka)
                             sampSendChat("/cput "..id.." 1", -1)
                         end)
                     else
                         lua_thread.create(function()
                             sampSendChat("/me открыл дверь автомобиля и затолкнул туда "..sampGetPlayerNickname(id))
-                            wait(1200)
+                            wait(cfg.commands.zaderjka)
                             sampSendChat("/cput "..id.." 1", -1)
                         end)
                     end
@@ -4173,13 +4174,13 @@ function cput(pam)
                     if isCharOnAnyBike(playerPed) then
                         lua_thread.create(function()
                             sampSendChat("/me посадил "..sampGetPlayerNickname(id).." на сиденье мотоцикла")
-                            wait(1200)
+                            wait(cfg.commands.zaderjka)
                             sampSendChat("/cput "..id.." 1", -1)
                         end)
                     else
                         lua_thread.create(function()
                             sampSendChat("/me открыл дверь автомобиля и затолкнул туда "..sampGetPlayerNickname(id))
-                            wait(1200)
+                            wait(cfg.commands.zaderjka)
                             sampSendChat("/cput "..id.." 2", -1)
                         end)
                     end
@@ -4187,13 +4188,13 @@ function cput(pam)
                     if isCharOnAnyBike(playerPed) then
                         lua_thread.create(function()
                             sampSendChat("/me посадил "..sampGetPlayerNickname(id).." на сиденье мотоцикла")
-                            wait(1200)
+                            wait(cfg.commands.zaderjka)
                             sampSendChat("/cput "..id.." 1", -1)
                         end)
                     else
                         lua_thread.create(function()
                             sampSendChat("/me открыл дверь автомобиля и затолкнул туда "..sampGetPlayerNickname(id))
-                            wait(1200)
+                            wait(cfg.commands.zaderjka)
                             sampSendChat("/cput "..id.." 3", -1)
                         end)
                     end
@@ -4211,13 +4212,13 @@ function cput(pam)
                     if isCharOnAnyBike(playerPed) then
                         lua_thread.create(function()
                             sampSendChat("/me посадила "..sampGetPlayerNickname(id).." на сиденье мотоцикла")
-                            wait(1200)
+                            wait(cfg.commands.zaderjka)
                             sampSendChat("/cput "..id.." 1", -1)
                         end)
                     else
                         lua_thread.create(function()
                             sampSendChat("/me открыла дверь автомобиля и затолкнула туда "..sampGetPlayerNickname(id))
-                            wait(1200)
+                            wait(cfg.commands.zaderjka)
                             sampSendChat("/cput "..id.." 1", -1)
                         end)
                     end
@@ -4225,13 +4226,13 @@ function cput(pam)
                     if isCharOnAnyBike(playerPed) then
                         lua_thread.create(function()
                             sampSendChat("/me посадила "..sampGetPlayerNickname(id).." на сиденье мотоцикла")
-                            wait(1200)
+                            wait(cfg.commands.zaderjka)
                             sampSendChat("/cput "..id.." 1", -1)
                         end)
                     else
                         lua_thread.create(function()
                             sampSendChat("/me открыла дверь автомобиля и затолкнула туда "..sampGetPlayerNickname(id))
-                            wait(1200)
+                            wait(cfg.commands.zaderjka)
                             sampSendChat("/cput "..id.." 2", -1)
                         end)
                     end
@@ -4239,13 +4240,13 @@ function cput(pam)
                     if isCharOnAnyBike(playerPed) then
                         lua_thread.create(function()
                             sampSendChat("/me посадила "..sampGetPlayerNickname(id).." на сиденье мотоцикла")
-                            wait(1200)
+                            wait(cfg.commands.zaderjka)
                             sampSendChat("/cput "..id.." 1", -1)
                         end)
                     else
                         lua_thread.create(function()
                             sampSendChat("/me открыла дверь автомобиля и затолкнула туда "..sampGetPlayerNickname(id))
-                            wait(1200)
+                            wait(cfg.commands.zaderjka)
                             sampSendChat("/cput "..id.." 3", -1)
                         end)
                     end
@@ -4271,13 +4272,13 @@ function ceject(pam)
                 if isCharOnAnyBike(playerPed) then
                     lua_thread.create(function()
                         sampSendChat("/me высадил "..sampGetPlayerNickname(id).." из мотоцикла")
-                        wait(1200)
+                        wait(cfg.commands.zaderjka)
                         sampSendChat("/ceject "..id, -1)
                     end)
                 else
                     lua_thread.create(function()
                         sampSendChat("/me открыл дверь автомобиля и высадил "..sampGetPlayerNickname(id))
-                        wait(1200)
+                        wait(cfg.commands.zaderjka)
                         sampSendChat("/ceject "..id)
                     end)
                 end
@@ -4291,13 +4292,13 @@ function ceject(pam)
                 if isCharOnAnyBike(playerPed) then
                     lua_thread.create(function()
                         sampSendChat("/me высадила "..sampGetPlayerNickname(id).." из мотоцикла")
-                        wait(1200)
+                        wait(cfg.commands.zaderjka)
                         sampSendChat("/ceject "..id, -1)
                     end)
                 else
                     lua_thread.create(function()
                         sampSendChat("/me открыла дверь автомобиля и высадила "..sampGetPlayerNickname(id))
-                        wait(1200)
+                        wait(cfg.commands.zaderjka)
                         sampSendChat("/ceject "..id)
                     end)
                 end
@@ -4346,31 +4347,31 @@ function deject(pam)
                     if isCharInFlyingVehicle(ped) then
                         lua_thread.create(function()
                             sampSendChat("/me открыл дверь вертолёта и вытащил "..sampGetPlayerNickname(id))
-                            wait(1200)
+                            wait(cfg.commands.zaderjka)
                             sampSendChat("/deject "..id)
                         end)
                     elseif isCharInModel(ped, 481) or isCharInModel(ped, 510) then
                         lua_thread.create(function()
                             sampSendChat("/me скинул "..sampGetPlayerNickname(id).." с велосипеда")
-                            wait(1200)
+                            wait(cfg.commands.zaderjka)
                             sampSendChat("/deject "..id)
                         end)
                     elseif isCharInModel(ped, 462) then
                         lua_thread.create(function()
                             sampSendChat("/me скинул "..sampGetPlayerNickname(id).." со скутера")
-                            wait(1200)
+                            wait(cfg.commands.zaderjka)
                             sampSendChat("/deject "..id)
                         end)
                     elseif isCharOnAnyBike(ped) then
                         lua_thread.create(function()
                             sampSendChat("/me скинул "..sampGetPlayerNickname(id).." с мотоцикла")
-                            wait(1200)
+                            wait(cfg.commands.zaderjka)
                             sampSendChat("/deject "..id)
                         end)
                     elseif isCharInAnyCar(ped) then
                         lua_thread.create(function()
                             sampSendChat("/me разбил окно и вытолкнул "..sampGetPlayerNickname(id).." из машины")
-                            wait(1200)
+                            wait(cfg.commands.zaderjka)
                             sampSendChat("/deject "..id)
                         end)
                     end
@@ -4387,31 +4388,31 @@ function deject(pam)
                     if isCharInFlyingVehicle(ped) then
                         lua_thread.create(function()
                             sampSendChat("/me открыла дверь вертолёта и вытащила "..sampGetPlayerNickname(id))
-                            wait(1200)
+                            wait(cfg.commands.zaderjka)
                             sampSendChat("/deject "..id)
                         end)
                     elseif isCharInModel(ped, 481) or isCharInModel(ped, 510) then
                         lua_thread.create(function()
                             sampSendChat("/me скинула "..sampGetPlayerNickname(id).." с велосипеда")
-                            wait(1200)
+                            wait(cfg.commands.zaderjka)
                             sampSendChat("/deject "..id)
                         end)
                     elseif isCharInModel(ped, 462) then
                         lua_thread.create(function()
                             sampSendChat("/me скинула "..sampGetPlayerNickname(id).." со скутера")
-                            wait(1200)
+                            wait(cfg.commands.zaderjka)
                             sampSendChat("/deject "..id)
                         end)
                     elseif isCharOnAnyBike(ped) then
                         lua_thread.create(function()
                             sampSendChat("/me скинула "..sampGetPlayerNickname(id).." с мотоцикла")
-                            wait(1200)
+                            wait(cfg.commands.zaderjka)
                             sampSendChat("/deject "..id)
                         end)
                     elseif isCharInAnyCar(ped) then
                         lua_thread.create(function()
                             sampSendChat("/me разбила окно и вытолкнула "..sampGetPlayerNickname(id).." из машины")
-                            wait(1200)
+                            wait(cfg.commands.zaderjka)
                             sampSendChat("/deject "..id)
                         end)
                     end
@@ -4468,7 +4469,7 @@ function warn(pam)
             lua_thread.create(function()
                 warnst = true
                 sampSendChat('/mdc '..id)
-                wait(1200)
+                wait(cfg.commands.zaderjka)
                 if wfrac == 'LSPD' or wfrac == 'SFPD' or wfrac == 'LVPD' then
                     sampSendChat(string.format('/d %s, %s получает предупреждение за неправильную подачу в розыск.', wfrac, sampGetPlayerNickname(id):gsub('_', ' ')))
                 else
@@ -4492,11 +4493,11 @@ function ms(pam)
             elseif pam == "1" then
                 lua_thread.create(function()
                     sampSendChat("/me снял с себя костюм агента и повесил на вешалку")
-                    wait(1200)
+                    wait(cfg.commands.zaderjka)
                     sampSendChat("/me открыл ящик, после чего достал комплект маскировки")
-                    wait(1200)
+                    wait(cfg.commands.zaderjka)
                     sampSendChat("/me надел на себя маскировку и закрыл ящик")
-                    wait(1200)
+                    wait(cfg.commands.zaderjka)
                     sampSendChat("/do Агент в маскировке.")
                     wait(100)
                     submenus_show(osnova, "{9966cc}FBI Tools {ffffff}| Mask")
@@ -4504,13 +4505,13 @@ function ms(pam)
             elseif pam == "2" then
                 lua_thread.create(function()
                     sampSendChat("/me открыл багажник автомобиля")
-                    wait(1200)
+                    wait(cfg.commands.zaderjka)
                     sampSendChat("/me снял с себя костюм агента и убрал в багажник")
-                    wait(1200)
+                    wait(cfg.commands.zaderjka)
                     sampSendChat("/me достал из багажника комплект маскировки и надел на себя")
-                    wait(1200)
+                    wait(cfg.commands.zaderjka)
                     sampSendChat("/me закрыл багажник")
-                    wait(1200)
+                    wait(cfg.commands.zaderjka)
                     sampSendChat("/do Агент в маскировке.")
                     wait(100)
                     submenus_show(osnova, "{9966cc}FBI Tools {ffffff}| Mask")
@@ -4518,13 +4519,13 @@ function ms(pam)
             elseif pam == "3" then
                 lua_thread.create(function()
                     sampSendChat("/do на плече агента висит сумка")
-                    wait(1200)
+                    wait(cfg.commands.zaderjka)
                     sampSendChat("/me открыв сумку, снял костюм агента и убрал туда")
-                    wait(1200)
+                    wait(cfg.commands.zaderjka)
                     sampSendChat("/me достал из сумки комплект маскировки и надел на себя")
-                    wait(1200)
+                    wait(cfg.commands.zaderjka)
                     sampSendChat("/me закрыл сумку")
-                    wait(1200)
+                    wait(cfg.commands.zaderjka)
                     sampSendChat("/do Агент в маскировке.")
                     wait(100)
                     submenus_show(osnova, "{9966cc}FBI Tools {ffffff}| Mask")
@@ -4532,11 +4533,11 @@ function ms(pam)
             elseif pam == "0" then
                 lua_thread.create(function()
                     sampSendChat("/me снял с себя маскировку")
-                    wait(1200)
+                    wait(cfg.commands.zaderjka)
                     sampSendChat("/me надел на себя костюм агента")
-                    wait(1200)
+                    wait(cfg.commands.zaderjka)
                     sampSendChat("/r Переоделся в костюм агента")
-                    wait(1200)
+                    wait(cfg.commands.zaderjka)
                     sampSendChat("/rb "..myid)
                 end)
             end
@@ -4548,11 +4549,11 @@ function ms(pam)
             elseif pam == "1" then
                 lua_thread.create(function()
                     sampSendChat("/me сняла с себя костюм агента и повесила на вешалку")
-                    wait(1200)
+                    wait(cfg.commands.zaderjka)
                     sampSendChat("/me открыла ящик, после чего достала комплект маскировки")
-                    wait(1200)
+                    wait(cfg.commands.zaderjka)
                     sampSendChat("/me надела на себя маскировку и закрыла ящик")
-                    wait(1200)
+                    wait(cfg.commands.zaderjka)
                     sampSendChat("/do Агент в маскировке.")
                     wait(100)
                     submenus_show(osnova, "{9966cc}FBI Tools {ffffff}| Mask")
@@ -4560,13 +4561,13 @@ function ms(pam)
             elseif pam == "2" then
                 lua_thread.create(function()
                     sampSendChat("/me открыла багажник автомобиля")
-                    wait(1200)
+                    wait(cfg.commands.zaderjka)
                     sampSendChat("/me сняла с себя костюм агента и убрала в багажник")
-                    wait(1200)
+                    wait(cfg.commands.zaderjka)
                     sampSendChat("/me достала из багажника комплект маскировки и надела на себя")
-                    wait(1200)
+                    wait(cfg.commands.zaderjka)
                     sampSendChat("/me закрыла багажник")
-                    wait(1200)
+                    wait(cfg.commands.zaderjka)
                     sampSendChat("/do Агент в маскировке.")
                     wait(100)
                     submenus_show(osnova, "{9966cc}FBI Tools {ffffff}| Mask")
@@ -4574,13 +4575,13 @@ function ms(pam)
             elseif pam == "3" then
                 lua_thread.create(function()
                     sampSendChat("/do на плече агента висит сумка")
-                    wait(1200)
+                    wait(cfg.commands.zaderjka)
                     sampSendChat("/me открыв сумку, сняла костюм агента и убрала туда")
-                    wait(1200)
+                    wait(cfg.commands.zaderjka)
                     sampSendChat("/me достала из сумки комплект маскировки и надела на себя")
-                    wait(1200)
+                    wait(cfg.commands.zaderjka)
                     sampSendChat("/me закрыла сумку")
-                    wait(1200)
+                    wait(cfg.commands.zaderjka)
                     sampSendChat("/do Агент в маскировке.")
                     wait(100)
                     submenus_show(osnova, "{9966cc}FBI Tools {ffffff}| Mask")
@@ -4588,11 +4589,11 @@ function ms(pam)
             elseif pam == "0" then
                 lua_thread.create(function()
                     sampSendChat("/me сняла с себя маскировку")
-                    wait(1200)
+                    wait(cfg.commands.zaderjka)
                     sampSendChat("/me надела на себя костюм агента")
-                    wait(1200)
+                    wait(cfg.commands.zaderjka)
                     sampSendChat("/r Переоделась в костюм агента")
-                    wait(1200)
+                    wait(cfg.commands.zaderjka)
                     sampSendChat("/rb "..myid)
                 end)
             end
@@ -4751,21 +4752,6 @@ function dmb()
 		gcount = nil
 	end)
 end
-function aaab()
-    local files = {}
-    local handleFile, nameFile = findFirstFile('moonloader/fbitools/*.txt')
-    while nameFile do
-        if handleFile then
-            if not nameFile then
-                findClose(handleFile)
-            else
-                files[#files+1] = nameFile
-                nameFile = findNextFile(handleFile)
-            end
-        end
-    end
-    return files
-end
 function megaf()
     lua_thread.create(function()
         if isCharInAnyCar(playerPed) then
@@ -4790,7 +4776,7 @@ function megaf()
                                             local nameofcar = getNameOfVehicleModel(getCarModel(carh))
                                             local _ , idofplayercar = sampGetPlayerIdByCharHandle(hm)
                                             sampSendChat(string.format("/m Водитель а/м %s с гос. номером [EVL%sX] прижмитесь к обочине", getCarNamebyModel(getCarModel(carh)), megafid), -1)
-                                            wait(1200)
+                                            wait(cfg.commands.zaderjka)
                                             sampSendChat('/m В противном случае нам придется открыть по вам огонь! ', -1)
 											wait(300)
                                             sampAddChatMessage(' {ffffff}~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~', 0x9966cc)
@@ -5177,11 +5163,11 @@ function kmdc(args)
             if sampIsPlayerConnected(pID) then
                 lua_thread.create(function()
                     sampSendChat("/me достал КПК и сделал фотографию человека")
-                    wait(1200)
+                    wait(cfg.commands.zaderjka)
                     sampSendChat("/do КПК дал информацию: Имя: "..sampGetPlayerNickname(pID):gsub('_', ' ')..".")
-                    wait(1200)
+                    wait(cfg.commands.zaderjka)
                     sampSendChat("/mdc "..args)
-                    wait(1200)
+                    wait(cfg.commands.zaderjka)
                     sampSendChat("/time")
                     wait(500)
                     setVirtualKeyDown(key.VK_F8, true)
@@ -5199,11 +5185,11 @@ function kmdc(args)
             if sampIsPlayerConnected(pID) then
                 lua_thread.create(function()
                     sampSendChat("/me достала КПК и сделала фотографию человека")
-                    wait(1200)
+                    wait(cfg.commands.zaderjka)
                     sampSendChat("/do КПК дал информацию: Имя: "..sampGetPlayerNickname(pID):gsub('_', ' ')..".")
-                    wait(1200)
+                    wait(cfg.commands.zaderjka)
                     sampSendChat("/mdc "..args)
-                    wait(1200)
+                    wait(cfg.commands.zaderjka)
                     sampSendChat("/time")
                     wait(500)
                     setVirtualKeyDown(key.VK_F8, true)
@@ -5313,7 +5299,7 @@ function fvz(pam)
             lua_thread.create(function()
                 warnst = true
                 sampSendChat('/mdc '..id)
-                wait(1200)
+                wait(cfg.commands.zaderjka)
                 if wfrac == 'LSPD' or wfrac == 'SFPD' or wfrac == 'LVPD' or wfrac == 'LVa' or wfrac == 'SFa' then
                     sampSendChat(string.format('/d %s, %s, явитесь в офис ФБР со старшими. Как приняли? Ответ на пдж.%s', wfrac, sampGetPlayerNickname(id):gsub('_', ' '), myid))
                 else
@@ -5338,7 +5324,7 @@ function fbd(pam)
                 local _, myid = sampGetPlayerIdByCharHandle(playerPed)
                 warnst = true
                 sampSendChat('/mdc '..id)
-                wait(1200)
+                wait(cfg.commands.zaderjka)
                 if wfrac == 'LSPD' or wfrac == 'SFPD' or wfrac == 'LVPD' then
                     sampSendChat(string.format('/d %s, %s, Причина изменения БД на п.%s', wfrac, sampGetPlayerNickname(id):gsub('_', ' '), myid))
                 else
@@ -5392,7 +5378,7 @@ function mcheck()
                         mcheckb = true
                         _ , idofplayercar = sampGetPlayerIdByCharHandle(hm)
                         sampSendChat('/mdc '..idofplayercar)
-                        wait(1200)
+                        wait(cfg.commands.zaderjka)
                         mcheckb = false
                     end
                 end
