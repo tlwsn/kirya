@@ -1,7 +1,6 @@
 {
-  "latest": "2.2",
+  "latest": "2.3",
   "updateurl": "https://raw.githubusercontent.com/WhackerH/kirya/master/fbitools.lua",
   "updlist": "
-  /fyk /ffp /fak пофикшен баг когда писало весь ук/ак/фп в чат когда не вводили текст для поиска.
-  Добавил команду /dmb в список /fthelp"
+  Добавлена настройка задержки между отыгровками"
 }
