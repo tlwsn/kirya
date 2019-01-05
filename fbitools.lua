@@ -3194,8 +3194,8 @@ local fbitools =
 {
   main =
   {
-    posX = 1588,
-    posY = 890,
+    posX = 1596,
+    posY = 916,
     widehud = 320,
     male = true,
     wanted = false,
@@ -3341,17 +3341,17 @@ function main()
     ykf()
     akf()
     fpf()
-    update()
     wait(1000)
-    --[[if not sampIsDialogActive() then
+    if not sampIsDialogActive() then
         checkStats()
     else
         while sampIsDialogActive() do wait(0) end
         checkStats()
-    end]]
+    end
 	for k, v in pairs(tBindList) do
 		rkeys.registerHotKey(v.v, true, onHotKey)
     end
+    update()
     nizfont = renderCreateFont('Ariel', 10, 9)
     while true do wait(0)
         infbar = imgui.ImBool(cfg.main.hud)
