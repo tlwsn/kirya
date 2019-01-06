@@ -1,5 +1,5 @@
 script_name('FBI Tools')
-script_version('2.7')
+script_version('2.8')
 script_author('Sesh Jefferson and Thomas Lawson') -- код биндера от DonHomka
 require 'lib.moonloader'
 require 'lib.sampfuncs'
@@ -1829,7 +1829,6 @@ function commands()
                 ftext('По завешению введите команду еще раз.')
             else
                 changetextpos = false
-                inicfg.save(fbitools, 'fbitools/config.ini')
             end
         else
             ftext('Для начала включите инфо-бар.')
@@ -2966,7 +2965,6 @@ function onScriptTerminate(scr)
         if fa then
             fa:write(encodeJson(config_keys))
             fa:close()
-            print('сахранил')
         end
 	end
 end
@@ -3380,6 +3378,16 @@ function main()
             imgui.SetCursorPosX( width / 2 - calc.x / 2 )
             imgui.Text(text)
         end
+        function imgui.CustomButton(name, color, colorHovered, colorActive, size)
+            local clr = imgui.Col
+            imgui.PushStyleColor(clr.Button, color)
+            imgui.PushStyleColor(clr.ButtonHovered, colorHovered)
+            imgui.PushStyleColor(clr.ButtonActive, colorActive)
+            if not size then size = imgui.ImVec2(0, 0) end
+            local result = imgui.Button(name, size)
+            imgui.PopStyleColor(3)
+            return result
+        end
         function imgui.OnDrawFrame()
             if infbar.v then
                 imgui.ShowCursor = false
@@ -3521,38 +3529,30 @@ function main()
                 if show == 1 then
                     if imgui.Checkbox(u8'Скрывать сообщения о начале преследования', offptrlb) then
                         cfg.main.offptrl = not cfg.main.offptrl
-                        inicfg.save(fbitools, 'fbitools/config.ini')
                     end
                     if imgui.Checkbox(u8'Скрывать сообщения о выдаче розыска', offwntdb) then
                         cfg.main.offwntd = not cfg.main.offwntd
-                        inicfg.save(fbitools, 'fbitools/config.ini')
                     end
                     if imgui.Checkbox(u8'Мужские отыгровки', stateb) then
                         cfg.main.male = not cfg.main.male
-                        inicfg.save(fbitools, 'fbitools/config.ini')
                     end
                     if imgui.Checkbox(u8'Использовать автотег', tagb) then
                         cfg.main.tarb = not cfg.main.tarb
-                        inicfg.save(fbitools, 'fbitools/config.ini')
                     end
                     if tagb.v then
                         if imgui.InputText(u8'Введите ваш Тег.', tagf) then
                             cfg.main.tar = u8:decode(tagf.v)
-                            inicfg.save(fbitools, 'fbitools/config.ini')
                         end
                     end
                     if imgui.Checkbox(u8'Использовать авто логин', parolb) then
                         cfg.main.parolb = not cfg.main.parolb
-                        inicfg.save(fbitools, 'fbitools/config.ini')
                     end
                     if imgui.Checkbox(u8'Использовать автоклист', clistb) then
                         cfg.main.clistb = not cfg.main.clistb
-                        inicfg.save(fbitools, 'fbitools/config.ini')
                     end
                     if clistb.v then
                         if imgui.SliderInt(u8"Выберите значение клиста", clistbuffer, 0, 33) then
                             cfg.main.clist = clistbuffer.v
-                            inicfg.save(fbitools, 'fbitools/config.ini')
                         end
                     end
                     if imgui.HotKey(u8'##Клавиша быстрого тазера', config_keys.tazerkey, tLastKeys, 100) then
@@ -3581,31 +3581,25 @@ function main()
                     imgui.Text(u8('Клавиша отмены'))
                     if imgui.InputInt(u8'Задержка в отыгровках', waitbuffer) then
                         cfg.commands.zaderjka = waitbuffer.v
-                        inicfg.save(fbitools, 'fbitools/config.ini')
                     end
                 end
                 if show == 2 then
                     if imgui.Checkbox(u8('Отыгровка /cput'), cput) then
                         cfg.commands.cput = not cfg.commands.cput
-                        inicfg.save(fbitools, 'fbitools/config.ini')
                     end
                     if imgui.Checkbox(u8('Отыгровка /ceject'), ceject) then
                         cfg.commands.ceject = not cfg.commands.ceject
-                        inicfg.save(fbitools, 'fbitools/config.ini')
                     end
                     if imgui.Checkbox(u8('Отыгровка /ftazer'), ftazer) then
                         cfg.commands.ftazer = not cfg.commands.ftazer
-                        inicfg.save(fbitools, 'fbitools/config.ini')
                     end
                     if imgui.Checkbox(u8('Отыгровка /deject'), deject) then
                         cfg.commands.deject = not cfg.commands.deject
-                        inicfg.save(fbitools, 'fbitools/config.ini')
                     end
                 end
                 if show == 3 then
                     if imgui.InputText(u8'Введите ваш пароль.', parolf, imgui.InputTextFlags.Password) then
                         cfg.main.parol = u8:decode(parolf.v)
-                        inicfg.save(fbitools, 'fbitools/config.ini')
                     end
                     if imgui.Button(u8'Узнать пароль') then
                         ftext('Ваш пароль: '..cfg.main.parol)
@@ -3627,25 +3621,27 @@ function main()
                 end
                 if imgui.Button(u8(cfg.main.hud and 'Выключить инфо-бар' or 'Включить инфобар'), btn_size) then
                     cfg.main.hud = not cfg.main.hud
-                    inicfg.save(fbitools, 'fbitools/config.ini')
                     ftext(cfg.main.hud and 'Инфо-бар включен' or 'Инфо-бар выключен')
                 end
                 if imgui.Button(u8(cfg.main.nwanted and 'Выключить обновленный Wanted' or 'Включить обновленный Wanted'), btn_size) then
                     cfg.main.nwanted = not cfg.main.nwanted
-                    inicfg.save(fbitools, 'fbitools/config.ini')
                     ftext(cfg.main.nwanted and 'Обновленый Wanted включен' or 'Обновленый Wanted выключен')
                 end
                 if imgui.Button(u8(cfg.main.nclear and 'Выключить дополненый Clear' or 'Включить дополненый Clear'), btn_size) then --дополненый Clear
                     cfg.main.nclear = not cfg.main.nclear
-                    inicfg.save(fbitools, 'fbitools/config.ini')
                     ftext(cfg.main.nclear and 'Дополненый Clear включен' or 'Дополненый Clear выключен')
                 end
                 if imgui.Button(u8'Настройки скрипта', btn_size) then
                     setwindows.v = not setwindows.v
                 end
+                --[[colors[clr.Button]                 = ImVec4(0.26, 0.59, 0.98, 0.40)
+                    colors[clr.ButtonHovered]          = ImVec4(0.26, 0.59, 0.98, 1.00)
+                    colors[clr.ButtonActive]           = ImVec4(0.06, 0.53, 0.98, 1.00)]]
+                if imgui.CustomButton(u8('Сохранить настройки'), imgui.ImVec4(0.11, 0.79, 0.07, 0.40), imgui.ImVec4(0.11, 0.79, 0.07, 1.00), imgui.ImVec4(0.11, 0.79, 0.07, 0.76), btn_size) then
+                    inicfg.save(fbitools, 'fbitools/config.ini')
+                end
                 if imgui.Button(u8'Перезагрузить скрипт', btn_size) then
                     showCursor(false)
-                    inicfg.save(fbitools, 'fbitools/config.ini')
                     thisScript():reload()
                 end
                 imgui.End()
