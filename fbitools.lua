@@ -1,5 +1,5 @@
 script_name('FBI Tools')
-script_version('2.5')
+script_version('2.6')
 script_author('Sesh Jefferson and Thomas Lawson') -- код биндера от DonHomka
 require 'lib.moonloader'
 require 'lib.sampfuncs'
@@ -31,6 +31,12 @@ gmegaffrak = nil
 nikk = nil
 ttt = nil
 tLastKeys = {}
+local config_keys = {
+    oopda = { v = {key.VK_F12}}, 
+    oopnet = { v = {key.VK_F11}},
+    tazerkey = { v = {key.VK_X}},
+    fastmenukey = { v = {key.VK_F2}}
+}
 
 local shpt = [[
 ѕока что вы не настроили шпору.
@@ -2946,12 +2952,6 @@ else
         }
     }
 end
-local config_keys = {
-    oopda = { v = {key.VK_F12}}, 
-    oopnet = { v = {key.VK_F11}},
-    tazerkey = { v = {key.VK_X}},
-    fastmenukey = { v = {key.VK_F2}}
-}
 function onScriptTerminate(scr)
     if scr == script.this then
 		if doesFileExist(fileb) then
@@ -4079,14 +4079,14 @@ function tazer()
     if cfg.main.male == true then
         lua_thread.create(function()
             sampSendChat("/tazer")
-            wait(cfg.commands.zaderjka)
+            wait(1200)
             sampSendChat("/me сменил тип патронов")
         end)
     end
     if cfg.main.male == false then
         lua_thread.create(function()
             sampSendChat("/tazer")
-            wait(cfg.commands.zaderjka)
+            wait(1200)
             sampSendChat("/me сменила тип патронов")
         end)
     end
