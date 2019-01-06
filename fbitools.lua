@@ -1,5 +1,5 @@
 script_name('FBI Tools')
-script_version('2.8')
+script_version('2')
 script_author('Sesh Jefferson and Thomas Lawson') -- код биндера от DonHomka
 require 'lib.moonloader'
 require 'lib.sampfuncs'
@@ -3573,7 +3573,7 @@ function main()
                     end
                     imgui.SameLine()
                     imgui.Text(u8('Клавиша подтверждения'))
-                    if imgui.HotKey('##oopda', config_keys.oopnet, tLastKeys, 100) then
+                    if imgui.HotKey('##oopnet', config_keys.oopnet, tLastKeys, 100) then
                         rkeys.changeHotKey(oopnetbind, config_keys.oopnet.v)
                         ftext('Клавиша успешно изменена. Старое значение: '.. table.concat(rkeys.getKeysName(tLastKeys.v), " + ") .. ' | Новое значение: '.. table.concat(rkeys.getKeysName(config_keys.oopnet.v), " + "))
                     end
