@@ -1,5 +1,5 @@
 script_name('FBI Tools')
-script_version('2.4')
+script_version('2.5')
 script_author('Sesh Jefferson and Thomas Lawson') -- код биндера от DonHomka
 require 'lib.moonloader'
 require 'lib.sampfuncs'
@@ -30,6 +30,7 @@ gmegaflvl = nil
 gmegaffrak = nil
 nikk = nil
 ttt = nil
+tLastKeys = {}
 
 local shpt = [[
 Пока что вы не настроили шпору.
@@ -1098,7 +1099,7 @@ function checkStats()
     sampCloseCurrentDialogWithButton(1)
     if rang == nil and frak == nil then
         ftext('Не удалось определить статистику персонажа. Повторить попытку?', -1)
-        ftext('Подтвердить: {9966cc}'..key.id_to_name(cfg.keys.oopda)..'{ffffff} | Отменить: {9966cc}'..key.id_to_name(cfg.keys.oopnet), -1)
+        ftext('Подтвердить: {9966cc}'..table.concat(rkeys.getKeysName(config_keys.oopda.v), " + ")..'{ffffff} | Отменить: {9966cc}'..table.concat(rkeys.getKeysName(config_keys.oopnet.v), " + "), -1)
         opyatstat = true
     end
 end
@@ -1160,7 +1161,7 @@ function oopchat()
             if nikk ~= nil then
                 wait(50)
                 ftext(string.format("Поступил запрос на объявление ООП игрока {9966cc}%s", nikk:gsub('_', ' ')), -1)
-                ftext('Подтвердить: {9966cc}'..key.id_to_name(cfg.keys.oopda)..'{ffffff} | Отменить: {9966cc}'..key.id_to_name(cfg.keys.oopnet), -1)
+                ftext('Подтвердить: {9966cc}'..table.concat(rkeys.getKeysName(config_keys.oopda.v), " + ")..'{ffffff} | Отменить: {9966cc}'..table.concat(rkeys.getKeysName(config_keys.oopnet.v), " + "), -1)
             else
                 zaproop = false
             end
@@ -1172,7 +1173,7 @@ function oopchat()
             if nikk ~= nil then
                 wait(50)
                 ftext(string.format("Поступил запрос на объявление ООП игрока {9966cc}%s", nikk:gsub('_', ' ')), -1)
-                ftext('Подтвердить: {9966cc}'..key.id_to_name(cfg.keys.oopda)..'{ffffff} | Отменить: {9966cc}'..key.id_to_name(cfg.keys.oopnet), -1)
+                ftext('Подтвердить: {9966cc}'..table.concat(rkeys.getKeysName(config_keys.oopda.v), " + ")..'{ffffff} | Отменить: {9966cc}'..table.concat(rkeys.getKeysName(config_keys.oopnet.v), " + "), -1)
             else
                 zaproop = false
             end
@@ -1184,7 +1185,7 @@ function oopchat()
             if nikk ~= nil then
                 wait(50)
                 ftext(string.format("Поступил запрос на объявление ООП игрока {9966cc}%s", nikk:gsub('_', ' ')), -1)
-                ftext('Подтвердить: {9966cc}'..key.id_to_name(cfg.keys.oopda)..'{ffffff} | Отменить: {9966cc}'..key.id_to_name(cfg.keys.oopnet), -1)
+                ftext('Подтвердить: {9966cc}'..table.concat(rkeys.getKeysName(config_keys.oopda.v), " + ")..'{ffffff} | Отменить: {9966cc}'..table.concat(rkeys.getKeysName(config_keys.oopnet.v), " + "), -1)
             else
                 zaproop = false
             end
@@ -1196,75 +1197,73 @@ function oopchat()
         if dmoop then dmoop = false end
     end
 end
-function oopkey()
-    if wasKeyPressed(cfg.keys.oopda) then
-        if opyatstat then
-            checkStats()
-            opyatstat = false
-        end
-        if zaproop then
-            sampSendChat(string.format('/d Mayor, дело на имя %s рассмотрению не подлежит, ООП', nikk:gsub('_', ' ')))
-            nikk = nil
-            zaproop = false
-        end
-        if dmoop then
-            if frak == 'FBI' or frak == 'LSPD' or frak == 'SFPD' or frak == 'LVPD' then
-                if rang == 'Кадет' or rang == 'Офицер' or rang == 'Мл.Сержант' or  rang == 'Сержант' or  rang == 'Прапорщик' then
-                    if not cfg.main.tarb then
-                        sampSendChat(string.format('/r Дело на имя %s рассмотрению не подлежит, ООП, объявите.', nikk:gsub('_', ' ')))
-                        dmoop = false
-                        nikk = false
-                    else
-                        sampSendChat(string.format('/r [%s]: Дело на имя %s рассмотрению не подлежит, ООП, объявите.', cfg.main.tar, nikk:gsub('_', ' ')))
-                        dmoop = false
-                        nikk = false
-                    end
+function oopdakey()
+    if opyatstat then
+        checkStats()
+        opyatstat = false
+    end
+    if zaproop then
+        sampSendChat(string.format('/d Mayor, дело на имя %s рассмотрению не подлежит, ООП', nikk:gsub('_', ' ')))
+        nikk = nil
+        zaproop = false
+    end
+    if dmoop then
+        if frak == 'FBI' or frak == 'LSPD' or frak == 'SFPD' or frak == 'LVPD' then
+            if rang == 'Кадет' or rang == 'Офицер' or rang == 'Мл.Сержант' or  rang == 'Сержант' or  rang == 'Прапорщик' then
+                if not cfg.main.tarb then
+                    sampSendChat(string.format('/r Дело на имя %s рассмотрению не подлежит, ООП, объявите.', nikk:gsub('_', ' ')))
+                    dmoop = false
+                    nikk = false
                 else
-                    sampSendChat(string.format('/d Mayor, дело на имя %s рассмотрению не подлежит, ООП КПЗ LSPD.', nikk:gsub('_', ' ')))
+                    sampSendChat(string.format('/r [%s]: Дело на имя %s рассмотрению не подлежит, ООП, объявите.', cfg.main.tar, nikk:gsub('_', ' ')))
                     dmoop = false
                     nikk = false
                 end
-            end
-        end
-        if aroop then
-            if frak == 'FBI' or frak == 'LSPD' or frak == 'SFPD' or frak == 'LVPD' then
-                if rang == 'Кадет' or rang == 'Офицер' or rang == 'Мл.Сержант' or  rang == 'Сержант' or  rang == 'Прапорщик' then
-                    if not cfg.main.tarb then
-                        sampSendChat(string.format('/r Дело на имя %s рассмотрению не подлежит, ООП, объявите.', nikk:gsub('_', ' ')))
-                        aroop = false
-                        nikk = false
-                    else
-                        sampSendChat(string.format('/r [%s]: Дело на имя %s рассмотрению не подлежит, ООП, объявите.', cfg.main.tar, nikk:gsub('_', ' ')))
-                        aroop = false
-                        nikk = false
-                    end
-                else
-                    sampSendChat(string.format("/d Mayor, дело на имя %s рассмотрению не подлежит, ООП.", nikk:gsub('_', ' ')))
-                    aroop = false
-                    nikk = false
-                end
+            else
+                sampSendChat(string.format('/d Mayor, дело на имя %s рассмотрению не подлежит, ООП КПЗ LSPD.', nikk:gsub('_', ' ')))
+                dmoop = false
+                nikk = false
             end
         end
     end
-    if wasKeyPressed(cfg.keys.oopnet) then
-        if opyatstat then
-            opyatstat = false
+    if aroop then
+        if frak == 'FBI' or frak == 'LSPD' or frak == 'SFPD' or frak == 'LVPD' then
+            if rang == 'Кадет' or rang == 'Офицер' or rang == 'Мл.Сержант' or  rang == 'Сержант' or  rang == 'Прапорщик' then
+                if not cfg.main.tarb then
+                    sampSendChat(string.format('/r Дело на имя %s рассмотрению не подлежит, ООП, объявите.', nikk:gsub('_', ' ')))
+                    aroop = false
+                    nikk = false
+                else
+                    sampSendChat(string.format('/r [%s]: Дело на имя %s рассмотрению не подлежит, ООП, объявите.', cfg.main.tar, nikk:gsub('_', ' ')))
+                    aroop = false
+                    nikk = false
+                end
+            else
+                sampSendChat(string.format("/d Mayor, дело на имя %s рассмотрению не подлежит, ООП.", nikk:gsub('_', ' ')))
+                aroop = false
+                nikk = false
+            end
         end
-        if dmoop == true then
-            dmoop = false
-            nikk = nil
-            ftext("Рассмотр дела отменен.", -1)
-        end
-        if zaproop == true then
-            zaproop = false
-            nikk = nil
-            ftext("Рассмотр дела отменен.", -1)
-        end
-        if aroop == true then
-            aroop = false
-            nikk = nil
-            ftext("Рассмотр дела отменен.", -1)
-        end
+    end
+end
+function oopnetkey()
+    if opyatstat then
+        opyatstat = false
+    end
+    if dmoop == true then
+        dmoop = false
+        nikk = nil
+        ftext("Рассмотр дела отменен.", -1)
+    end
+    if zaproop == true then
+        zaproop = false
+        nikk = nil
+        ftext("Рассмотр дела отменен.", -1)
+    end
+    if aroop == true then
+        aroop = false
+        nikk = nil
+        ftext("Рассмотр дела отменен.", -1)
     end
 end
 local russian_characters = {
@@ -1638,12 +1637,12 @@ function pkmmenu(id)
         onclick = function()
           if cfg.main.male == true then
             sampSendChat("/me заломал руки "..sampGetPlayerNickname(id).." и достал наручники")
-            wait(cfg.commands.zaderjka)
+            wait(1200)
             sampSendChat("/cuff "..id)
           end
           if cfg.main.male == false then
             sampSendChat("/me заломала руки "..sampGetPlayerNickname(id).." и достала наручники")
-            wait(cfg.commands.zaderjka)
+            wait(1200)
             sampSendChat("/cuff "..id)
           end
         end
@@ -1653,12 +1652,12 @@ function pkmmenu(id)
         onclick = function()
           if cfg.main.male == true then
             sampSendChat("/me пристегнул один из концов наручников к себе, после чего повел за собой "..sampGetPlayerNickname(id))
-            wait(cfg.commands.zaderjka)
+            wait(1200)
             sampSendChat("/follow "..id)
           end
           if cfg.main.male == false then
             sampSendChat("/me пристегнула один из концов наручников к себе, после чего повела за собой "..sampGetPlayerNickname(id))
-            wait(cfg.commands.zaderjka)
+            wait(1200)
             sampSendChat("/follow "..id)
           end
         end
@@ -1668,12 +1667,12 @@ function pkmmenu(id)
         onclick = function()
           if cfg.main.male == true then
             sampSendChat("/me надев перчатки, провел руками по торсу")
-            wait(cfg.commands.zaderjka)
+            wait(1200)
             sampSendChat("/take "..id)
           end
           if cfg.main.male == false then
             sampSendChat("/me надев перчатки, провела руками по торсу")
-            wait(cfg.commands.zaderjka)
+            wait(1200)
             sampSendChat("/take "..id)
           end
         end
@@ -1706,12 +1705,12 @@ function pkmmenu(id)
         onclick = function()
           if cfg.main.male == true then
             sampSendChat("/me снял наручники с "..sampGetPlayerNickname(id))
-            wait(cfg.commands.zaderjka)
+            wait(1200)
             sampSendChat("/uncuff "..id)
           end
           if cfg.main.male == false then
             sampSendChat("/me сняла наручники с "..sampGetPlayerNickname(id))
-            wait(cfg.commands.zaderjka)
+            wait(1200)
             sampSendChat("/uncuff "..id)
           end
         end
@@ -1739,16 +1738,16 @@ function pkmmenu(id)
         onclick = function()
           if cfg.main.male == true then
             sampSendChat("/su "..id.." 2 Продажа наркотиков")
-            wait(cfg.commands.zaderjka)
+            wait(1200)
             sampSendChat("/me заломал руки "..sampGetPlayerNickname(id).." и достал наручники")
-            wait(cfg.commands.zaderjka)
+            wait(1200)
             sampSendChat("/cuff "..id)
           end
           if cfg.main.male == false then
             sampSendChat("/su "..id.." 2 Продажа наркотиков")
-            wait(cfg.commands.zaderjka)
+            wait(1200)
             sampSendChat("/me заломала руки "..sampGetPlayerNickname(id).." и достала наручники")
-            wait(cfg.commands.zaderjka)
+            wait(1200)
             sampSendChat("/cuff "..id)
           end
         end
@@ -2947,7 +2946,12 @@ else
         }
     }
 end
-
+local config_keys = {
+    oopda = { v = {key.VK_F12}}, 
+    oopnet = { v = {key.VK_F11}},
+    tazerkey = { v = {key.VK_X}},
+    fastmenukey = { v = {key.VK_F2}}
+}
 function onScriptTerminate(scr)
     if scr == script.this then
 		if doesFileExist(fileb) then
@@ -2957,6 +2961,12 @@ function onScriptTerminate(scr)
 		if f then
 			f:write(encodeJson(tBindList))
 			f:close()
+        end
+        local fa = io.open("moonloader/config/fbitools/keys.json", "w")
+        if fa then
+            fa:write(encodeJson(config_keys))
+            fa:close()
+            print('сахранил')
         end
 	end
 end
@@ -3032,7 +3042,7 @@ function sp.onServerMessage(color, text)
                 aroop = true
                 wait(3000)
                 ftext(string.format("Запретить рассмотр дела на имя %s", nikk:gsub('_', ' ')), -1)
-                ftext('Подтвердить: {9966cc}'..key.id_to_name(cfg.keys.oopda)..'{ffffff} | Отменить: {9966cc}'..key.id_to_name(cfg.keys.oopnet), -1)
+                ftext('Подтвердить: {9966cc}'..table.concat(rkeys.getKeysName(config_keys.oopda.v), " + ")..'{ffffff} | Отменить: {9966cc}'..table.concat(rkeys.getKeysName(config_keys.oopnet.v), " + "), -1)
             end)
         end
     end
@@ -3044,7 +3054,7 @@ function sp.onServerMessage(color, text)
                 dmoop = true
                 wait(50)
                 ftext(string.format("Запретить рассмотр дела на имя %s", nikk:gsub('_', ' ')), -1)
-                ftext('Подтвердить: {9966cc}'..key.id_to_name(cfg.keys.oopda)..'{ffffff} | Отменить: {9966cc}'..key.id_to_name(cfg.keys.oopnet), -1)
+                ftext('Подтвердить: {9966cc}'..table.concat(rkeys.getKeysName(config_keys.oopda.v), " + ")..'{ffffff} | Отменить: {9966cc}'..table.concat(rkeys.getKeysName(config_keys.oopnet.v), " + "), -1)
             end)
         end
     end
@@ -3218,13 +3228,6 @@ local fbitools =
     deject = true,
     ftazer = true,
     zaderjka = 1200
-  },
-  keys =
-  {
-    tazer = key.VK_X,
-    fastmenu = key.VK_F2,
-    oopda = key.VK_F12,
-    oopnet = key.VK_F11
   }
 }
 local fthmenu = {
@@ -3253,7 +3256,7 @@ local fthmenu = {
 }
 megaftimer = nil
 ----------
-local libs = {'sphere.lua', 'rkeys.lua', 'imcustom/hotkey.lua', 'imgui.lua', 'MoonImGui.dll'}
+local libs = {'sphere.lua', 'rkeys.lua', 'imcustom/hotkey.lua', 'imgui.lua', 'MoonImGui.dll', 'imgui_addons.lua'}
 function main()
     while not isSampAvailable() do wait(0) end
     ftext('FBI Tools успешно загружен. Введите: /fthelp что бы получить дополнительную информацию.')
@@ -3267,6 +3270,15 @@ function main()
         if not doesFileExist('moonloader/lib/'..v) then
             downloadUrlToFile('https://raw.githubusercontent.com/WhackerH/kirya/master/lib/'..v, getWorkingDirectory()..'\\lib\\'..v)
             print('Загружается библиотека '..v)
+        end
+    end
+    if not doesFileExist("moonloader/config/fbitools/keys.json") then
+        local fa = io.open("moonloader/config/fbitools/keys.json", "w")
+        fa:close()
+    else
+        local fa = io.open("moonloader/config/fbitools/keys.json", 'r')
+        if fa then
+            config_keys = decodeJson(fa:read('*a'))
         end
     end
     while not sampIsLocalPlayerSpawned() do wait(0) end
@@ -3287,6 +3299,7 @@ function main()
     bMainWindow = imgui.ImBool(false)
     sInputEdit = imgui.ImBuffer(128)
     bIsEnterEdit = imgui.ImBool(false)
+    imgui.HotKey = require('imgui_addons').HotKey
     apply_custom_style()
     addEventHandler("onWindowMessage", function (msg, wparam, lparam)
         if msg == wm.WM_KEYDOWN or msg == wm.WM_SYSKEYDOWN then
@@ -3342,17 +3355,21 @@ function main()
     akf()
     fpf()
     wait(1000)
+	for k, v in pairs(tBindList) do
+		rkeys.registerHotKey(v.v, true, onHotKey)
+    end
+    tazerbind = rkeys.registerHotKey(config_keys.tazerkey.v, true, function() sampSendChat('/tazer') end)
+    fastmenubind = rkeys.registerHotKey(config_keys.fastmenukey.v, true, function() lua_thread.create(function() submenus_show(fthmenu, '{9966cc}FBI Tools') end) end)
+    oopdabind = rkeys.registerHotKey(config_keys.oopda.v, true, oopdakey)
+    oopnetbind = rkeys.registerHotKey(config_keys.oopnet.v, true, oopnetkey)
+    nizfont = renderCreateFont('Ariel', 10, 9)
     if not sampIsDialogActive() then
         checkStats()
     else
         while sampIsDialogActive() do wait(0) end
         checkStats()
     end
-	for k, v in pairs(tBindList) do
-		rkeys.registerHotKey(v.v, true, onHotKey)
-    end
     update()
-    nizfont = renderCreateFont('Ariel', 10, 9)
     while true do wait(0)
         infbar = imgui.ImBool(cfg.main.hud)
         imgui.Process = mainwin.v or infbar.v or shpwindow.v or ykwindow.v or fpwindow.v or akwindow.v
@@ -3414,7 +3431,6 @@ function main()
                 imgui.LockPlayer = true
                 imgui.ShowCursor = true
                 local iScreenWidth, iScreenHeight = getScreenResolution()
-                local tLastKeys = {}
                 imgui.SetNextWindowPos(imgui.ImVec2(iScreenWidth / 2, iScreenHeight / 2), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
                 imgui.SetNextWindowSize(imgui.ImVec2(800, 525), imgui.Cond.FirstUseEver)
                 imgui.Begin(u8("FBI Tools | Биндер##main"), bMainWindow, imgui.WindowFlags.NoCollapse + imgui.WindowFlags.NoResize)
@@ -3484,10 +3500,6 @@ function main()
                 local tagb = imgui.ImBool(cfg.main.tarb)
                 local xcord = imgui.ImInt(cfg.main.posX)
                 local ycord = imgui.ImInt(cfg.main.posY)
-                local xtazer = imgui.ImInt(cfg.keys.tazer)
-                local xfast = imgui.ImInt(cfg.keys.fastmenu)
-                local xoopda = imgui.ImInt(cfg.keys.oopda)
-                local xoopnet = imgui.ImInt(cfg.keys.oopnet)
                 local clistbuffer = imgui.ImInt(cfg.main.clist)
                 local waitbuffer = imgui.ImInt(cfg.commands.zaderjka)
                 local clistb = imgui.ImBool(cfg.main.clistb)
@@ -3542,40 +3554,33 @@ function main()
                             inicfg.save(fbitools, 'fbitools/config.ini')
                         end
                     end
-                    if imgui.InputInt(u8'Введите ид клавиши тазера', xtazer) then
-                        cfg.keys.tazer = xtazer.v
-                        inicfg.save(fbitools, 'fbitools/config.ini')
+                    if imgui.HotKey(u8'##Клавиша быстрого тазера', config_keys.tazerkey, tLastKeys, 100) then
+                        rkeys.changeHotKey(tazerbind, config_keys.tazerkey.v)
+                        ftext('Клавиша успешно изменена. Старое значение: '.. table.concat(rkeys.getKeysName(tLastKeys.v), " + ") .. ' | Новое значение: '.. table.concat(rkeys.getKeysName(config_keys.tazerkey.v), " + "))
                     end
-                    if cfg.keys.tazer ~= nil and key.id_to_name(cfg.keys.tazer) ~= nil then
-                        imgui.Text(u8'Текущая клавиша: '..u8(key.id_to_name(cfg.keys.tazer)))
+                    imgui.SameLine()
+                    imgui.Text(u8'Клавиша быстрого тазера')
+                    if imgui.HotKey('##fastmenu', config_keys.fastmenukey, tLastKeys, 100) then
+                        rkeys.changeHotKey(fastmenubind, config_keys.fastmenukey.v)
+                        ftext('Клавиша успешно изменена. Старое значение: '.. table.concat(rkeys.getKeysName(tLastKeys.v), " + ") .. ' | Новое значение: '.. table.concat(rkeys.getKeysName(config_keys.fastmenukey.v), " + "))
                     end
-                    if imgui.InputInt(u8'Введите ид клавиши быстрого меню', xfast) then
-                        cfg.keys.fastmenu = xfast.v
-                        inicfg.save(fbitools, 'fbitools/config.ini')
-                     end
-                    if cfg.keys.fastmenu ~= nil and key.id_to_name(cfg.keys.fastmenu) ~= nil then
-                        imgui.Text(u8'Текущая клавиша: '..u8(key.id_to_name(cfg.keys.fastmenu)))
+                    imgui.SameLine()
+                    imgui.Text(u8('Клавиша быстрого меню'))
+                    if imgui.HotKey('##oopda', config_keys.oopda, tLastKeys, 100) then
+                        rkeys.changeHotKey(oopdabind, config_keys.oopda.v)
+                        ftext('Клавиша успешно изменена. Старое значение: '.. table.concat(rkeys.getKeysName(tLastKeys.v), " + ") .. ' | Новое значение: '.. table.concat(rkeys.getKeysName(config_keys.oopda.v), " + "))
                     end
-                    if imgui.InputInt(u8'Введите ид клавиши подтверждения', xoopda) then
-                        cfg.keys.oopda = xoopda.v
-                        inicfg.save(fbitools, 'fbitools/config.ini')
+                    imgui.SameLine()
+                    imgui.Text(u8('Клавиша подтверждения'))
+                    if imgui.HotKey('##oopda', config_keys.oopnet, tLastKeys, 100) then
+                        rkeys.changeHotKey(oopnetbind, config_keys.oopnet.v)
+                        ftext('Клавиша успешно изменена. Старое значение: '.. table.concat(rkeys.getKeysName(tLastKeys.v), " + ") .. ' | Новое значение: '.. table.concat(rkeys.getKeysName(config_keys.oopnet.v), " + "))
                     end
-                    if cfg.keys.oopda ~= nil and key.id_to_name(cfg.keys.oopda) ~= nil then
-                        imgui.Text(u8'Текущая клавиша: '..u8(key.id_to_name(cfg.keys.oopda)))
-                    end
-                    if imgui.InputInt(u8'Введите ид клавиши отмены', xoopnet) then
-                        cfg.keys.oopnet = xoopnet.v
-                        inicfg.save(fbitools, 'fbitools/config.ini')
-                    end
-                    if cfg.keys.oopnet ~= nil and key.id_to_name(cfg.keys.oopnet) ~= nil then
-                        imgui.Text(u8'Текущая клавиша: '..u8(key.id_to_name(cfg.keys.oopnet)))
-                    end
+                    imgui.SameLine()
+                    imgui.Text(u8('Клавиша отмены'))
                     if imgui.InputInt(u8'Задержка в отыгровках', waitbuffer) then
                         cfg.commands.zaderjka = waitbuffer.v
                         inicfg.save(fbitools, 'fbitools/config.ini')
-                    end
-                    if imgui.Button(u8'Гайд по смене клавиши') then
-                        os.execute('explorer "https://docs.google.com/document/d/1R2o0hm9RYWNZNK38EBOyEgqPeiCeDDqWP4HlpUFGLzQ/edit?usp=sharing"')
                     end
                 end
                 if show == 2 then
@@ -3777,14 +3782,6 @@ function main()
             end
         end
         oopchat()
-        oopkey()
-        if wasKeyPressed(cfg.keys.tazer) and not sampIsChatInputActive() and not sampIsDialogActive() then
-            sampSendChat("/tazer")
-            wait(1200)
-        end
-        if wasKeyPressed(cfg.keys.fastmenu) and not sampIsDialogActive() and not sampIsChatInputActive() then
-            submenus_show(fthmenu, '{9966cc}FBI Tools')
-        end
         local result, button, list, input = sampHasDialogRespond(1385)
         local result1, button, list, input = sampHasDialogRespond(1386)
         local result2, button, list, input = sampHasDialogRespond(1387)
@@ -4776,7 +4773,7 @@ function megaf()
                                             local nameofcar = getNameOfVehicleModel(getCarModel(carh))
                                             local _ , idofplayercar = sampGetPlayerIdByCharHandle(hm)
                                             sampSendChat(string.format("/m Водитель а/м %s с гос. номером [EVL%sX] прижмитесь к обочине", getCarNamebyModel(getCarModel(carh)), megafid), -1)
-                                            wait(cfg.commands.zaderjka)
+                                            wait(1200)
                                             sampSendChat('/m В противном случае нам придется открыть по вам огонь! ', -1)
 											wait(300)
                                             sampAddChatMessage(' {ffffff}~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~', 0x9966cc)
