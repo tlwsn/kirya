@@ -1,5 +1,5 @@
 script_name('FBI Tools')
-script_version('2.6')
+script_version('2.7')
 script_author('Sesh Jefferson and Thomas Lawson') -- код биндера от DonHomka
 require 'lib.moonloader'
 require 'lib.sampfuncs'
@@ -3282,6 +3282,7 @@ function main()
         end
     end
     while not sampIsLocalPlayerSpawned() do wait(0) end
+    while not doesFileExist('moonloader\\lib\\sphere.lua') or not doesFileExist('moonloader\\lib\\rkeys.lua') or not doesFileExist('moonloader\\lib\\imcustom\\hotkey.lua') or not doesFileExist('moonloader\\lib\\imgui.lua') or not doesFileExist('moonloader\\lib\\MoonImGui.dll') or not doesFileExist('moonloader\\lib\\imgui_addons.lua') do wait(0) end
     rkeys = require 'rkeys'
     hk = require 'lib.imcustom.hotkey'
     wm = require 'lib.windows.message'
