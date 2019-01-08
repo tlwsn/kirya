@@ -5799,22 +5799,24 @@ function smslog()
     sampShowDialog(97987, '{9966cc}FBI Tools {ffffff} | Лог SMS', table.concat(sms, '\n'), '»', 'x', 0)
 end
 function ticket(pam)
-    local id, summa, reason = pam:match('(%d+) (%d+) (.+)')
-    if id and summa and reason and cfg.commands.ticket then
-        if cfg.commands.ticket then
-            sampSendChat(string.format("/me %s бланк и ручку", cfg.main.male and 'достал' or 'достала'))
-            wait(cfg.commands.zaderjka)
-            sampSendChat("/do Бланк и ручка в руках.")
-            wait(cfg.commands.zaderjka)
-            sampSendChat("/me начинает заполнять бланк")
-            wait(cfg.commands.zaderjka)
-            sampSendChat("/do Бланк заполнен.")
-            wait(cfg.commands.zaderjka)
-            sampSendChat(string.format("/me %s бланк нарушителю", cfg.main.male and 'передал' or 'передала'))
-            wait(1200)
+    lua_thread.create(function()
+        local id, summa, reason = pam:match('(%d+) (%d+) (.+)')
+        if id and summa and reason then
+            if cfg.commands.ticket then
+                sampSendChat(string.format("/me %s бланк и ручку", cfg.main.male and 'достал' or 'достала'))
+                wait(cfg.commands.zaderjka)
+                sampSendChat("/do Бланк и ручка в руках.")
+                wait(cfg.commands.zaderjka)
+                sampSendChat("/me начинает заполнять бланк")
+                wait(cfg.commands.zaderjka)
+                sampSendChat("/do Бланк заполнен.")
+                wait(cfg.commands.zaderjka)
+                sampSendChat(string.format("/me %s бланк нарушителю", cfg.main.male and 'передал' or 'передала'))
+                wait(1200)
+            end
+            sampSendChat(string.format('/ticket %s %s %s', id, summa, reason))
+        else
+            ftext('Введите: /ticket [id] [сумма] [причина]')
         end
-        sampSendChat(string.format('/ticket %s %s %s', id, summa, reason))
-    else
-        ftext('Введите: /ticket [id] [сумма] [причина]')
-    end
+    end)
 end
