@@ -3764,7 +3764,7 @@ function sp.onServerMessage(color, text)
     end
 end
 function sp.onShowDialog(id, style, title, button1, button2, text)
-    if id == 1 and cfg.main.parolb then
+    if id == 1 and cfg.main.parolb and #cfg.main.parolb >= 6 then
         sampSendDialogResponse(id, 1, _, cfg.main.parol)
         return false
     end
