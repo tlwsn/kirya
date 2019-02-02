@@ -1628,9 +1628,9 @@ function oopdakey()
             else
                 sampSendChat(string.format('/d Mayor, дело на имя %s рассмотрению не подлежит, ООП КПЗ LSPD.', nikk:gsub('_', ' ')))
                 dmoop = false
+                nazhaloop = true
             end
         end
-        nazhaloop = true
     end
     if aroop then
         if frak == 'FBI' or frak == 'LSPD' or frak == 'SFPD' or frak == 'LVPD' then
@@ -1648,9 +1648,9 @@ function oopdakey()
                 sampSendChat(string.format("/d Mayor, дело на имя %s рассмотрению не подлежит, ООП.", nikk:gsub('_', ' ')))
                 aroop = false
                 nikk = false
+                nazhaloop = true
             end
         end
-        nazhaloop = true
     end
 end
 function oopnetkey()
