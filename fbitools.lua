@@ -1,5 +1,5 @@
 script_name('FBI Tools')
-script_version('2.1')
+script_version('2.2')
 script_author('Sesh Jefferson and Thomas Lawson') -- код биндера от DonHomka
 require 'lib.moonloader'
 require 'lib.sampfuncs'
@@ -16,6 +16,7 @@ u8 = encoding.UTF8
 ------------
 --GLOBALS--
 ctag = " FBI Tools {ffffff}|"
+oopdelnick = 'none'
 mcheckb = false
 rabden = false
 frak = nil
@@ -25,17 +26,25 @@ warnst = false
 changetextpos = false
 opyatstat = false
 gmegafhandle = nil
-gmegafid = nil
+gmegafid = -1
 gmegaflvl = nil
 gmegaffrak = nil
+gmegafcar = nil
+targetid = -1
+smsid = -1
+smstoid = -1
 nikk = nil
 ttt = nil
+vixodid = {}
+ooplistt = {}
 tLastKeys = {}
 departament = {}
 radio = {}
 sms = {}
 wanted = {}
+suz = {}
 show = 1
+zid = nil
 local config_keys = {
     oopda = { v = {key.VK_F12}}, 
     oopnet = { v = {key.VK_F11}},
@@ -49,8 +58,58 @@ local config_keys = {
     cejectkey = { v = {}},
     takekey = { v = {}},
     arrestkey = { v = {}},
-    uncuffkey = { v = {}}
+    uncuffkey = { v = {}},
+    dejectkey = { v = {}},
+    sirenkey = { v = {}}
 }
+local sut = [[
+Нанесение телесных повреждений - 2 года
+Вооруженное нападение на гражданских - 3 года
+Вооруженное нападение на гос - 6 лет, запрет на адвоката
+Хулиганство - 1 год
+Неадекватное поведение - 1 год
+Попрошайничество - 1 год
+Оскорбление - 2 года
+Угон транспортного средства - 2 года
+Неподчинение сотрудникам ПО - 1 год
+Уход от сотрудников ПО - 2 года
+Побег с места заключения - 6 лет
+Ношение оружия без лицензии - 1 год и штраф в размере 2000$.
+Изготовление нелегального оружия - 3 года и изъятие
+Приобретение нелегального оружия - 3 года и изъятие
+Продажа нелегального оружия - 3 года и изъятие
+Хранение наркотиков - 3 года и изъятие
+Хранение материалов - 3 года и изъятие
+Употребление наркотиков - 3 года и изъятие
+Порча чужого имущества - 1 год и штраф в размере 5000$
+Уничтожение чужого имущества - 4 года и штраф в размере 15000$
+Проникновение на охр. территорию - 2 года
+Проникновение на част. территорию - 1 год
+Вымогательство - 2 года
+Угрозы - 1 год
+Провокации - 2 года
+Мошенничество - 2 года
+Предложение интимных услуг - 1 год
+Изнасилование гражданина - 3 год
+Укрывательство преступлений - 2 года
+Использование фальшивых документов - 1 год
+Клевета на гос. лицо - 1 год
+Клевета на гос. организации - 2 года
+Ношение военной формы - 2 года, форма подлежит изъятию.
+Покупка ключей от камеры - 6 лет
+Предложение взятки - 2 года
+Совершение теракта - 6 лет, лишение всех лицензий
+Неуплата штрафа - 2 года
+Игнорирование спец. сирен - 1 год
+Превышение полномочий адвоката - 3 года
+Похищение гос. сотрудника - 4 года
+Чистосердечное признание - 1 год
+Наезд на пешехода - 2 года
+Уход с места ДТП - 3 года
+Ограбление - 3 года
+ООП - 6 лет
+Уход - 6 лет
+]]
 
 local shpt = [[
 Пока что вы не настроили шпору.
@@ -1075,11 +1134,11 @@ function goupdate()
     ftext('Началось скачивание обновления. Скрипт перезагрузится через пару секунд.', -1)
     wait(300)
     downloadUrlToFile(updatelink, thisScript().path, function(id3, status1, p13, p23)
-    if status1 == dlstatus.STATUS_ENDDOWNLOADDATA then
-        showCursor(false)
-	    thisScript():reload()
-    end
-end)
+        if status1 == dlstatus.STATUS_ENDDOWNLOADDATA then
+            showCursor(false)
+            thisScript():reload()
+        end
+    end)
 end
 function getNameSphere(id)
     local names =
@@ -1157,6 +1216,24 @@ function ykf()
         file = nil
     end
 end
+function suf()
+    if not doesFileExist('moonloader/fbitools/su.txt') then
+        local file = io.open('moonloader/fbitools/su.txt', 'w')
+        file:write(sut)
+        file:close()
+        file = nil
+    end
+end
+function sampGetPlayerNicknameForBinder(nikkid)
+    local nick = '-1'
+    local nickid = tonumber(nikkid)
+    if nickid ~= nil then
+        if sampIsPlayerConnected(nickid) then
+            nick = sampGetPlayerNickname(nickid)
+        end
+    end
+    return nick
+end
 function getClosestPlayerId()
     local minDist = 9999
     local closestId = -1
@@ -1184,13 +1261,38 @@ function getClosestPlayerIDinCar()
         if streamed then
             local xi, yi, zi = getCharCoordinates(pedID)
             local dist = math.sqrt( (xi - x) ^ 2 + (yi - y) ^ 2 + (zi - z) ^ 2 )
-            if dist < minDist and getFraktionBySkin(i) ~= 'Полиция' and getFraktionBySkin(i) ~= 'FBI' and isCharInAnyCar(pedID) and storeCarCharIsInNoSave(pedID) == veh then
+            if dist < minDist and getFraktionBySkin(i) ~= 'Полиция' and getFraktionBySkin(i) ~= 'FBI' and isCharInAnyCar(pedID) then
+                if storeCarCharIsInNoSave(pedID) == veh then
+                    minDist = dist
+                    closestId = i
+                end
+            end
+        end
+    end
+    return closestId
+end
+function getClosestPlayerIDinCarD()
+    local minDist = 9999
+    local closestId = -1
+    local x, y, z = getCharCoordinates(PLAYER_PED)
+    for i = 0, 999 do
+        local streamed, pedID = sampGetCharHandleBySampPlayerId(i)
+        if streamed then
+            local xi, yi, zi = getCharCoordinates(pedID)
+            local dist = math.sqrt( (xi - x) ^ 2 + (yi - y) ^ 2 + (zi - z) ^ 2 )
+            if dist < minDist and getFraktionBySkin(i) ~= 'Полиция' and getFraktionBySkin(i) ~= 'FBI' and isCharInAnyCar(pedID) then
                 minDist = dist
                 closestId = i
             end
         end
     end
     return closestId
+end
+function sirenk()
+    if isCharInAnyCar(PLAYER_PED) then
+        local car = storeCarCharIsInNoSave(PLAYER_PED)
+        switchCarSiren(car, not isCarSirenOn(car))
+    end
 end
 function cuffk()
     local valid, ped = getCharPlayerIsTargeting(PLAYER_HANDLE)
@@ -1226,31 +1328,33 @@ end
 function uncuffk()
     local valid, ped = getCharPlayerIsTargeting(PLAYER_HANDLE)
     if valid then
-        result, targetid = sampGetPlayerIdByCharHandle(ped)
+        local result, targetid = sampGetPlayerIdByCharHandle(ped)
         if result then
             lua_thread.create(function()
                 sampSendChat(string.format('/me %s наручники с преступника', cfg.main.male and 'снял' or 'сняла'))
                 wait(1200)
                 sampSendChat('/uncuff '..targetid)
                 gmegafhandle = nil
-                gmegafid = nil
+                gmegafid = -1
                 gmegaflvl = nil
                 gmegaffrak = nil
             end)
         end
     else
         local closeid = getClosestPlayerId()
-        local result, closehandle = sampGetCharHandleBySampPlayerId(closeid)
-        if closeid ~= -1 and doesCharExist(closehandle) then
-            lua_thread.create(function()
-                sampSendChat(string.format('/me %s наручники с преступника', cfg.main.male and 'снял' or 'сняла'))
-                wait(1200)
-                sampSendChat('/uncuff '..closeid)
-                gmegafhandle = nil
-                gmegafid = nil
-                gmegaflvl = nil
-                gmegaffrak = nil
-            end)
+        if sampIsPlayerConnected(closeid) then
+            local result, closehandle = sampGetCharHandleBySampPlayerId(closeid)
+            if closeid ~= -1 and doesCharExist(closehandle) then
+                lua_thread.create(function()
+                    sampSendChat(string.format('/me %s наручники с преступника', cfg.main.male and 'снял' or 'сняла'))
+                    wait(1200)
+                    sampSendChat('/uncuff '..closeid)
+                    gmegafhandle = nil
+                    gmegafid = -1
+                    gmegaflvl = nil
+                    gmegaffrak = nil
+                end)
+            end
         end
     end
 end
@@ -1319,24 +1423,26 @@ function cputk()
     end
 end
 function cejectk()
-    local closestId = getClosestPlayerIDinCar()
-    local result, closehandle = sampGetCharHandleBySampPlayerId(closestId)
-    if closestId ~= -1 and doesCharExist(closehandle) then
-        lua_thread.create(function()
-            if isCharOnAnyBike(PLAYER_PED) then
-                sampSendChat(string.format("/me %s преступника с мотоцикла", cfg.main.male and 'высадил' or 'высадила'))
-                wait(1200)
-                sampSendChat("/ceject "..closestId, -1)
-            else
-                sampSendChat(string.format("/me %s дверь автомобиля и %s преступника", cfg.main.male and 'открыл' or 'открыл', cfg.main.male and 'высадил' or 'высадила'))
-                wait(1200)
-                sampSendChat("/ceject "..closestId)
-            end
-            gmegafhandle = closehandle
-            gmegafid = closestId
-            gmegaflvl = sampGetPlayerScore(closestId)
-            gmegaffrak = getFraktionBySkin(closestId)
-        end)
+    if isCharInAnyCar(PLAYER_PED) then
+        local closestId = getClosestPlayerIDinCar()
+        if closestId ~= -1 then
+            local result, closehandle = sampGetCharHandleBySampPlayerId(closestId)
+            lua_thread.create(function()
+                if isCharOnAnyBike(PLAYER_PED) then
+                    sampSendChat(string.format("/me %s преступника с мотоцикла", cfg.main.male and 'высадил' or 'высадила'))
+                    wait(1200)
+                    sampSendChat("/ceject "..closestId, -1)
+                else
+                    sampSendChat(string.format("/me %s дверь автомобиля и %s преступника", cfg.main.male and 'открыл' or 'открыл', cfg.main.male and 'высадил' or 'высадила'))
+                    wait(1200)
+                    sampSendChat("/ceject "..closestId)
+                end
+                gmegafhandle = closehandle
+                gmegafid = closestId
+                gmegaflvl = sampGetPlayerScore(closestId)
+                gmegaffrak = getFraktionBySkin(closestId)
+            end)
+        end
     end
 end
 function takek()
@@ -1384,7 +1490,7 @@ function arrestk()
                 wait(cfg.commands.zaderjka)
                 sampSendChat(string.format('/me %s камеру', cfg.main.male and 'закрыл' or 'закрыла'))
                 gmegafhandle = nil
-                gmegafid = nil
+                gmegafid = -1
                 gmegaflvl = nil
                 gmegaffrak = nil
             end)
@@ -1402,9 +1508,40 @@ function arrestk()
                 wait(cfg.commands.zaderjka)
                 sampSendChat(string.format('/me %s камеру', cfg.main.male and 'закрыл' or 'закрыла'))
                 gmegafhandle = nil
-                gmegafid = nil
+                gmegafid = -1
                 gmegaflvl = nil
                 gmegaffrak = nil
+            end)
+        end
+    end
+end
+function dejectk()
+    local closestId = getClosestPlayerIDinCarD()
+    if closestId ~= -1 then
+        local result, closehandle = sampGetCharHandleBySampPlayerId(closestId)
+        if result then
+            lua_thread.create(function()
+                if isCharInFlyingVehicle(closehandle) then
+                    sampSendChat(string.format("/me %s дверь вертолёта и %s преступника", cfg.main.male and 'открыл' or 'открыла', cfg.main.male and 'вытащил' or 'вытащила'))
+                    wait(1200)
+                    sampSendChat("/deject "..closestId)
+                elseif isCharInModel(closehandle, 481) or isCharInModel(closehandle, 510) then
+                    sampSendChat(string.format("/me скинул преступника с велосипеда", cfg.main.male and 'скинул' or 'скинула'))
+                    wait(1200)
+                    sampSendChat("/deject "..closestId)
+                elseif isCharInModel(closehandle, 462) then
+                    sampSendChat(string.format("/me %s преступника со скутера", cfg.main.male and 'скинул' or 'скинула'))
+                    wait(1200)
+                    sampSendChat("/deject "..closestId)
+                elseif isCharOnAnyBike(closehandle) then
+                    sampSendChat(string.format("/me %s преступника с мотоцикла", cfg.main.male and 'скинул' or 'скинула'))
+                    wait(1200)
+                    sampSendChat("/deject "..closestId)
+                elseif isCharInAnyCar(closehandle) then
+                    sampSendChat(string.format("/me %s окно и %s преступника из машины", cfg.main.male and 'разбил' or 'разбила', cfg.main.male and 'вытолкнул' or 'вытолкнула'))
+                    wait(1200)
+                    sampSendChat("/deject "..closestId)
+                end
             end)
         end
     end
@@ -1427,36 +1564,33 @@ function oopchat()
     end
     if scolor == 4287467007 then
         if rang ~= 'Кадет' and rang ~= 'Офицер' and rang ~= 'Мл.Сержант' and  rang ~= 'Сержант' and  rang ~= 'Прапорщик' then
-            if stext:find('Дело .+ рассмотрению не подлежит %- ООП.') then
-                local name = stext:match('Дело (.+) рассмотрению не подлежит %- ООП.')
-                zaproop = true
-                nikk = name
-                if nikk ~= nil then
-                    wait(50)
-                    ftext(string.format("Поступил запрос на объявление ООП игрока {9966cc}%s", nikk:gsub('_', ' ')), -1)
-                    ftext('Подтвердить: {9966cc}'..table.concat(rkeys.getKeysName(config_keys.oopda.v), " + ")..'{ffffff} | Отменить: {9966cc}'..table.concat(rkeys.getKeysName(config_keys.oopnet.v), " + "), -1)
-                else
-                    zaproop = false
-                end
-            end
             if stext:find('Дело на имя .+ %(%d+%) рассмотрению не подлежит, ООП, объявите.') then
                 local name, id = stext:match('Дело на имя (.+) %((%d+)%) рассмотрению не подлежит, ООП, объявите.')
                 zaproop = true
                 nikk = name
                 if nikk ~= nil then
-                    wait(50)
                     ftext(string.format("Поступил запрос на объявление ООП игрока {9966cc}%s", nikk:gsub('_', ' ')), -1)
                     ftext('Подтвердить: {9966cc}'..table.concat(rkeys.getKeysName(config_keys.oopda.v), " + ")..'{ffffff} | Отменить: {9966cc}'..table.concat(rkeys.getKeysName(config_keys.oopnet.v), " + "), -1)
                 else
                     zaproop = false
                 end
             end
-            if stext:find('Дело №%d+ на имя .+ рассмотрению не подлежит, ООП, объявите.') then
-                local id, name = stext:match('Дело №(%d+) на имя (.+) рассмотрению не подлежит, ООП, объявите.')
+            if stext:match('Дело .+ рассмотрению не подлежит %- ООП.') then
+                local name = stext:match('Дело (.+) рассмотрению не подлежит %- ООП.')
                 zaproop = true
                 nikk = name
                 if nikk ~= nil then
-                    wait(50)
+                    ftext(string.format("Поступил запрос на объявление ООП игрока {9966cc}%s", nikk:gsub('_', ' ')), -1)
+                    ftext('Подтвердить: {9966cc}'..table.concat(rkeys.getKeysName(config_keys.oopda.v), " + ")..'{ffffff} | Отменить: {9966cc}'..table.concat(rkeys.getKeysName(config_keys.oopnet.v), " + "), -1)
+                else
+                    zaproop = false
+                end
+            end
+            if stext:match('Дело на имя .+ рассмотрению не подлежит, ООП.') then
+                local name = stext:match('Дело на имя (.+) рассмотрению не подлежит, ООП.')
+                zaproop = true
+                nikk = name
+                if nikk ~= nil then
                     ftext(string.format("Поступил запрос на объявление ООП игрока {9966cc}%s", nikk:gsub('_', ' ')), -1)
                     ftext('Подтвердить: {9966cc}'..table.concat(rkeys.getKeysName(config_keys.oopda.v), " + ")..'{ffffff} | Отменить: {9966cc}'..table.concat(rkeys.getKeysName(config_keys.oopnet.v), " + "), -1)
                 else
@@ -1478,37 +1612,35 @@ function oopdakey()
     end
     if zaproop then
         sampSendChat(string.format('/d Mayor, дело на имя %s рассмотрению не подлежит, ООП', nikk:gsub('_', ' ')))
-        nikk = nil
         zaproop = false
+        nazhaloop = true
     end
     if dmoop then
         if frak == 'FBI' or frak == 'LSPD' or frak == 'SFPD' or frak == 'LVPD' then
             if rang == 'Кадет' or rang == 'Офицер' or rang == 'Мл.Сержант' or  rang == 'Сержант' or  rang == 'Прапорщик' then
                 if not cfg.main.tarb then
-                    sampSendChat(string.format('/r Дело на имя %s рассмотрению не подлежит, ООП, объявите.', nikk:gsub('_', ' ')))
+                    sampSendChat(string.format('/r Дело на имя %s рассмотрению не подлежит, ООП.', nikk:gsub('_', ' ')))
                     dmoop = false
-                    nikk = false
                 else
-                    sampSendChat(string.format('/r [%s]: Дело на имя %s рассмотрению не подлежит, ООП, объявите.', cfg.main.tar, nikk:gsub('_', ' ')))
+                    sampSendChat(string.format('/r [%s]: Дело на имя %s рассмотрению не подлежит, ООП.', cfg.main.tar, nikk:gsub('_', ' ')))
                     dmoop = false
-                    nikk = false
                 end
             else
                 sampSendChat(string.format('/d Mayor, дело на имя %s рассмотрению не подлежит, ООП КПЗ LSPD.', nikk:gsub('_', ' ')))
                 dmoop = false
-                nikk = false
             end
         end
+        nazhaloop = true
     end
     if aroop then
         if frak == 'FBI' or frak == 'LSPD' or frak == 'SFPD' or frak == 'LVPD' then
             if rang == 'Кадет' or rang == 'Офицер' or rang == 'Мл.Сержант' or  rang == 'Сержант' or  rang == 'Прапорщик' then
                 if not cfg.main.tarb then
-                    sampSendChat(string.format('/r Дело на имя %s рассмотрению не подлежит, ООП, объявите.', nikk:gsub('_', ' ')))
+                    sampSendChat(string.format('/r Дело на имя %s рассмотрению не подлежит, ООП.', nikk:gsub('_', ' ')))
                     aroop = false
                     nikk = false
                 else
-                    sampSendChat(string.format('/r [%s]: Дело на имя %s рассмотрению не подлежит, ООП, объявите.', cfg.main.tar, nikk:gsub('_', ' ')))
+                    sampSendChat(string.format('/r [%s]: Дело на имя %s рассмотрению не подлежит, ООП.', cfg.main.tar, nikk:gsub('_', ' ')))
                     aroop = false
                     nikk = false
                 end
@@ -1518,6 +1650,7 @@ function oopdakey()
                 nikk = false
             end
         end
+        nazhaloop = true
     end
 end
 function oopnetkey()
@@ -2048,6 +2181,9 @@ function pkmmenu(id)
     }
 end
 function commands()
+    sampRegisterChatCommand('fnr', fnr)
+    sampRegisterChatCommand('fkv', fkv)
+    sampRegisterChatCommand('ooplist', ooplist)
     sampRegisterChatCommand('ticket', ticket)
     sampRegisterChatCommand('dlog', dlog)
     sampRegisterChatCommand('rlog', rlog)
@@ -2073,6 +2209,7 @@ function commands()
     sampRegisterChatCommand('ar', ar)
     sampRegisterChatCommand('r', r)
     sampRegisterChatCommand('f', f)
+    sampRegisterChatCommand('rt', rt)
     sampRegisterChatCommand('fthelp', fthelp)
     sampRegisterChatCommand("fst", fst)
     sampRegisterChatCommand("fsw", fsw)
@@ -2088,6 +2225,7 @@ function commands()
     sampRegisterChatCommand('cc', cc)
     sampRegisterChatCommand('df', df)
     sampRegisterChatCommand('mcheck', mcheck)
+    sampRegisterChatCommand('z', ssuz)
     sampfuncsRegisterConsoleCommand('gppc', function() print(getCharCoordinates(PLAYER_PED)) end)
     sampRegisterChatCommand('yk', function() ykwindow.v = not ykwindow.v end)
     sampRegisterChatCommand('fp', function() fpwindow.v = not fpwindow.v end)
@@ -2650,6 +2788,59 @@ function getFraktionBySkin(playerid)
         return fraks[skin]
     end
 end
+function kvadrat1(param)
+    local KV = {
+        ["А"] = 1,
+        ["Б"] = 2,
+        ["В"] = 3,
+        ["Г"] = 4,
+        ["Д"] = 5,
+        ["Ж"] = 6,
+        ["З"] = 7,
+        ["И"] = 8,
+        ["К"] = 9,
+        ["Л"] = 10,
+        ["М"] = 11,
+        ["Н"] = 12,
+        ["О"] = 13,
+        ["П"] = 14,
+        ["Р"] = 15,
+        ["С"] = 16,
+        ["Т"] = 17,
+        ["У"] = 18,
+        ["Ф"] = 19,
+        ["Х"] = 20,
+        ["Ц"] = 21,
+        ["Ч"] = 22,
+        ["Ш"] = 23,
+        ["Я"] = 24,
+        ["а"] = 1,
+        ["б"] = 2,
+        ["в"] = 3,
+        ["г"] = 4,
+        ["д"] = 5,
+        ["ж"] = 6,
+        ["з"] = 7,
+        ["и"] = 8,
+        ["к"] = 9,
+        ["л"] = 10,
+        ["м"] = 11,
+        ["н"] = 12,
+        ["о"] = 13,
+        ["п"] = 14,
+        ["р"] = 15,
+        ["с"] = 16,
+        ["т"] = 17,
+        ["у"] = 18,
+        ["ф"] = 19,
+        ["х"] = 20,
+        ["ц"] = 21,
+        ["ч"] = 22,
+        ["ш"] = 23,
+        ["я"] = 24,
+    }
+    return KV[param]
+end
 function kvadrat()
     local KV = {
         [1] = "А",
@@ -3100,6 +3291,41 @@ local fthelpsub =
                             sampSetChatInputText('/smslog')
                             sampSetChatInputEnabled(true)
                         end
+                    },
+                    {
+                        title = '{9966cc}/z [id] [параметр(не опционально)]{ffffff} - Выдать розыск по загатовленым статьям',
+                        onclick = function()
+                            sampSetChatInputText('/z ')
+                            sampSetChatInputEnabled(true)
+                        end
+                    },
+                    {
+                        title = '{9966cc}/rt [текст] {ffffff} - Сообщение в рацию без тега',
+                        onclick = function()
+                            sampSetChatInputText('/rt ')
+                            sampSetChatInputEnabled(true)
+                        end
+                    },
+                    {
+                        title = '{9966cc}/ooplist [id(не опционально)]{ffffff} - Список ООП',
+                        onclick = function()
+                            sampSetChatInputText('/ooplist ')
+                            sampSetChatInputEnabled(true)
+                        end
+                    },
+                    {
+                        title = '{9966cc}/fkv [квадрат] {ffffff}- Поставить метку на квадрат на карте',
+                        onclick = function()
+                            sampSetChatInputText('/fkv ')
+                            sampSetChatInputEnabled(true)
+                        end
+                    },
+                    {
+                        title = '{9966cc}/fnr {ffffff}- Созвать сотрудников на работу',
+                        onclick = function()
+                            sampSetChatInputText('/fnr')
+                            sampSetChatInputEnabled(true)
+                        end
                     }
                 }
             }
@@ -3244,16 +3470,19 @@ if doesFileExist(fileb) then
 else
     tBindList = {
         [1] = {
-            text = "/time",
-            v = {key.VK_3}
+            text = "",
+            v = {},
+            time = 0
         },
         [2] = {
-            text = "/members",
-            v = {key.VK_4}
+            text = "",
+            v = {},
+            time = 0
         },
         [3] = {
-            text = "/patrul",
-            v = {key.VK_5}
+            text = "",
+            v = {},
+            time = 0
         }
     }
 end
@@ -3267,6 +3496,9 @@ function onScriptTerminate(scr)
 			f:write(encodeJson(tBindList))
 			f:close()
         end
+        if doesFileExist('moonloader/config/fbitools/keys.json') then
+            os.remove('moonloader/config/fbitools/keys.json')
+        end
         local fa = io.open("moonloader/config/fbitools/keys.json", "w")
         if fa then
             fa:write(encodeJson(config_keys))
@@ -3277,17 +3509,18 @@ end
 -------------
 --HOOKS--
 function sp.onPlayerQuit(id, reason)
-    if id == gmegafid then
+    if gmegafhandle ~= -1 and id == gmegafid then
         sampAddChatMessage(' {ffffff}~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~', 0x9966cc)
-		sampAddChatMessage('', 0x9966cc)
-		sampAddChatMessage(' {ffffff}Игрок: {9966cc}'..sampGetPlayerNickname(gmegafid)..'['..gmegafid..'] {ffffff}вышел из игры', 0x9966cc)
-		sampAddChatMessage(' {ffffff}Уровень: {9966cc}'..gmegaflvl, 0x9966cc)
-		sampAddChatMessage(' {ffffff}Фракция: {9966cc}'..gmegaffrak, 0x9966cc)
-		sampAddChatMessage('', 0x9966cc)
+        sampAddChatMessage('', 0x9966cc)
+        sampAddChatMessage(' {ffffff}Игрок: {9966cc}'..sampGetPlayerNickname(gmegafid)..'['..gmegafid..'] {ffffff}вышел из игры', 0x9966cc)
+        sampAddChatMessage(' {ffffff}Уровень: {9966cc}'..gmegaflvl, 0x9966cc)
+        sampAddChatMessage(' {ffffff}Фракция: {9966cc}'..gmegaffrak, 0x9966cc)
+        sampAddChatMessage('', 0x9966cc)
         sampAddChatMessage(' {ffffff}~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~', 0x9966cc)
-        gmegafid = nil
+        gmegafid = -1
         gmegaflvl = nil
         gmegaffrak = nil
+        gmegafhandle = nil
     end
 end
 function sp.onSendSpawn()
@@ -3300,6 +3533,38 @@ function sp.onSendSpawn()
     end
 end
 function sp.onServerMessage(color, text)
+    if nazhaloop then
+        if text:match('Посылать объявление можно раз в 10 секунд!') then
+            zaproop = true
+            ftext('Не удалось подать в ООП игрока {9966cc}'..nikk'{ffffff}. Повторить попытку?')
+            ftext('Подтвердить: {9966cc}'..table.concat(rkeys.getKeysName(config_keys.oopda.v), " + ")..'{ffffff} | Отменить: {9966cc}'..table.concat(rkeys.getKeysName(config_keys.oopnet.v), " + "))
+        end
+        if color == -8224086 and text:find(nikk) then
+            dmoop = false
+            nikk = nil
+            zaproop = false
+            aroop = false
+            nazhaloop = false
+            ftext("Рассмотр дела отменен.", -1)
+        end
+    end
+    if (text:match('дело на имя .+ рассмотрению не подлежит, ООП') or text:match('дело .+ рассмотрению не подлежит %- ООП.')) and color == -8224086 then
+        local ooptext = text:match('Mayor, (.+)')
+        table.insert(ooplistt, ooptext)
+    end
+    if text:find('{00AB06}Чтобы завести двигатель нажмите клавишу {FFFFFF}"2"{00AB06} или введите команду {FFFFFF}"/en"') then
+        if cfg.main.autocar then
+            lua_thread.create(function()
+                while not isCharInAnyCar(PLAYER_PED) do wait(0) end
+                if not isCarEngineOn(storeCarCharIsInNoSave(PLAYER_PED)) then
+                    while sampIsChatInputActive() or sampIsDialogActive() or isSampfuncsConsoleActive() do wait(0) end
+                    setVirtualKeyDown(key.VK_2, true)
+                    wait(150)
+                    setVirtualKeyDown(key.VK_2, false)
+                end
+            end)
+        end
+    end
     if color == -8224086 then
         local colors = ("{%06X}"):format(bit.rshift(color, 8))
         table.insert(departament, os.date(colors.."[%H:%M:%S] ") .. text)
@@ -3313,6 +3578,7 @@ function sp.onServerMessage(color, text)
         table.insert(wanted, os.date(colors.."[%H:%M:%S] ") .. text)
     end
     if color == -65366 and (text:match('SMS%: .+. Отправитель%: .+') or text:match('SMS%: .+. Получатель%: .+')) then
+        if text:match('SMS%: .+. Отправитель%: .+%[%d+%]') then smsid = text:match('SMS%: .+. Отправитель%: .+%[(%d+)%]') elseif text:match('SMS%: .+. Получатель%: .+%[%d+%]') then smstoid = text:match('SMS%: .+. Получатель%: .+%[(%d+)%]') end
         local colors = ("{%06X}"):format(bit.rshift(color, 8))
         table.insert(sms, os.date(colors.."[%H:%M:%S] ") .. text)
     end
@@ -3381,9 +3647,13 @@ function sp.onServerMessage(color, text)
     if status then
 		if text:match('ID: .+ | .+: .+ %- .+') and not fstatus then
 			gosmb = true
-			local id, nick, rang, stat = text:match('ID: (%d+) | (.+): (.+) %- (.+)')
-			local color = ("%06X"):format(bit.band(sampGetPlayerColor(id), 0xFFFFFF))
-			table.insert(players2, string.format('{'..color..'}%s[%s]{ffffff}\t%s\t%s', nick, id, rang, stat))
+			local id, nick, mrang, stat = text:match('ID: (%d+) | (.+): (.+) %- (.+)')
+            local color = ("%06X"):format(bit.band(sampGetPlayerColor(id), 0xFFFFFF))
+            local nmrang = mrang:match('.+%[(%d+)%]')
+            if stat:find('Выходной') and tonumber(nmrang) < 11 then
+                table.insert(vixodid, id)
+            end
+			table.insert(players2, string.format('{'..color..'}%s[%s]{ffffff}\t%s\t%s', nick, id, mrang, stat))
 			return false
 		end
 		if text:match('Всего: %d+ человек') then
@@ -3419,7 +3689,7 @@ function sp.onServerMessage(color, text)
         if cfg.main.clistb then
             lua_thread.create(function()
                 wait(100)
-                ftext(cfg.main.clist)
+                ftext('Цвет ника сменен на: {9966cc}'..cfg.main.clist)
                 sampSendChat('/clist '..tonumber(cfg.main.clist))
                 rabden = true
             end)
@@ -3502,7 +3772,6 @@ function sp.onShowDialog(id, style, title, button1, button2, text)
         frak = text:match('.+Организация%:%s+(.+)%s+Ранг')
         rang = text:match('.+Ранг%:%s+(.+)%s+Работа')
         sampCloseCurrentDialogWithButton(0)
-        print(text)
         print(frak)
         print(rang)
         checkstat = false
@@ -3539,7 +3808,9 @@ local fbitools =
     spzamen = false,
     clist = 0,
     offptrl = false,
-    offwntd = false
+    offwntd = false,
+    tchat = false,
+    autocar = false
   },
   commands =
   {
@@ -3548,7 +3819,8 @@ local fbitools =
     deject = true,
     ftazer = true,
     zaderjka = 1200,
-    ticket = true
+    ticket = true,
+    kmdctime = true
   }
 }
 local fthmenu = {
@@ -3575,22 +3847,19 @@ local fthmenu = {
         end
     }
 }
-megaftimer = nil
 ----------
 local libs = {'sphere.lua', 'rkeys.lua', 'imcustom/hotkey.lua', 'imgui.lua', 'MoonImGui.dll', 'imgui_addons.lua'}
 function main()
-    while not isSampAvailable() do wait(0) end
-    ftext('FBI Tools успешно загружен. Введите: /fthelp что бы получить дополнительную информацию.')
-    ftext('Авторы: Sesh Jefferson, Thomas Lawson')
     if not doesDirectoryExist('moonloader\\config') then createDirectory('moonloader\\config') end
     if not doesDirectoryExist('moonloader\\config\\fbitools') then createDirectory('moonloader\\config\\fbitools') end
     if not doesDirectoryExist('moonloader/fbitools') then createDirectory('moonloader/fbitools') end
     cfg = inicfg.load(fbitools, 'fbitools/config.ini')
     if not doesDirectoryExist('moonloader/lib/imcustom') then createDirectory('moonloader/lib/imcustom') end
+    if not doesFileExist('moonloader\\lib\\sphere.lua') or not doesFileExist('moonloader\\lib\\rkeys.lua') or not doesFileExist('moonloader\\lib\\imcustom\\hotkey.lua') or not doesFileExist('moonloader\\lib\\imgui.lua') or not doesFileExist('moonloader\\lib\\MoonImGui.dll') or not doesFileExist('moonloader\\lib\\imgui_addons.lua') then ftext('Начала загрузка отстутствующих бибилиотек.'); local nolibs = true end
     for k, v in pairs(libs) do
         if not doesFileExist('moonloader/lib/'..v) then
             downloadUrlToFile('https://raw.githubusercontent.com/WhackerH/kirya/master/lib/'..v, getWorkingDirectory()..'\\lib\\'..v)
-            print('Загружается библиотека '..v)
+            print('Начата загрузка библиотеки '..v)
         end
     end
     if not doesFileExist("moonloader/config/fbitools/keys.json") then
@@ -3609,10 +3878,29 @@ function main()
             if config_keys.takekey == nil then config_keys.takekey = { v = {}} end
             if config_keys.arrestkey == nil then config_keys.arrestkey = { v = {}} end
             if config_keys.uncuffkey == nil then config_keys.uncuffkey = { v = {}} end
+            if config_keys.dejectkey == nil then config_keys.dejectkey = { v = {}} end
+            if config_keys.sirenkey == nil then config_keys.sirenkey = { v= {}} end
         end
     end
+    local nolibs = false
+    while not isSampAvailable() do wait(0) end
+    ftext('FBI Tools успешно загружен. Введите: /fthelp что бы получить дополнительную информацию.')
+    ftext('Авторы: Sesh Jefferson, Thomas Lawson')
+    print(('Загружен скрипт %s v.%s'):format(thisScript().name, thisScript().version))
+    commands()
+    mcheckf()
+    shpf()
+    ykf()
+    akf()
+    fpf()
+    suf()
+    wait(1000)
+    nizfont = renderCreateFont('Ariel', 10, 9)
     while not sampIsLocalPlayerSpawned() do wait(0) end
     while not doesFileExist('moonloader\\lib\\sphere.lua') or not doesFileExist('moonloader\\lib\\rkeys.lua') or not doesFileExist('moonloader\\lib\\imcustom\\hotkey.lua') or not doesFileExist('moonloader\\lib\\imgui.lua') or not doesFileExist('moonloader\\lib\\MoonImGui.dll') or not doesFileExist('moonloader\\lib\\imgui_addons.lua') do wait(0) end
+    if nolibs then ftext('Проверка и закачка библиотек окончена.'); local nolibs = false end
+    --[[local memory = require 'memory'
+    memory.fill(sampGetBase() + 713F2, 0x90, 5, true)]]
     rkeys = require 'rkeys'
     hk = require 'lib.imcustom.hotkey'
     wm = require 'lib.windows.message'
@@ -3628,23 +3916,12 @@ function main()
     pozivn = imgui.ImBool(false)
     updwindows = imgui.ImBool(false)
     bMainWindow = imgui.ImBool(false)
+    bindkey = imgui.ImBool(false)
     sInputEdit = imgui.ImBuffer(256)
     bIsEnterEdit = imgui.ImBool(false)
     imgui.HotKey = require('imgui_addons').HotKey
+    imgui.ToggleButton = require('imgui_addons').ToggleButton
     apply_custom_style()
-    addEventHandler("onWindowMessage", function (msg, wparam, lparam)
-        if msg == wm.WM_KEYDOWN or msg == wm.WM_SYSKEYDOWN then
-            if tEditData.id > -1 then
-                if wparam == key.VK_ESCAPE then
-                    tEditData.id = -1
-                    consumeWindowMessage(true, true)
-                elseif wparam == key.VK_TAB then
-                    bIsEnterEdit.v = not bIsEnterEdit.v
-                    consumeWindowMessage(true, true)
-                end
-            end
-        end
-    end)
     Sphere.createSphere(-1984.6375732422, 106.85540008545, 27.42943572998, 50.0)-- -1984.6375732422 106.85540008545 27.42943572998 -- АВСФ [1]
     Sphere.createSphere(-2055.283203125, -84.472702026367, 35.064281463623, 50.0)-- -2055.283203125 -84.472702026367 35.064281463623 -- АШ [2]
     Sphere.createSphere(-1521.4412841797, 503.20678710938, 6.7215604782104, 40.0)-- -1521.4412841797 503.20678710938 6.7215604782104 -- СФа [3]
@@ -3679,15 +3956,9 @@ function main()
     Sphere.createSphere(2238.6533203125,   2449.4895019531,   11.037217140198, 10.0) -- 2238.6533203125   2449.4895019531   11.037217140198 -- КПП ЛВПД [32]
     Sphere.createSphere(2458.4575195313,   1340.5772705078,   10.9765625, 30) -- 2458.4575195313   1340.5772705078   10.9765625 -- LVPD D [33]
     Sphere.createSphere(373.66720581055,   173.75173950195,   1008.3893432617, 30) -- 373.66720581055,   173.75173950195,   1008.3893432617 -- Холл мэрии [34]
-    commands()
-    mcheckf()
-    shpf()
-    ykf()
-    akf()
-    fpf()
-    wait(1000)
-	for k, v in pairs(tBindList) do
-		rkeys.registerHotKey(v.v, true, onHotKey)
+    for k, v in pairs(tBindList) do
+        rkeys.registerHotKey(v.v, true, onHotKey)
+        if v.time == nil then v.time = 0 end
     end
     tazerbind = rkeys.registerHotKey(config_keys.tazerkey.v, true, function() sampSendChat('/tazer') end)
     fastmenubind = rkeys.registerHotKey(config_keys.fastmenukey.v, true, function() lua_thread.create(function() submenus_show(fthmenu, '{9966cc}FBI Tools') end) end)
@@ -3702,7 +3973,21 @@ function main()
     takebind = rkeys.registerHotKey(config_keys.takekey.v, true, takek)
     arrestbind = rkeys.registerHotKey(config_keys.arrestkey.v, true, arrestk)
     uncuffbind = rkeys.registerHotKey(config_keys.uncuffkey.v, true, uncuffk)
-    nizfont = renderCreateFont('Ariel', 10, 9)
+    dejectbind = rkeys.registerHotKey(config_keys.dejectkey.v, true, dejectk)
+    sirenbind = rkeys.registerHotKey(config_keys.sirenkey.v, true, sirenk)
+    addEventHandler("onWindowMessage", function (msg, wparam, lparam)
+        if msg == wm.WM_KEYDOWN or msg == wm.WM_SYSKEYDOWN then
+            if tEditData.id > -1 then
+                if wparam == key.VK_ESCAPE then
+                    tEditData.id = -1
+                    consumeWindowMessage(true, true)
+                elseif wparam == key.VK_TAB then
+                    bIsEnterEdit.v = not bIsEnterEdit.v
+                    consumeWindowMessage(true, true)
+                end
+            end
+        end
+    end)
     if not sampIsDialogActive() then
         checkStats()
     else
@@ -3717,6 +4002,18 @@ function main()
         if #sms > 25 then table.remove(sms, 1) end
         infbar = imgui.ImBool(cfg.main.hud)
         imgui.Process = mainwin.v or infbar.v or shpwindow.v or ykwindow.v or fpwindow.v or akwindow.v
+        if sampIsDialogActive() == false and not isPauseMenuActive() and isPlayerPlaying(playerHandle) and sampIsChatInputActive() == false then
+            if coordX ~= nil and coordY ~= nil then
+                cX, cY, cZ = getCharCoordinates(playerPed)
+                cX = math.ceil(cX)
+                cY = math.ceil(cY)
+                cZ = math.ceil(cZ)
+                ftext('Метка установлена на '..kvadY..'-'..kvadX)
+                placeWaypoint(coordX, coordY, 0)
+                coordX = nil
+                coordY = nil
+            end
+        end
         function imgui.CentrText(text)
             local width = imgui.GetWindowWidth()
             local calc = imgui.CalcTextSize(text)
@@ -3736,6 +4033,7 @@ function main()
         function imgui.OnDrawFrame()
             if infbar.v then
                 imgui.ShowCursor = false
+                imgui.DisableInput = true
                 _, myid = sampGetPlayerIdByCharHandle(PLAYER_PED)
                 local myname = sampGetPlayerNickname(myid)
                 local myping = sampGetPlayerPing(myid)
@@ -3781,16 +4079,38 @@ function main()
                 end
                 imgui.End()
             end
+            if bindkey.v then
+                local iScreenWidth, iScreenHeight = getScreenResolution()
+                imgui.SetNextWindowPos(imgui.ImVec2(iScreenWidth / 2, iScreenHeight / 2), imgui.Cond.FirstUseEver, imgui.ImVec2(7, 3))
+                imgui.Begin(u8 '', bindkey, imgui.WindowFlags.NoResize, imgui.WindowFlags.NoCollapse)
+                imgui.Text(u8 'Используйте ключи биндера для более удобного использования биндера')
+                imgui.Text(u8 'Пример: /su {targetid} 6 Вооруженное нападение на ПО')
+                imgui.Separator()
+                imgui.Text(u8 '{myid} - ID вашего персонажа')
+                imgui.Text(u8 '{myrpnick} - РП ник вашего персонажа')
+                imgui.Text(u8 '{naparnik} - Ваши напарники')
+                imgui.Text(u8 '{kv} - Ваш текущий квадрат')
+                imgui.Text(u8 '{targetid} - ID игрока на которого вы целитесь')
+                imgui.Text(u8 '{targetrpnick} - РП ник игрока на которого вы целитесь')
+                imgui.Text(u8 '{smsid} - Последний ID того, кто вам написал в SMS')
+                imgui.Text(u8 '{smstoid} - Последний ID того, кому вы написали в SMS')
+                imgui.Text(u8 '{megafid} - ID игрока, за которым была начата погоня')
+                imgui.Text(u8 '{rang} - Ваше звание')
+                imgui.Text(u8 '{frak} - Ваша фракция')
+                imgui.Text(u8 '{f6} - Отправить сообщение в чат через эмуляцию чата (использовать в самом начале)')
+                imgui.End()
+            end
             if bMainWindow.v then
                 imgui.LockPlayer = true
                 imgui.ShowCursor = true
+                imgui.DisableInput = false
                 local iScreenWidth, iScreenHeight = getScreenResolution()
                 imgui.SetNextWindowPos(imgui.ImVec2(iScreenWidth / 2, iScreenHeight / 2), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
-                imgui.SetNextWindowSize(imgui.ImVec2(800, 525), imgui.Cond.FirstUseEver)
+                imgui.SetNextWindowSize(imgui.ImVec2(1000, 525), imgui.Cond.FirstUseEver)
                 imgui.Begin(u8("FBI Tools | Биндер##main"), bMainWindow, imgui.WindowFlags.NoCollapse + imgui.WindowFlags.NoResize)
                 imgui.Text(u8'Для корректной работы биндера рекомендуется перезагрузить скрипт после изменения настроек биндера.')
                 imgui.Separator()
-                imgui.BeginChild("##bindlist", imgui.ImVec2(795, 442))
+                imgui.BeginChild("##bindlist", imgui.ImVec2(995, 442))
                 for k, v in ipairs(tBindList) do
                     if hk.HotKey("##HK" .. k, v, tLastKeys, 100) then
                         if not rkeys.isHotKeyDefined(v.v) then
@@ -3818,13 +4138,18 @@ function main()
                             tEditData.inputActve = true
                         end
                     else
+                        local btimeb = imgui.ImInt(v.time)
                         imgui.PushAllowKeyboardFocus(false)
                         imgui.PushItemWidth(500)
-                        local save = imgui.InputText(k.."##Edit" .. k, sInputEdit, imgui.InputTextFlags.EnterReturnsTrue)
+                        local save = imgui.InputText("##Edit" .. k, sInputEdit, imgui.InputTextFlags.EnterReturnsTrue)
                         imgui.PopItemWidth()
                         imgui.PopAllowKeyboardFocus()
                         imgui.SameLine()
                         imgui.Checkbox(u8("Ввод") .. "##editCH" .. k, bIsEnterEdit)
+                        imgui.SameLine()
+                        imgui.PushItemWidth(50)
+                        if imgui.InputInt(u8'Задержка', btimeb, 0) then v.time = btimeb.v end
+                        imgui.PopItemWidth()
                         if save then
                             tBindList[tEditData.id].text = u8:decode(sInputEdit.v) .. (bIsEnterEdit.v and "[enter]" or "")
                             tEditData.id = -1
@@ -3838,15 +4163,22 @@ function main()
                 imgui.EndChild()
                 imgui.Separator()
                 if imgui.Button(u8"Добавить клавишу") then
-                    tBindList[#tBindList + 1] = {text = "", v = {}}
+                    tBindList[#tBindList + 1] = {text = "", v = {}, time = 0}
                 end
-            imgui.End()
+                imgui.SameLine()
+                if imgui.Button(u8 'Ключи') then
+                    bindkey.v = not bindkey.v
+                end
+                imgui.End()
             end
             if setwindows.v then
+                imgui.DisableInput = false
                 local cput =  imgui.ImBool(cfg.commands.cput)
                 local ceject = imgui.ImBool(cfg.commands.ceject)
                 local ftazer = imgui.ImBool(cfg.commands.ftazer)
                 local deject = imgui.ImBool(cfg.commands.deject)
+                local kmdcb = imgui.ImBool(cfg.commands.kmdctime)
+                local carb = imgui.ImBool(cfg.main.autocar)
                 local stateb = imgui.ImBool(cfg.main.male)
                 local tagf = imgui.ImBuffer(u8(cfg.main.tar), 256)
                 local parolf = imgui.ImBuffer(u8(cfg.main.parol), 256)
@@ -3860,78 +4192,47 @@ function main()
                 local offptrlb = imgui.ImBool(cfg.main.offptrl)
                 local offwntdb = imgui.ImBool(cfg.main.offwntd)
                 local ticketb = imgui.ImBool(cfg.commands.ticket)
+                local tchatb = imgui.ImBool(cfg.main.tchat)
                 local iScreenWidth, iScreenHeight = getScreenResolution()
                 imgui.SetNextWindowPos(imgui.ImVec2(iScreenWidth / 2, iScreenHeight / 2), imgui.Cond.FirstUseEver, imgui.ImVec2(15,6))
                 imgui.Begin(u8'Настройки##1', setwindows)
                 imgui.BeginChild('##set', imgui.ImVec2(140, 400), true)
                 if imgui.Selectable(u8'Основные') then show = 1 end
                 if imgui.Selectable(u8'Команды') then show = 2 end
-                if imgui.Selectable(u8'Клавиши') then show = 4 end
-                if parolb.v then
-                    if imgui.Selectable(u8'Авто логин') then show = 3 end
-                end
+                if imgui.Selectable(u8'Клавиши') then show = 3 end
                 imgui.EndChild()
                 imgui.SameLine()
                 imgui.BeginChild('##set1', imgui.ImVec2(800, 400), true)
                 if show == 1 then
-                    if imgui.Checkbox(u8'Скрывать сообщения о начале преследования', offptrlb) then
-                        cfg.main.offptrl = not cfg.main.offptrl
-                    end
-                    if imgui.Checkbox(u8'Скрывать сообщения о выдаче розыска', offwntdb) then
-                        cfg.main.offwntd = not cfg.main.offwntd
-                    end
-                    if imgui.Checkbox(u8'Мужские отыгровки', stateb) then
-                        cfg.main.male = not cfg.main.male
-                    end
-                    if imgui.Checkbox(u8'Использовать автотег', tagb) then
-                        cfg.main.tarb = not cfg.main.tarb
-                    end
+                    if imgui.ToggleButton(u8'Скрывать сообщения о начале преследования', offptrlb) then cfg.main.offptrl = not cfg.main.offptrl end; imgui.SameLine(); imgui.Text(u8 'Скрывать сообщения о начале преследования')
+                    if imgui.ToggleButton(u8'Скрывать сообщения о выдаче розыска', offwntdb) then cfg.main.offwntd = not cfg.main.offwntd end; imgui.SameLine(); imgui.Text(u8 'Скрывать сообщения о выдаче розыска')
+                    if imgui.ToggleButton(u8'Мужские отыгровки', stateb) then cfg.main.male = not cfg.main.male end; imgui.SameLine(); imgui.Text(u8 'Мужские отыгровки')
+                    if imgui.ToggleButton(u8'Использовать автотег', tagb) then cfg.main.tarb = not cfg.main.tarb end; imgui.SameLine(); imgui.Text(u8 'Использовать автотег')
                     if tagb.v then
-                        if imgui.InputText(u8'Введите ваш Тег.', tagf) then
-                            cfg.main.tar = u8:decode(tagf.v)
-                        end
+                        if imgui.InputText(u8'Введите ваш Тег.', tagf) then cfg.main.tar = u8:decode(tagf.v) end
                     end
-                    if imgui.Checkbox(u8'Использовать авто логин', parolb) then
-                        cfg.main.parolb = not cfg.main.parolb
+                    if imgui.ToggleButton(u8'Использовать авто логин', parolb) then cfg.main.parolb = not cfg.main.parolb end; imgui.SameLine(); imgui.Text(u8 'Использовать авто логин')
+                    if parolb.v then
+                        if imgui.InputText(u8'Введите ваш пароль.', parolf, imgui.InputTextFlags.Password) then cfg.main.parol = u8:decode(parolf.v) end
+                        if imgui.Button(u8'Узнать пароль') then ftext('Ваш пароль: {9966cc}'..cfg.main.parol) end
                     end
-                    if imgui.Checkbox(u8'Использовать автоклист', clistb) then
-                        cfg.main.clistb = not cfg.main.clistb
-                    end
+                    if imgui.ToggleButton(u8'Использовать автоклист', clistb) then cfg.main.clistb = not cfg.main.clistb end; imgui.SameLine(); imgui.Text(u8 'Использовать автоклист')
                     if clistb.v then
-                        if imgui.SliderInt(u8"Выберите значение клиста", clistbuffer, 0, 33) then
-                            cfg.main.clist = clistbuffer.v
-                        end
+                        if imgui.SliderInt(u8"Выберите значение клиста", clistbuffer, 0, 33) then cfg.main.clist = clistbuffer.v end
                     end
-                    if imgui.InputInt(u8'Задержка в отыгровках', waitbuffer) then
-                        cfg.commands.zaderjka = waitbuffer.v
-                    end
+                    if imgui.ToggleButton(u8'Открывать чат на T', tchatb) then cfg.main.tchat = not cfg.main.tchat end; imgui.SameLine(); imgui.Text(u8 'Открывать чат на T')
+                    if imgui.ToggleButton(u8 'Автоматически заводить авто', carb) then cfg.main.autocar = not cfg.main.autocar end; imgui.SameLine(); imgui.Text(u8 'Автоматически заводить авто')
+                    if imgui.InputInt(u8'Задержка в отыгровках', waitbuffer) then cfg.commands.zaderjka = waitbuffer.v end
                 end
                 if show == 2 then
-                    if imgui.Checkbox(u8('Отыгровка /cput'), cput) then
-                        cfg.commands.cput = not cfg.commands.cput
-                    end
-                    if imgui.Checkbox(u8('Отыгровка /ceject'), ceject) then
-                        cfg.commands.ceject = not cfg.commands.ceject
-                    end
-                    if imgui.Checkbox(u8('Отыгровка /ftazer'), ftazer) then
-                        cfg.commands.ftazer = not cfg.commands.ftazer
-                    end
-                    if imgui.Checkbox(u8('Отыгровка /deject'), deject) then
-                        cfg.commands.deject = not cfg.commands.deject
-                    end
-                    if imgui.Checkbox(u8('Отыгровка /ticket'), ticketb) then
-                        cfg.commands.ticket = not cfg.commands.ticket
-                    end
+                    if imgui.ToggleButton(u8('Отыгровка /cput'), cput) then cfg.commands.cput = not cfg.commands.cput end; imgui.SameLine(); imgui.Text(u8 'Отыгровка /cput')
+                    if imgui.ToggleButton(u8('Отыгровка /ceject'), ceject) then cfg.commands.ceject = not cfg.commands.ceject end; imgui.SameLine(); imgui.Text(u8 'Отыгровка /ceject')
+                    if imgui.ToggleButton(u8('Отыгровка /ftazer'), ftazer) then cfg.commands.ftazer = not cfg.commands.ftazer end; imgui.SameLine(); imgui.Text(u8 'Отыгровка /ftazer')
+                    if imgui.ToggleButton(u8('Отыгровка /deject'), deject) then cfg.commands.deject = not cfg.commands.deject end; imgui.SameLine(); imgui.Text(u8 'Отыгровка /deject')
+                    if imgui.ToggleButton(u8('Отыгровка /ticket'), ticketb) then cfg.commands.ticket = not cfg.commands.ticket end; imgui.SameLine(); imgui.Text(u8 'Отыгровка /ticket')
+                    if imgui.ToggleButton(u8('Использовать /time F8 при /kmdc'), kmdcb) then cfg.commands.kmdctime = not cfg.commands.kmdctime end; imgui.SameLine(); imgui.Text(u8 'Использовать /time F8 при /kmdc')
                 end
                 if show == 3 then
-                    if imgui.InputText(u8'Введите ваш пароль.', parolf, imgui.InputTextFlags.Password) then
-                        cfg.main.parol = u8:decode(parolf.v)
-                    end
-                    if imgui.Button(u8'Узнать пароль') then
-                        ftext('Ваш пароль: '..cfg.main.parol)
-                    end
-                end
-                if show == 4 then
                     if imgui.HotKey(u8'##Клавиша быстрого тазера', config_keys.tazerkey, tLastKeys, 100) then
                         rkeys.changeHotKey(tazerbind, config_keys.tazerkey.v)
                         ftext('Клавиша успешно изменена. Старое значение: '.. table.concat(rkeys.getKeysName(tLastKeys.v), " + ") .. ' | Новое значение: '.. table.concat(rkeys.getKeysName(config_keys.tazerkey.v), " + "))
@@ -4010,11 +4311,24 @@ function main()
                     end
                     imgui.SameLine()
                     imgui.Text(u8('Арестовать преступника'))
+                    if imgui.HotKey('##deject', config_keys.dejectkey, tLastKeys, 100) then
+                        rkeys.changeHotKey(dejectbind, config_keys.dejectkey.v)
+                        ftext('Клавиша успешно изменена. Старое значение: '.. table.concat(rkeys.getKeysName(tLastKeys.v), " + ") .. ' | Новое значение: '.. table.concat(rkeys.getKeysName(config_keys.dejectkey.v), " + "))
+                    end
+                    imgui.SameLine()
+                    imgui.Text(u8('Вытащить преступника из авто'))
+                    if imgui.HotKey('##siren', config_keys.sirenkey, tLastKeys, 100) then
+                        rkeys.changeHotKey(sirenbind, config_keys.sirenkey.v)
+                        ftext('Клавиша успешно изменена. Старое значение: '.. table.concat(rkeys.getKeysName(tLastKeys.v), " + ") .. ' | Новое значение: '.. table.concat(rkeys.getKeysName(config_keys.sirenkey.v), " + "))
+                    end
+                    imgui.SameLine()
+                    imgui.Text(u8('Включить / выключить сирену на авто'))
                 end
                 imgui.EndChild()
                 imgui.End()
             end
             if mainwin.v then
+                imgui.DisableInput = false
                 imgui.LockPlayer = true
                 imgui.ShowCursor = true
                 local x, y = getScreenResolution()
@@ -4045,7 +4359,9 @@ function main()
                     colors[clr.ButtonActive]           = ImVec4(0.06, 0.53, 0.98, 1.00)]]
                 if imgui.CustomButton(u8('Сохранить настройки'), imgui.ImVec4(0.11, 0.79, 0.07, 0.40), imgui.ImVec4(0.11, 0.79, 0.07, 1.00), imgui.ImVec4(0.11, 0.79, 0.07, 0.76), btn_size) then
                     inicfg.save(fbitools, 'fbitools/config.ini')
+                    ftext('Настройки успешно сохранены.')
                 end
+                if imgui.Button(u8 'Сообщить о ошибке / баге', btn_size) then os.execute('explorer "https://vk.me/fbitools"') end
                 if imgui.Button(u8'Перезагрузить скрипт', btn_size) then
                     showCursor(false)
                     thisScript():reload()
@@ -4053,6 +4369,7 @@ function main()
                 imgui.End()
             end
             if shpwindow.v then
+                imgui.DisableInput = false
                 imgui.LockPlayer = true
                 imgui.ShowCursor = true
                 local iScreenWidth, iScreenHeight = getScreenResolution()
@@ -4065,6 +4382,7 @@ function main()
                 imgui.End()
             end
             if akwindow.v then
+                imgui.DisableInput = false
                 imgui.LockPlayer = true
                 imgui.ShowCursor = true
                 local iScreenWidth, iScreenHeight = getScreenResolution()
@@ -4077,6 +4395,7 @@ function main()
                 imgui.End()
             end
             if fpwindow.v then
+                imgui.DisableInput = false
                 imgui.LockPlayer = true
                 imgui.ShowCursor = true
                 local iScreenWidth, iScreenHeight = getScreenResolution()
@@ -4089,6 +4408,7 @@ function main()
                 imgui.End()
             end
             if ykwindow.v then
+                imgui.DisableInput = false
                 imgui.LockPlayer = true
                 imgui.ShowCursor = true
                 local iScreenWidth, iScreenHeight = getScreenResolution()
@@ -4101,6 +4421,7 @@ function main()
                 imgui.End()
             end
             if updwindows.v then
+                imgui.DisableInput = false
                 local updlist = ttt
                 imgui.LockPlayer = true
                 imgui.ShowCursor = true
@@ -4137,26 +4458,15 @@ function main()
             post = id
         end
         function Sphere.onExitSphere(id)
-              post = nil
+            post = nil
         end
         local myskin = getCharModel(PLAYER_PED)
         local mmx, mmy, mmz = getCharCoordinates(PLAYER_PED)
-        if megaftimer ~= nil then
-            if megaftimer <= os.time() then
-                ftext('Время погони истекло')
-                gmegafid = nil
-                gmegaflvl = nil
-                gmegaffrak = nil
-                megaftimer = nil
-                gmegafhandle = nil
-            end
-        end
         if not doesCharExist(gmegafhandle) and gmegafhandle ~= nil then
             ftext(string.format('Игрок {9966cc}%s[%s] {ffffff}потерян из поля зрения', sampGetPlayerNickname(gmegafid), gmegafid))
-            gmegafid = nil
+            gmegafid = -1
 			gmegaflvl = nil
 			gmegaffrak = nil
-            megaftimer = nil
             gmegafhandle = nil
         end
         if myskin == 280 or myskin == 265 or myskin == 266 or myskin == 267 or myskin == 281 or myskin == 282 or myskin == 288 or myskin == 284 or myskin == 285 or myskin == 304 or myskin == 305 or myskin == 306 or myskin == 307 or myskin == 309 or myskin == 283 or myskin == 286 or myskin == 287 or myskin == 252 or myskin == 279 or myskin == 163 or myskin == 164 or myskin == 165 or myskin == 166 then
@@ -4168,10 +4478,14 @@ function main()
             cfg.main.posX = CPX
             cfg.main.posY = CPY
         end
+        if wasKeyPressed(key.VK_T) and cfg.main.tchat and not sampIsChatInputActive() and not sampIsDialogActive() and not isSampfuncsConsoleActive() then
+            sampSetChatInputEnabled(true)
+        end
         local myhp = getCharHealth(PLAYER_PED)
         local valid, ped = getCharPlayerIsTargeting(PLAYER_HANDLE)
         if valid and doesCharExist(ped) then
             local result, id = sampGetPlayerIdByCharHandle(ped)
+            targetid = id
             if result and wasKeyPressed(key.VK_Z) then
                 gmegafhandle = ped
                 gmegafid = id
@@ -4180,7 +4494,6 @@ function main()
                 --[[ftext(gmegafid)
                 ftext(gmegaflvl)
                 ftext(gmegaffrak)]]
-				megaftimer = os.time() + 300
                 submenus_show(pkmmenu(id), "{9966cc}FBI Tools {ffffff}| "..sampGetPlayerNickname(id).."["..id.."] ")
             end
         end
@@ -4202,11 +4515,59 @@ function main()
         local result14, button, list, input = sampHasDialogRespond(1399)
         local result15, button, list, input = sampHasDialogRespond(1400)
         local result16, button, list, input = sampHasDialogRespond(1401)
+        local result17, button, list, input = sampHasDialogRespond(1765)
+        local ooplresult, button, list, input = sampHasDialogRespond(2458)
+        local oopdelresult, button, list, input = sampHasDialogRespond(2459)
         local _, myid = sampGetPlayerIdByCharHandle(PLAYER_PED)
+        if #ooplistt > 30 then
+            table.remove(ooplistt, 1)
+        end
+        if oopdelresult then
+            if button == 1 then
+                local oopi = 1
+                while oopi <= #ooplistt do
+                    if ooplistt[oopi]:find(oopdelnick) then
+                        table.remove(ooplistt, oopi)
+                    else
+                        oopi = oopi + 1
+                    end
+                end
+                ftext('Игрок {9966cc}'..oopdelnick..'{ffffff} был удален из списка ООП')
+            elseif button == 0 then
+                sampShowDialog(2458, '{9966cc}FBI Tools | {ffffff}Список ООП', table.concat(ooplistt, '\n'), '»', "x", 2)
+            end
+        end
+        if ooplresult then
+            if button == 1 then
+                local ltext = sampGetListboxItemText(list)
+                if ltext:match("дело на имя .+ рассмотрению не подлежит, ООП") then
+                    oopdelnick = ltext:match("дело на имя (.+) рассмотрению не подлежит, ООП")
+                    sampShowDialog(2459, '{9966cc}FBI Tools | {ffffff}Удаление из ООП', "{ffffff}Вы действительно желаете удалить {9966cc}"..oopdelnick.."\n{ffffff}Из списка ООП?", "»", "«", 0)
+                elseif ltext:match("дело .+ рассмотрению не подлежит %- ООП.") then
+                    oopdelnick = ltext:match("дело (.+) рассмотрению не подлежит %- ООП.")
+                    sampShowDialog(2459, '{9966cc}FBI Tools | {ffffff}Удаление из ООП', "{ffffff}Вы действительно желаете удалить {9966cc}"..oopdelnick.."\n{ffffff}Из списка ООП?", "»", "«", 0)
+                end
+            end
+        end
+        if result17 then
+            if button == 1 then
+                if #input ~= 0 and tonumber(input) ~= nil then
+                    for k, v in pairs(suz) do
+                        if tonumber(input) == k then
+                            local reas, zzv = v:match('(.+) %- (%d+) .+')
+                            sampSendChat(string.format('/su %s %s %s', zid, zzv, reas))
+                            zid = nil
+                        end
+                    end
+                else
+                    ftext('Вы не выбрали номер статьи.')
+                end
+            end
+        end
         if result16 then
             if input ~= '' and button == 1 then
                 if cfg.main.tarb then
-                    sampSendChat(string.format('/r [%s] Запрашиваю эвакуацию в квадрат %s на %s', cfg.main.tar, kvadrat(), input))
+                    sampSendChat(string.format('/r [%s]: Запрашиваю эвакуацию в квадрат %s на %s', cfg.main.tar, kvadrat(), input))
                 else
                     sampSendChat(string.format('/r Запрашиваю эвакуацию в квадрат %s на %s', kvadrat(), input))
                 end
@@ -4438,21 +4799,78 @@ function main()
         end
     end
 end
+function naparnik()
+    local v = {}
+    if isCharInAnyCar(PLAYER_PED) then
+        local veh = storeCarCharIsInNoSave(PLAYER_PED)
+        for i = 0, 999 do
+            if sampIsPlayerConnected(i) then
+                local ichar = select(2, sampGetCharHandleBySampPlayerId(i))
+                if doesCharExist(ichar) then
+                    if isCharInAnyCar(ichar) then
+                        local iveh = storeCarCharIsInNoSave(ichar)
+                        if veh == iveh then
+                            if getFraktionBySkin(i) == 'Полиция' or getFraktionBySkin(i) == 'FBI' then
+                                local inick, ifam = sampGetPlayerNickname(i):match('(.+)_(.+)')
+                                if inick and ifam then
+                                    table.insert(v, string.format('%s.%s', inick:sub(1,1), ifam))
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    else
+        local myposx, myposy, myposz = getCharCoordinates(PLAYER_PED)
+        for i = 0, 999 do
+            if sampIsPlayerConnected(i) then
+                local ichar = select(2, sampGetCharHandleBySampPlayerId(i))
+                if doesCharExist(ichar) then
+                    local ix, iy, iz = getCharCoordinates(ichar)
+                    if getDistanceBetweenCoords3d(myposx, myposy, myposz, ix, iy, iz) <= 30 then
+                        if getFraktionBySkin(i) == 'Полиция' or getFraktionBySkin(i) == 'FBI' then
+                            local inick, ifam = sampGetPlayerNickname(i):match('(.+)_(.+)')
+                            if inick and ifam then
+                                table.insert(v, string.format('%s.%s', inick:sub(1,1), ifam))
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+    if #v == 0 then
+        return 'Напарников нет.'
+    elseif #v == 1 then
+        return 'Напарник: '..table.concat(v, ', ').. '.'
+    elseif #v >=2 then
+        return 'Напарники: '..table.concat(v, ', ').. '.'
+    end
+end
 function onHotKey(id, keys)
-	local sKeys = tostring(table.concat(keys, " "))
-	for k, v in pairs(tBindList) do
-		if sKeys == tostring(table.concat(v.v, " ")) then
-			if tostring(v.text):len() > 0 then
-				local bIsEnter = string.match(v.text, "(.)%[enter%]$") ~= nil
-				if bIsEnter then
-					sampProcessChatInput(v.text:gsub("%[enter%]$", ""))
-				else
-					sampSetChatInputText(v.text)
-					sampSetChatInputEnabled(true)
-				end
-			end
-		end
-	end
+    lua_thread.create(function()
+        local sKeys = tostring(table.concat(keys, " "))
+        for k, v in pairs(tBindList) do
+            if sKeys == tostring(table.concat(v.v, " ")) then
+                if tostring(v.text):len() > 0 then
+                    local bIsEnter = string.match(v.text, "(.)%[enter%]$") ~= nil
+                    local bIsF6 = string.match(v.text, "{f6}(.+)") ~= nil
+                    if bIsEnter then
+                        if bIsF6 then
+                            sampProcessChatInput(v.text:gsub("{f6}", ""):gsub("%[enter%]$", ""):gsub('{myid}', select(2, sampGetPlayerIdByCharHandle(PLAYER_PED))):gsub('{kv}', kvadrat()):gsub('{targetid}', targetid):gsub('{targetrpnick}', sampGetPlayerNicknameForBinder(targetid):gsub('_', ' ')):gsub('{naparnik}', naparnik()):gsub('{myrpnick}', sampGetPlayerNickname(select(2, sampGetPlayerIdByCharHandle(PLAYER_PED))):gsub('_', ' ')):gsub('{smsid}', smsid):gsub('{smstoid}', smstoid):gsub('{rang}', rang):gsub('{frak}', frak):gsub('{megafid}', gmegafid))
+                        else
+                            sampSendChat(v.text:gsub("%[enter%]$", ""):gsub('{myid}', select(2, sampGetPlayerIdByCharHandle(PLAYER_PED))):gsub('{kv}', kvadrat()):gsub('{targetid}', targetid):gsub('{targetrpnick}', sampGetPlayerNicknameForBinder(targetid):gsub('_', ' ')):gsub('{naparnik}', naparnik()):gsub('{myrpnick}', sampGetPlayerNickname(select(2, sampGetPlayerIdByCharHandle(PLAYER_PED))):gsub('_', ' ')):gsub('{smsid}', smsid):gsub('{smstoid}', smstoid):gsub('{rang}', rang):gsub('{frak}', frak):gsub('{megafid}', gmegafid))
+                        end
+                    else
+                        sampSetChatInputText(v.text:gsub('{myid}', select(2, sampGetPlayerIdByCharHandle(PLAYER_PED))):gsub('{kv}', kvadrat()):gsub('{targetid}', targetid):gsub('{targetrpnick}', sampGetPlayerNicknameForBinder(targetid):gsub('_', ' ')):gsub('{naparnik}', naparnik()):gsub('{myrpnick}', sampGetPlayerNickname(select(2, sampGetPlayerIdByCharHandle(PLAYER_PED))):gsub('_', ' ')):gsub('{smsid}', smsid):gsub('{smstoid}', smstoid):gsub('{rang}', rang):gsub('{frak}', frak):gsub('{megafid}', gmegafid))
+                        sampSetChatInputEnabled(true)
+                    end
+                    wait(v.time)
+                end
+            end
+        end
+    end)
 end
 
 --COMMANDS--
@@ -4518,29 +4936,22 @@ end
 function oop(pam)
     pID = tonumber(pam)
     if frak == 'FBI' or frak == 'LSPD' or frak == 'SFPD' or frak == 'LVPD' then
-        if rang == 'Кадет' or rang == 'Офицер' or rang == 'Мл.Сержант' or  rang == 'Сержант' or  rang == 'Прапорщик' then
-            if pID == nil then
-                ftext("Введите: /oop [id]")
-            end
-            if pID ~= nil and sampIsPlayerConnected(pID) then
-                if not cfg.main.tarb then
-                    sampSendChat("/r Дело на имя "..sampGetPlayerNickname(pID):gsub('_', ' ').." ("..pID..") рассмотрению не подлежит, ООП, объявите.")
+        if pID ~= nil then
+            if sampIsPlayerConnected(pID) then
+                if rang == 'Кадет' or rang == 'Офицер' or rang == 'Мл.Сержант' or  rang == 'Сержант' or  rang == 'Прапорщик' then
+                    if not cfg.main.tarb then
+                        sampSendChat("/r Дело на имя "..sampGetPlayerNickname(pID):gsub('_', ' ').." рассмотрению не подлежит, ООП.")
+                    else
+                        sampSendChat("/r ["..cfg.main.tar.."]: Дело на имя "..sampGetPlayerNickname(pID):gsub('_', ' ').." рассмотрению не подлежит, ООП.")
+                    end
                 else
-                    sampSendChat("/r ["..cfg.main.tar.."]: Дело на имя "..sampGetPlayerNickname(pID):gsub('_', ' ').." ("..pID..") рассмотрению не подлежит, ООП, объявите.")
+                    sampSendChat("/d Mayor, дело на имя "..sampGetPlayerNickname(pID):gsub('_', ' ').." рассмотрению не подлежит, ООП.")
                 end
-            end
-            if pID ~= nil and not sampIsPlayerConnected(pID) then
-                ftext("Игрок с ID: "..pID.." не подключен к серверу")
-            end
-        else
-            if pID == nil then
-                ftext("Введите: /oop [id]", -1)
-            end
-            if pID ~= nil and sampIsPlayerConnected(pID) then
-                sampSendChat("/d Mayor, дело на имя "..sampGetPlayerNickname(pID):gsub('_', ' ').." рассмотрению не подлежит, ООП.")
             else
                 ftext("Игрок с ID: "..pID.." не подключен к серверу")
             end
+        else
+            ftext("Введите: /oop [id]")
         end
     else
         ftext("Вы не сотрудник ПД/FBI")
@@ -5189,6 +5600,7 @@ function megaf()
                                             gmegafid = megafid
                                             gmegaflvl = sampGetPlayerScore(megafid)
                                             gmegaffrak = getFraktionBySkin(megafid)
+                                            gmegafcar = getCarNamebyModel(getCarModel(carh))
                                             break
                                         end
                                     end
@@ -5207,191 +5619,47 @@ function megaf()
     end)
 end
 function dkld()
-    local tn = {}
     if isCharInAnyCar(PLAYER_PED) then
         if post ~= 7 and post ~= 12 and post ~= 13 and post ~= 14 and post ~= 18 and post ~= 21 and post ~= 22 and post ~= 23 and post ~= 24 and post ~= 25 and post ~= 26 and post ~= 27 and post ~= 28 and post ~= 29 and post ~= 30 and post ~= 31 then
-            for patrulid = 0, sampGetMaxPlayerId(true) do
-                local result, ped = sampGetCharHandleBySampPlayerId(patrulid)
-                if result then
-                    local myPosX, myPosY, myPosZ = getCharCoordinates(PLAYER_PED)
-                    local posX, posY, posZ = getCharCoordinates(ped)
-                    local distance = getDistanceBetweenCoords3d(myPosX, myPosY, myPosZ, posX, posY, posZ)
-                    if distance <= 5.0 then
-                        local nskin = getCharModel(ped)
-                        if getFraktionBySkin(patrulid) == 'FBI' or getFraktionBySkin(patrulid) == 'Полиция' then
-                            local doknick, dockfam = sampGetPlayerNickname(patrulid):match('(.+)_(.+)')
-                            if doknick and dockfam then
-                                table.insert(tn, string.format('%s.%s', doknick:sub(1,1), dockfam))
-                            end
-                        end
-                    end
-                end
-            end
             if frak == 'LSPD' then
                 if not cfg.main.tarb  then
-                    if #tn == 0 then
-                    sampSendChat('/r Патруль г. Лос-Сантос. Напарников нет.')
-                    elseif #tn == 1 then
-                    sampSendChat('/r Патруль г. Лос-Сантос. Напарник: '..table.concat(tn, ", ")..'.')
-                    elseif #tn > 1 then
-                    sampSendChat('/r Патруль г. Лос-Сантос. Напарники: '..table.concat(tn, ", ")..'.')
-                    end
+                    sampSendChat('/r Патруль г. Лос-Сантос. '..naparnik())
                 else
-                    if #tn == 0 then
-                    sampSendChat('/r ['..cfg.main.tar..']: Патруль г. Лос-Сантос. Напарников нет.')
-                    elseif #tn == 1 then
-                    sampSendChat('/r ['..cfg.main.tar..']: Патруль г. Лос-Сантос. Напарник: '..table.concat(tn, ", ")..'.')
-                    elseif #tn > 1 then
-                    sampSendChat('/r ['..cfg.main.tar..']: Патруль г. Лос-Сантос. Напарники: '..table.concat(tn, ", ")..'.')
-                    end
+                    sampSendChat('/r ['..cfg.main.tar..']: Патруль г. Лос-Сантос. '..naparnik())
                 end
             elseif frak == 'SFPD' then
                 if not cfg.main.tarb then
-                    if #tn == 0 then
-                        sampSendChat('/r Патруль г. Сан-Фиерро. Напарников нет.')
-                    elseif #tn == 1 then
-                        sampSendChat('/r Патруль г. Сан-Фиерро. Напарник: '..table.concat(tn, ", ")..'.')
-                    elseif #tn > 1 then
-                        sampSendChat('/r Патруль г. Сан-Фиерро. Напарники: '..table.concat(tn, ", ")..'.')
-                    end
+                    sampSendChat('/r Патруль г. Сан-Фиерро. '..naparnik())
                 else
-                    if #tn == 0 then
-                        sampSendChat('/r ['..cfg.main.tar..']: Патруль г. Сан-Фиерро. Напарников нет.')
-                    elseif #tn == 1 then
-                        sampSendChat('/r ['..cfg.main.tar..']: Патруль г. Сан-Фиерро. Напарник: '..table.concat(tn, ", ")..'.')
-                    elseif #tn > 1 then
-                        sampSendChat('/r ['..cfg.main.tar..']: Патруль г. Сан-Фиерро. Напарники: '..table.concat(tn, ", ")..'.')
-                    end
+                    sampSendChat('/r ['..cfg.main.tar..']: Патруль г. Сан-Фиерро. '..naparnik())
                 end
             elseif frak == 'LVPD' then
                 if not cfg.main.tarb then
-                    if #tn == 0 then
-                        sampSendChat('/r Патруль г. Лас-Вентурас. Напарников нет.')
-                    elseif #tn == 1 then
-                        sampSendChat('/r Патруль г. Лас-Вентурас. Напарник: '..table.concat(tn, ", ")..'.')
-                    elseif #tn > 1 then
-                        sampSendChat('/r Патруль г. Лас-Вентурас. Напарники: '..table.concat(tn, ", ")..'.')
-                    end
+                    sampSendChat('/r Патруль г. Лас-Вентурас. '..naparnik())
                 else
-                    if #tn == 0 then
-                        sampSendChat('/r ['..cfg.main.tar..']: Патруль г. Лас-Вентурас. Напарников нет.')
-                    elseif #tn == 1 then
-                        sampSendChat('/r ['..cfg.main.tar..']: Патруль г. Лас-Вентурас. Напарник: '..table.concat(tn, ", ")..'.')
-                    elseif #tn > 1 then
-                        sampSendChat('/r ['..cfg.main.tar..']: Патруль г. Лас-Вентурас. Напарники: '..table.concat(tn, ", ")..'.')
-                    end
+                    sampSendChat('/r ['..cfg.main.tar..']: Патруль г. Лас-Вентурас. '..naparnik())
                 end
             end
         end
         if post == 7 or post == 12 or post == 13 or post == 14 or post == 18 then
-            local tn = {}
-            for patrulid = 0, sampGetMaxPlayerId(true) do
-                local result, ped = sampGetCharHandleBySampPlayerId(patrulid)
-                if result then
-                    local myPosX, myPosY, myPosZ = getCharCoordinates(PLAYER_PED)
-                    local posX, posY, posZ = getCharCoordinates(ped)
-                    local distance = getDistanceBetweenCoords3d(myPosX, myPosY, myPosZ, posX, posY, posZ)
-                    if distance <= 5.0 then
-                        local nskin = getCharModel(ped)
-                        if getFraktionBySkin(patrulid) == 'FBI' or getFraktionBySkin(patrulid) == 'Полиция' then
-                            local doknick, dockfam = sampGetPlayerNickname(patrulid):match('(.+)_(.+)')
-                            if doknick and dockfam then
-                                table.insert(tn, string.format('%s.%s', doknick:sub(1,1), dockfam))
-                            end
-                        end
-                    end
-                end
-            end
             if not cfg.main.tarb then
-                if #tn == 0 then
-                    sampSendChat('/r Пост: '..getNameSphere(post)..'. Напарников нет.')
-                elseif #tn == 1 then
-                    sampSendChat('/r Пост: '..getNameSphere(post)..'. Напарник: '..table.concat(tn, ", ")..'.')
-                elseif #tn > 1 then
-                    sampSendChat('/r Пост: '..getNameSphere(post)..'. Напарники: '..table.concat(tn, ", ")..'.')
-                end
+                sampSendChat('/r Пост: '..getNameSphere(post)..'. '..naparnik())
             else
-                if #tn == 0 then
-                    sampSendChat('/r ['..cfg.main.tar..']: Пост: '..getNameSphere(post)..'. Напарников нет.')
-                elseif #tn == 1 then
-                    sampSendChat('/r ['..cfg.main.tar..']: Пост: '..getNameSphere(post)..'. Напарник: '..table.concat(tn, ", ")..'.')
-                elseif #tn > 1 then
-                    sampSendChat('/r ['..cfg.main.tar..']: Пост: '..getNameSphere(post)..'. Напарники: '..table.concat(tn, ", ")..'.')
-                end
+                sampSendChat('/r ['..cfg.main.tar..']: Пост: '..getNameSphere(post)..'. '..naparnik())
             end
         end
         if post == 21 then
-            local tn = {}
-            for patrulid = 0, sampGetMaxPlayerId(true) do
-                local result, ped = sampGetCharHandleBySampPlayerId(patrulid)
-                if result then
-                    local myPosX, myPosY, myPosZ = getCharCoordinates(PLAYER_PED)
-                    local posX, posY, posZ = getCharCoordinates(ped)
-                    local distance = getDistanceBetweenCoords3d(myPosX, myPosY, myPosZ, posX, posY, posZ)
-                    if distance <= 5.0 then
-                        local nskin = getCharModel(ped)
-                        if getFraktionBySkin(patrulid) == 'FBI' or getFraktionBySkin(patrulid) == 'Полиция' then
-                            local doknick, dockfam = sampGetPlayerNickname(patrulid):match('(.+)_(.+)')
-                            if doknick and dockfam then
-                                table.insert(tn, string.format('%s.%s', doknick:sub(1,1), dockfam))
-                            end
-                        end
-                    end
-                end
-            end
             if not cfg.main.tarb then
-                if #tn == 0 then
-                    sampSendChat('/r Патруль опасного района. Напарников нет.')
-                elseif #tn == 1 then
-                    sampSendChat('/r Патруль опасного района. Напарник: '..table.concat(tn, ", ")..'.')
-                elseif #tn > 1 then
-                    sampSendChat('/r Патруль опасного района. Напарники: '..table.concat(tn, ", ")..'.')
-                end
+                sampSendChat('/r Патруль опасного района. '..naparnik())
             else
-                if #tn == 0 then
-                    sampSendChat('/r ['..cfg.main.tar..']: Патруль опасного района. Напарников нет.')
-                elseif #tn == 1 then
-                    sampSendChat('/r ['..cfg.main.tar..']: Патруль опасного района. Напарник: '..table.concat(tn, ", ")..'.')
-                elseif #tn > 1 then
-                    sampSendChat('/r ['..cfg.main.tar..']: Патруль опасного района. Напарники: '..table.concat(tn, ", ")..'.')
-                end
+                sampSendChat('/r ['..cfg.main.tar..']: Патруль опасного района. '..naparnik())
             end
         end
         if post == 22 then
-            local tn = {}
-            for patrulid = 0, sampGetMaxPlayerId(true) do
-                local result, ped = sampGetCharHandleBySampPlayerId(patrulid)
-                if result then
-                    local myPosX, myPosY, myPosZ = getCharCoordinates(PLAYER_PED)
-                    local posX, posY, posZ = getCharCoordinates(ped)
-                    local distance = getDistanceBetweenCoords3d(myPosX, myPosY, myPosZ, posX, posY, posZ)
-                    if distance <= 5.0 then
-                        local nskin = getCharModel(ped)
-                        if getFraktionBySkin(patrulid) == 'FBI' or getFraktionBySkin(patrulid) == 'Полиция' then
-                            local doknick, dockfam = sampGetPlayerNickname(patrulid):match('(.+)_(.+)')
-                            if doknick and dockfam then
-                                table.insert(tn, string.format('%s.%s', doknick:sub(1,1), dockfam))
-                            end
-                        end
-                    end
-                end
-            end
             if cfg.main.tar == nil then
-                if #tn == 0 then
-                    sampSendChat('/r Патруль ЛВа. Напарников нет.')
-                elseif #tn == 1 then
-                    sampSendChat('/r Патруль ЛВа. Напарник: '..table.concat(tn, ", ")..'.')
-                elseif #tn > 1 then
-                    sampSendChat('/r Патруль ЛВа. Напарники: '..table.concat(tn, ", ")..'.')
-                end
+                sampSendChat('/r Патруль ЛВа. '..naparnik())
             else
-                if #tn == 0 then
-                    sampSendChat('/r ['..cfg.main.tar..']: Патруль ЛВа. Напарников нет.')
-                elseif #tn == 1 then
-                    sampSendChat('/r ['..cfg.main.tar..']: Патруль ЛВа. Напарник: '..table.concat(tn, ", ")..'.')
-                elseif #tn > 1 then
-                    sampSendChat('/r ['..cfg.main.tar..']: Патруль ЛВа. Напарники: '..table.concat(tn, ", ")..'.')
-                end
+                sampSendChat('/r ['..cfg.main.tar..']: Патруль ЛВа. '..naparnik())
             end
         end
         lua_thread.create(function()
@@ -5480,77 +5748,17 @@ function dkld()
     end
     if not isCharInAnyCar(PLAYER_PED) then
         if post ~= nil and post ~= 8 then
-            local pn = {}
-            for patrulid = 0, sampGetMaxPlayerId(true) do
-                local result, ped = sampGetCharHandleBySampPlayerId(patrulid)
-                if result then
-                    local myPosX, myPosY, myPosZ = getCharCoordinates(PLAYER_PED)
-                    local posX, posY, posZ = getCharCoordinates(ped)
-                    local distance = getDistanceBetweenCoords3d(myPosX, myPosY, myPosZ, posX, posY, posZ)
-                    if distance <= 20.0 then
-                        local nskin = getCharModel(ped)
-                        if getFraktionBySkin(patrulid) == 'FBI' or getFraktionBySkin(patrulid) == 'Полиция' then
-                            local doknick, dockfam = sampGetPlayerNickname(patrulid):match('(.+)_(.+)')
-                            if doknick and dockfam then
-                                table.insert(pn, string.format('%s.%s', doknick:sub(1,1), dockfam))
-                            end
-                        end
-                    end
-                end
-            end
             if not cfg.main.tarb then
-                if #pn == 0 then
-                    sampSendChat('/r Пост: '..getNameSphere(post)..'. Напарников нет.')
-                elseif #pn == 1 then
-                    sampSendChat('/r Пост: '..getNameSphere(post)..'. Напарник: '..table.concat(pn, ", ")..'.')
-                elseif #pn > 1 then
-                    sampSendChat('/r Пост: '..getNameSphere(post)..'. Напарники: '..table.concat(pn, ", ")..'.')
-                end
+                sampSendChat('/r Пост: '..getNameSphere(post)..'. '..naparnik())
             else
-                if #pn == 0 then
-                    sampSendChat('/r ['..cfg.main.tar..']: Пост: '..getNameSphere(post)..'. Напарников нет.')
-                elseif #pn == 1 then
-                    sampSendChat('/r ['..cfg.main.tar..']: Пост: '..getNameSphere(post)..'. Напарник: '..table.concat(pn, ", ")..'.')
-                elseif #pn > 1 then
-                    sampSendChat('/r ['..cfg.main.tar..']: Пост: '..getNameSphere(post)..'. Напарники: '..table.concat(pn, ", ")..'.')
-                end
+                sampSendChat('/r ['..cfg.main.tar..']: Пост: '..getNameSphere(post)..'. '..naparnik())
             end
         end
         if post == 8 then
-            local pn = {}
-            for patrulid = 0, sampGetMaxPlayerId(true) do
-                local result, ped = sampGetCharHandleBySampPlayerId(patrulid)
-                if result then
-                    local myPosX, myPosY, myPosZ = getCharCoordinates(PLAYER_PED)
-                    local posX, posY, posZ = getCharCoordinates(ped)
-                    local distance = getDistanceBetweenCoords3d(myPosX, myPosY, myPosZ, posX, posY, posZ)
-                    if distance <= 50.0 then
-                        local nskin = getCharModel(ped)
-                        if getFraktionBySkin(patrulid) == 'FBI' or getFraktionBySkin(patrulid) == 'Полиция' then
-                            local doknick, dockfam = sampGetPlayerNickname(patrulid):match('(.+)_(.+)')
-                            if doknick and dockfam then
-                                table.insert(pn, string.format('%s.%s', doknick:sub(1,1), dockfam))
-                            end
-                        end
-                    end
-                end
-            end
             if not cfg.main.tarb then
-                if #pn == 0 then
-                    sampSendChat('/r Пост: '..getNameSphere(post)..'. Напарников нет.')
-                elseif #pn == 1 then
-                    sampSendChat('/r Пост: '..getNameSphere(post)..'. Напарник: '..table.concat(pn, ", ")..'.')
-                elseif #pn > 1 then
-                    sampSendChat('/r Пост: '..getNameSphere(post)..'. Напарники: '..table.concat(pn, ", ")..'.')
-                end
+                sampSendChat('/r Пост: '..getNameSphere(post)..'. '..naparnik())
             else
-                if #pn == 0 then
-                    sampSendChat('/r ['..cfg.main.tar..']: Пост: '..getNameSphere(post)..'. Напарников нет.')
-                elseif #pn == 1 then
-                    sampSendChat('/r ['..cfg.main.tar..']: Пост: '..getNameSphere(post)..'. Напарник: '..table.concat(pn, ", ")..'.')
-                elseif #pn > 1 then
-                    sampSendChat('/r ['..cfg.main.tar..']: Пост: '..getNameSphere(post)..'. Напарники: '..table.concat(pn, ", ")..'.')
-                end
+                sampSendChat('/r ['..cfg.main.tar..']: Пост: '..getNameSphere(post)..'. '..naparnik())
             end
         end
     end
@@ -5567,12 +5775,14 @@ function kmdc(args)
                     sampSendChat("/do КПК дал информацию: Имя: "..sampGetPlayerNickname(pID):gsub('_', ' ')..".")
                     wait(cfg.commands.zaderjka)
                     sampSendChat("/mdc "..args)
-                    wait(cfg.commands.zaderjka)
-                    sampSendChat("/time")
-                    wait(500)
-                    setVirtualKeyDown(key.VK_F8, true)
-                    wait(150)
-                    setVirtualKeyDown(key.VK_F8, false)
+                    if cfg.commands.kmdctime then
+                        wait(1200)
+                        sampSendChat("/time")
+                        wait(500)
+                        setVirtualKeyDown(key.VK_F8, true)
+                        wait(150)
+                        setVirtualKeyDown(key.VK_F8, false)
+                    end
                 end)
             else
                 ftext("Игрок с ID: "..args.." не подключен к серверу", -1)
@@ -5819,4 +6029,85 @@ function ticket(pam)
             ftext('Введите: /ticket [id] [сумма] [причина]')
         end
     end)
+end
+function ssuz(pam)
+    suz = {}
+    local dsuz = {}
+    for line in io.lines('moonloader\\fbitools\\su.txt') do
+        table.insert(suz, line)
+    end
+    for k, v in pairs(suz) do
+        table.insert(dsuz, string.format('{9966cc}%s. {ffffff}%s', k, v))
+    end
+    if pam:match('(%d+) (%d+)') then
+        zid, zsu = pam:match('(%d+) (%d+)')
+        if sampIsPlayerConnected(tonumber(zid)) then
+            for k, v in pairs(suz) do
+                if tonumber(zsu) == k then
+                    local reas, zzv = v:match('(.+) %- (%d+) .+')
+                    sampSendChat(string.format('/su %s %s %s', zid, zzv, reas))
+                    zid = nil
+                end
+            end
+        end
+    elseif pam:match('(%d+)') then
+        zid = pam:match('(%d+)')
+        if sampIsPlayerConnected(tonumber(zid)) then
+            sampShowDialog(1765, '{9966cc}FBI Tools {ffffff}| Выдача розыска игроку {9966cc}'..sampGetPlayerNickname(tonumber(zid)).. '[' ..zid.. ']', table.concat(dsuz, '\n').. '\n\n{ffffff}Выберите номер для объявления в розыск. Пример: 15', '»', 'x', 1)
+        end
+    elseif #pam == 0 then
+        ftext('Введите: /z [id] [параметр(не опционально)]')
+    end
+end
+function rt(pam)
+    if #pam == 0 then
+        ftext("Введите /rt [текст]")
+    else
+        sampSendChat('/r '..pam)
+    end
+end
+function ooplist(pam)
+    lua_thread.create(function()
+        local oopid = tonumber(pam)
+        if oopid ~= nil and sampIsPlayerConnected(oopid) then
+            for k, v in pairs(ooplistt) do
+                sampSendChat('/sms '..oopid..' '..v)
+                wait(1200)
+            end
+        else
+            sampShowDialog(2458, '{9966cc}FBI Tools | {ffffff}Список ООП', table.concat(ooplistt, '\n'), '»', "x", 2)
+            ftext('Для отправки списка ООП адвокату введите /ooplist [id]')
+        end
+    end)
+end
+function fkv(pam)
+    if #pam ~= 0 then
+        kvadY, kvadX = string.match(pam, "(%A)-(%d+)")
+        if kvadrat(kvadY) ~= nil and kvadX ~= nil and kvadY ~= nil and tonumber(kvadX) < 25 and tonumber(kvadX) > 0 then
+            last = lcs
+            coordX = kvadX * 250 - 3125
+            coordY = (kvadrat1(kvadY) * 250 - 3125) * - 1
+        end
+    else
+        ftext('Введите: /fkv [квадрат]')
+        ftext('Пример: /fkv Л-6')
+    end
+end
+function fnr()
+    lua_thread.create(function()
+        vixodid = {}
+		status = true
+		sampSendChat('/members')
+        while not gotovo do wait(0) end
+        wait(1200)
+        for k, v in pairs(vixodid) do
+            sampSendChat('/sms '..v..' На работу')
+            wait(1200)
+        end
+        players2 = {'{ffffff}Ник\t{ffffff}Ранг\t{ffffff}Статус'}
+		players1 = {'{ffffff}Ник\t{ffffff}Ранг'}
+		gotovo = false
+        status = false
+        vixodid = {}
+	end)
 end
