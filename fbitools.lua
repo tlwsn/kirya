@@ -46,7 +46,7 @@ suz = {}
 show = 1
 zid = nil
 local config_keys = {
-    oopda = { v = {key.VK_F12}}, 
+    oopda = { v = {key.VK_F12}},
     oopnet = { v = {key.VK_F11}},
     tazerkey = { v = {key.VK_X}},
     fastmenukey = { v = {key.VK_F2}},
@@ -2245,7 +2245,7 @@ function commands()
             ftext('Для начала включите инфо-бар.')
         end
     end)
-    sampfuncsRegisterConsoleCommand('gppc', function() 
+    sampfuncsRegisterConsoleCommand('gppc', function()
         local mxx, myy, mzz = getCharCoordinates(PLAYER_PED)
         print(string.format('%s, %s, %s', mxx, myy, mzz))
     end)
@@ -2999,7 +2999,7 @@ local osnova =
     end
   }
 }
-local fthelpsub = 
+local fthelpsub =
 {
     {
         title = '{9966cc}/ft {ffffff}- Открыть меню скрипта',
@@ -3227,7 +3227,7 @@ local fthelpsub =
             },
             {
                 title = 'Продолжение',
-                submenu = 
+                submenu =
                 {
                     {
                         title = '{9966cc}/fsw{ffffff} - Изменить погоду',
@@ -5329,7 +5329,7 @@ function ms(pam)
                 end)
             elseif pam == "3" then
                 lua_thread.create(function()
-                    sampSendChat("/do на плече агента висит сумка")
+                    sampSendChat("/do На плече агента висит сумка.")
                     wait(cfg.commands.zaderjka)
                     sampSendChat("/me открыв сумку, снял костюм агента и убрал туда")
                     wait(cfg.commands.zaderjka)
@@ -5385,7 +5385,7 @@ function ms(pam)
                 end)
             elseif pam == "3" then
                 lua_thread.create(function()
-                    sampSendChat("/do на плече агента висит сумка")
+                    sampSendChat("/do На плече агента висит сумка.")
                     wait(cfg.commands.zaderjka)
                     sampSendChat("/me открыв сумку, сняла костюм агента и убрала туда")
                     wait(cfg.commands.zaderjka)
