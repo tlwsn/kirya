@@ -1,5 +1,5 @@
 script_name('FBI Tools')
-script_version('2.2')
+script_version('2.2.1')
 script_author('Sesh Jefferson and Thomas Lawson') -- код биндера от DonHomka
 require 'lib.moonloader'
 require 'lib.sampfuncs'
@@ -3764,7 +3764,7 @@ function sp.onServerMessage(color, text)
     end
 end
 function sp.onShowDialog(id, style, title, button1, button2, text)
-    if id == 1 and cfg.main.parolb and #cfg.main.parolb >= 6 then
+    if id == 1 and cfg.main.parolb and #cfg.main.parol >= 6 then
         sampSendDialogResponse(id, 1, _, cfg.main.parol)
         return false
     end
