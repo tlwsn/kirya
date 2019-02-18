@@ -1117,7 +1117,7 @@ function update()
                     version = tonumber(info.latest)
                     if version > tonumber(thisScript().version) then
                         ftext('Обнаружено обновление {9966cc}FBI Tools{ffffff}. Для обновления нажмите кнопку в окошке.')
-                        ftext('Примечание: Если у вас не появилось окошко введите /ft')
+                        ftext('Примечание: Если у вас не появилось окошко введите {9966cc}/ft')
 					    updwindows.v = true
                     else
                         ftext('Обновлений скрипта не обнаружено. Приятной игры.', -1)
@@ -1125,7 +1125,7 @@ function update()
 				    end
 			    end
 		    end
-	    end
+		end
     end)
 end
 
@@ -3682,7 +3682,6 @@ function sp.onServerMessage(color, text)
     end
     if color == -1920073984 and (text:match('.+ .+%: .+') or text:match('%(%( .+ .+%: .+ %)%)')) then
         local colors = ("{%06X}"):format(bit.rshift(color, 8))
-		setClipboardText(colors)
         table.insert(radio, os.date(colors.."[%H:%M:%S] ") .. text)
     end
     if color == -3669760 and text:match('%[Wanted %d+: .+%] %[Сообщает%: .+%] %[.+%]') then
@@ -3976,7 +3975,6 @@ function main()
     if not doesDirectoryExist('moonloader/fbitools') then createDirectory('moonloader/fbitools') end
     cfg = inicfg.load(fbitools, 'fbitools/config.ini')
     if not doesDirectoryExist('moonloader/lib/imcustom') then createDirectory('moonloader/lib/imcustom') end
-    if not doesFileExist('moonloader\\lib\\sphere.lua') or not doesFileExist('moonloader\\lib\\rkeys.lua') or not doesFileExist('moonloader\\lib\\imcustom\\hotkey.lua') or not doesFileExist('moonloader\\lib\\imgui.lua') or not doesFileExist('moonloader\\lib\\MoonImGui.dll') or not doesFileExist('moonloader\\lib\\imgui_addons.lua') then ftext('Начала загрузка отстутствующих бибилиотек.'); local nolibs = true end
     for k, v in pairs(libs) do
         if not doesFileExist('moonloader/lib/'..v) then
             downloadUrlToFile('https://raw.githubusercontent.com/WhackerH/kirya/master/lib/'..v, getWorkingDirectory()..'\\lib\\'..v)
@@ -4008,6 +4006,7 @@ function main()
     ftext('FBI Tools успешно загружен. Введите: /fthelp что бы получить дополнительную информацию.')
     ftext('Авторы: Sesh Jefferson, Thomas Lawson')
     print(('Загружен скрипт %s v.%s'):format(thisScript().name, thisScript().version))
+	if not doesFileExist('moonloader\\lib\\sphere.lua') or not doesFileExist('moonloader\\lib\\rkeys.lua') or not doesFileExist('moonloader\\lib\\imcustom\\hotkey.lua') or not doesFileExist('moonloader\\lib\\imgui.lua') or not doesFileExist('moonloader\\lib\\MoonImGui.dll') or not doesFileExist('moonloader\\lib\\imgui_addons.lua') then ftext('Начала загрузка отстутствующих бибилиотек.'); local nolibs = true end
     commands()
     mcheckf()
     shpf()
@@ -5947,14 +5946,14 @@ function strobes()
 				if doesVehicleExist(car) then
 					local veh_struct = getCarPointer(car) + 1440
 					if isCarSirenOn(car) then
-						callMethod(0x6C2100, veh_struct, 2, 1, 0, 1) -- Левая (0) выключена (1)
-						callMethod(0x6C2100, veh_struct, 2, 1, 1, 0) -- Правая (1) включена (0)
+						callMethod(0x6C2100, veh_struct, 2, 1, 0, 1)
+						callMethod(0x6C2100, veh_struct, 2, 1, 1, 0)
 						wait(300)
-						callMethod(0x6C2100, veh_struct, 2, 1, 0, 0) -- Левая (0) включена (0)
-						callMethod(0x6C2100, veh_struct, 2, 1, 1, 1) -- Правая (1) выключена (1)
+						callMethod(0x6C2100, veh_struct, 2, 1, 0, 0)
+						callMethod(0x6C2100, veh_struct, 2, 1, 1, 1)
 					else
-						callMethod(0x6C2100, veh_struct, 2, 1, 0, 0) -- Левая (0) включена (0)
-						callMethod(0x6C2100, veh_struct, 2, 1, 1, 0) -- Правая (1) включена (0)
+						callMethod(0x6C2100, veh_struct, 2, 1, 0, 0)
+						callMethod(0x6C2100, veh_struct, 2, 1, 1, 0)
 					end
 				end
 			end
