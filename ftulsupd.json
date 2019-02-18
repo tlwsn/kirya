@@ -1,6 +1,8 @@
 {
-  "latest": "2.21",
+  "latest": "2.3",
   "updateurl": "https://raw.githubusercontent.com/WhackerH/kirya/master/fbitools.lua",
   "updlist": "
-    Исправлена ошибка с автологином"
+    Исправлена ошибка с вылетом скрипта при объявлении в ООП
+    Добавлена автовыдача маскировки для ФБР
+    Добавлены стробоскопы"
 }

@@ -1,5 +1,5 @@
 script_name('FBI Tools')
-script_version('2.21')
+script_version('2.3')
 script_author('Sesh Jefferson and Thomas Lawson') -- код биндера от DonHomka
 require 'lib.moonloader'
 require 'lib.sampfuncs'
@@ -1546,66 +1546,162 @@ function dejectk()
         end
     end
 end
+function sampGetPlayerIdByNickname(nick)
+    local _, myid = sampGetPlayerIdByCharHandle(playerPed)
+    if tostring(nick) == sampGetPlayerNickname(myid) then return myid end
+    for i = 0, 1000 do if sampIsPlayerConnected(i) and sampGetPlayerNickname(i) == tostring(nick) then return i end end
+end
+function getMaskList(forma)
+	local mask = {
+		['гражданского'] = 0,
+		['полицейского'] = 1,
+		['военного'] = 2,
+		['лаборатория'] = 3,
+		['медика'] = 3,
+		['сотрудника мэрии'] = 4,
+		['работника автошколы'] = 5,
+		['работника новостей'] = 6,
+		['ЧОП LCN'] = 7,
+		['ЧОП Yakuza'] = 8,
+		['ЧОП Russian Mafia'] = 9,
+		['БК Rifa'] = 10,
+		['БК Grove'] = 11,
+		['БК Ballas'] = 12,
+		['БК Vagos'] = 13,
+		['БК Aztec'] = 14,
+		['байкеров'] = 15
+	}
+	return mask[forma]
+end
 function oopchat()
-    stext, sprefix, scolor, spcolor = sampGetChatString(99)
-    if zaproop then
-        if nikk ~= nil then
-            if stext:find(nikk) and scolor == 4294935170 then
-                local _, myid = sampGetPlayerIdByCharHandle(PLAYER_PED)
-                local myname = sampGetPlayerNickname(myid)
-                if not stext:find(myname) then
-                    zaproop = false
-                    nikk = nil
-                    wait(100)
-                    ftext('Команду выполнил другой сотрудник.', -1)
-                end
-            end
-        end
-    end
-    if scolor == 4287467007 then
-        if rang ~= 'Кадет' and rang ~= 'Офицер' and rang ~= 'Мл.Сержант' and  rang ~= 'Сержант' and  rang ~= 'Прапорщик' then
-            if stext:find('Дело на имя .+ %(%d+%) рассмотрению не подлежит, ООП, объявите.') then
-                local name, id = stext:match('Дело на имя (.+) %((%d+)%) рассмотрению не подлежит, ООП, объявите.')
-                zaproop = true
-                nikk = name
-                if nikk ~= nil then
-                    ftext(string.format("Поступил запрос на объявление ООП игрока {9966cc}%s", nikk:gsub('_', ' ')), -1)
-                    ftext('Подтвердить: {9966cc}'..table.concat(rkeys.getKeysName(config_keys.oopda.v), " + ")..'{ffffff} | Отменить: {9966cc}'..table.concat(rkeys.getKeysName(config_keys.oopnet.v), " + "), -1)
-                else
-                    zaproop = false
-                end
-            end
-            if stext:match('Дело .+ рассмотрению не подлежит %- ООП.') then
-                local name = stext:match('Дело (.+) рассмотрению не подлежит %- ООП.')
-                zaproop = true
-                nikk = name
-                if nikk ~= nil then
-                    ftext(string.format("Поступил запрос на объявление ООП игрока {9966cc}%s", nikk:gsub('_', ' ')), -1)
-                    ftext('Подтвердить: {9966cc}'..table.concat(rkeys.getKeysName(config_keys.oopda.v), " + ")..'{ffffff} | Отменить: {9966cc}'..table.concat(rkeys.getKeysName(config_keys.oopnet.v), " + "), -1)
-                else
-                    zaproop = false
-                end
-            end
-            if stext:match('Дело на имя .+ рассмотрению не подлежит, ООП.') then
-                local name = stext:match('Дело на имя (.+) рассмотрению не подлежит, ООП.')
-                zaproop = true
-                nikk = name
-                if nikk ~= nil then
-                    ftext(string.format("Поступил запрос на объявление ООП игрока {9966cc}%s", nikk:gsub('_', ' ')), -1)
-                    ftext('Подтвердить: {9966cc}'..table.concat(rkeys.getKeysName(config_keys.oopda.v), " + ")..'{ffffff} | Отменить: {9966cc}'..table.concat(rkeys.getKeysName(config_keys.oopnet.v), " + "), -1)
-                else
-                    zaproop = false
-                end
-            end
-        end
-    end
-    if nikk == nil then
-        if aroop then aroop = false end
-        if zaproop then zaproop = false end
-        if dmoop then dmoop = false end
-    end
+	while true do wait(0)
+	    stext, sprefix, scolor, spcolor = sampGetChatString(99)
+	    if zaproop then
+	        if nikk ~= nil then
+	            if stext:find(nikk) and scolor == 4294935170 then
+	                local _, myid = sampGetPlayerIdByCharHandle(PLAYER_PED)
+	                local myname = sampGetPlayerNickname(myid)
+	                if not stext:find(myname) then
+	                    zaproop = false
+	                    nikk = nil
+	                    wait(100)
+	                    ftext('Команду выполнил другой сотрудник.', -1)
+	                end
+	            end
+	        end
+	    end
+	    if scolor == 4287467007 or scolor == 9276927 then
+			if frak == 'FBI' then
+				if rang == 'Глава DEA' or rang == 'Глава CID' or rang == 'Инспектор FBI' or rang == 'Зам.Директора FBI' or rang == 'Директор FBI' then
+					if stext:match('Переоделся в костюм агента') then
+						local msrang, msnick = stext:match('(.+) (.+): Переоделся в костюм агента')
+						if msnick ~= sampGetPlayerNickname(select(2, sampGetPlayerIdByCharHandle(PLAYER_PED))) then
+							mssnyat = true
+							msoffid = sampGetPlayerIdByNickname(msnick)
+							ftext(('Агент {9966cc}%s {ffffff}хочет cнять маскировку'):format(msnick:gsub('_', ' ')))
+							ftext('Подтвердить: {9966cc}'..table.concat(rkeys.getKeysName(config_keys.oopda.v), " + ")..'{ffffff} | Отменить: {9966cc}'..table.concat(rkeys.getKeysName(config_keys.oopnet.v), " + "), -1)
+						end
+					end
+					if stext:match('Переоделась в костюм агента') then
+						local msrang, msnick = stext:match('(.+) (.+): Переоделась в костюм агента')
+						if msnick ~= sampGetPlayerNickname(select(2, sampGetPlayerIdByCharHandle(PLAYER_PED))) then
+							mssnyat = true
+							msoffid = sampGetPlayerIdByNickname(msnick)
+							ftext(('Агент {9966cc}%s {ffffff}хочет cнять маскировку'):format(msnick:gsub('_', ' ')))
+							ftext('Подтвердить: {9966cc}'..table.concat(rkeys.getKeysName(config_keys.oopda.v), " + ")..'{ffffff} | Отменить: {9966cc}'..table.concat(rkeys.getKeysName(config_keys.oopnet.v), " + "), -1)
+						end
+					end
+					if stext:match('Переоделся в сотрудника лаборатории') then
+						local msrang, msnick = stext:match('(.+) (.+): Переоделся в сотрудника лаборатории')
+						if msnick ~= sampGetPlayerNickname(select(2, sampGetPlayerIdByCharHandle(PLAYER_PED))) then
+							msid = sampGetPlayerIdByNickname(msnick)
+							msvidat = "лаборатория"
+							ftext(('Агент {9966cc}%s {ffffff}хочет взять форму {9966cc}сотрудника лаборатории{ffffff}'):format(msnick:gsub('_', ' ')))
+							ftext('Подтвердить: {9966cc}'..table.concat(rkeys.getKeysName(config_keys.oopda.v), " + ")..'{ffffff} | Отменить: {9966cc}'..table.concat(rkeys.getKeysName(config_keys.oopnet.v), " + "), -1)
+						end
+					end
+					if stext:match('Переоделась в сотрудника лаборатории') then
+						local msrang, msnick = stext:match('(.+) (.+): Переоделась в сотрудника лаборатории')
+						if msnick ~= sampGetPlayerNickname(select(2, sampGetPlayerIdByCharHandle(PLAYER_PED))) then
+							msid = sampGetPlayerIdByNickname(msnick)
+							msvidat = "лаборатория"
+							ftext(('Агент {9966cc}%s {ffffff}хочет взять форму {9966cc}сотрудника лаборатории{ffffff}'):format(msnick:gsub('_', ' ')))
+							ftext('Подтвердить: {9966cc}'..table.concat(rkeys.getKeysName(config_keys.oopda.v), " + ")..'{ffffff} | Отменить: {9966cc}'..table.concat(rkeys.getKeysName(config_keys.oopnet.v), " + "), -1)
+						end
+					end
+					if stext:match('Переоделся в форму .+. Причина: .+') then
+						local msrang, msnick, msforma, msreason = stext:match('(.+) (.+): Переоделся в форму (.+). Причина: (.+)')
+						if msnick ~= sampGetPlayerNickname(select(2, sampGetPlayerIdByCharHandle(PLAYER_PED))) then
+							msid = sampGetPlayerIdByNickname(msnick)
+							msvidat = msforma
+							ftext(('Агент {9966cc}%s {ffffff}хочет взять маскировку {9966cc}%s{ffffff}. Причина: {9966cc}%s'):format(msnick:gsub('_', ' '), msforma, msreason))
+							ftext('Подтвердить: {9966cc}'..table.concat(rkeys.getKeysName(config_keys.oopda.v), " + ")..'{ffffff} | Отменить: {9966cc}'..table.concat(rkeys.getKeysName(config_keys.oopnet.v), " + "), -1)
+						end
+					end
+					if stext:match('Переоделась в форму .+. Причина: .+') then
+						local msrang, msnick, msforma, msreason = stext:match('(.+) (.+): Переоделась в форму (.+). Причина: (.+)')
+						if msnick ~= sampGetPlayerNickname(select(2, sampGetPlayerIdByCharHandle(PLAYER_PED))) then
+							msid = sampGetPlayerIdByNickname(msnick)
+							msvidat = forma
+							ftext(('Агент {9966cc}%s {ffffff}хочет взять маскировку {9966cc}%s{ffffff}. Причина: {9966cc}%s'):format(msnick:gsub('_', ' '), msforma, msreason))
+							ftext('Подтвердить: {9966cc}'..table.concat(rkeys.getKeysName(config_keys.oopda.v), " + ")..'{ffffff} | Отменить: {9966cc}'..table.concat(rkeys.getKeysName(config_keys.oopnet.v), " + "), -1)
+						end
+					end
+				end
+			end
+	        if rang ~= 'Кадет' and rang ~= 'Офицер' and rang ~= 'Мл.Сержант' and  rang ~= 'Сержант' and  rang ~= 'Прапорщик' then
+	            if stext:find('Дело на имя .+ %(%d+%) рассмотрению не подлежит, ООП, объявите.') then
+	                local name, id = stext:match('Дело на имя (.+) %((%d+)%) рассмотрению не подлежит, ООП, объявите.')
+	                zaproop = true
+	                nikk = name
+	                if nikk ~= nil then
+	                    ftext(string.format("Поступил запрос на объявление ООП игрока {9966cc}%s", nikk:gsub('_', ' ')), -1)
+	                    ftext('Подтвердить: {9966cc}'..table.concat(rkeys.getKeysName(config_keys.oopda.v), " + ")..'{ffffff} | Отменить: {9966cc}'..table.concat(rkeys.getKeysName(config_keys.oopnet.v), " + "), -1)
+	                else
+	                    zaproop = false
+	                end
+	            end
+	            if stext:match('Дело .+ рассмотрению не подлежит %- ООП.') then
+	                local name = stext:match('Дело (.+) рассмотрению не подлежит %- ООП.')
+	                zaproop = true
+	                nikk = name
+	                if nikk ~= nil then
+	                    ftext(string.format("Поступил запрос на объявление ООП игрока {9966cc}%s", nikk:gsub('_', ' ')), -1)
+	                    ftext('Подтвердить: {9966cc}'..table.concat(rkeys.getKeysName(config_keys.oopda.v), " + ")..'{ffffff} | Отменить: {9966cc}'..table.concat(rkeys.getKeysName(config_keys.oopnet.v), " + "), -1)
+	                else
+	                    zaproop = false
+	                end
+	            end
+	            if stext:match('Дело на имя .+ рассмотрению не подлежит, ООП.') then
+	                local name = stext:match('Дело на имя (.+) рассмотрению не подлежит, ООП.')
+	                zaproop = true
+	                nikk = name
+	                if nikk ~= nil then
+	                    ftext(string.format("Поступил запрос на объявление ООП игрока {9966cc}%s", nikk:gsub('_', ' ')), -1)
+	                    ftext('Подтвердить: {9966cc}'..table.concat(rkeys.getKeysName(config_keys.oopda.v), " + ")..'{ffffff} | Отменить: {9966cc}'..table.concat(rkeys.getKeysName(config_keys.oopnet.v), " + "), -1)
+	                else
+	                    zaproop = false
+	                end
+	            end
+	        end
+	    end
+	    if nikk == nil then
+	        if aroop then aroop = false end
+	        if zaproop then zaproop = false end
+	        if dmoop then dmoop = false end
+	    end
+	end
 end
 function oopdakey()
+	if msvidat then
+		msda = true
+		sampSendChat('/spy '..msid)
+	end
+	if mssnyat then
+		sampSendChat('/spyoff '..msoffid)
+		msoffid = nil
+		mssnyat = false
+	end
     if opyatstat then
         checkStats()
         opyatstat = false
@@ -1638,22 +1734,27 @@ function oopdakey()
                 if not cfg.main.tarb then
                     sampSendChat(string.format('/r Дело на имя %s рассмотрению не подлежит, ООП.', nikk:gsub('_', ' ')))
                     aroop = false
-                    nikk = false
+                    nikk = nil
                 else
                     sampSendChat(string.format('/r [%s]: Дело на имя %s рассмотрению не подлежит, ООП.', cfg.main.tar, nikk:gsub('_', ' ')))
                     aroop = false
-                    nikk = false
+                    nikk = nil
                 end
             else
                 sampSendChat(string.format("/d Mayor, дело на имя %s рассмотрению не подлежит, ООП.", nikk:gsub('_', ' ')))
                 aroop = false
-                nikk = false
+                --nikk = nil
                 nazhaloop = true
             end
         end
     end
 end
 function oopnetkey()
+	msid = nil
+	msda = false
+	msvidat = nil
+	mssnyat = false
+	msoffid = nil
     if opyatstat then
         opyatstat = false
     end
@@ -2181,6 +2282,7 @@ function pkmmenu(id)
     }
 end
 function commands()
+	sampRegisterChatCommand('test', function() sampAddChatMessage(' Глава CID Aleksey_Efimenko: Переоделся в костюм агента', 0x8D8DFF) end)
     sampRegisterChatCommand('fnr', fnr)
     sampRegisterChatCommand('fkv', fkv)
     sampRegisterChatCommand('ooplist', ooplist)
@@ -2884,121 +2986,130 @@ function longtoshort(long)
     }
     return short[long]
 end
-local osnova =
-{
-  {
-    title = "Лаборатория",
-    onclick = function()
-      local _, myid = sampGetPlayerIdByCharHandle(PLAYER_PED)
-      if cfg.main.male == true then
-        sampSendChat("/r Переоделся в сотрудника лаборатории.")
-        wait(1200)
-        sampSendChat("/rb "..myid)
-      end
-      if cfg.main.male == false then
-        sampSendChat("/r Переоделась в сотрудника лаборатории.")
-        wait(1200)
-        sampSendChat("/rb "..myid)
-      end
-    end
-  },
-  {
-    title = 'Гражданский',
-    onclick = function()
-      sampShowDialog(1385, '{9966cc}FBI Tools {ffffff}| Маскировка', 'Введите: причину', 'Отправить', '', 1)
-    end
-  },
-  {
-    title = 'Полиция',
-    onclick = function()
-      sampShowDialog(1386, '{9966cc}FBI Tools {ffffff}| Маскировка', 'Введите: причину', 'Отправить', '', 1)
-    end
-  },
-  {
-    title = 'Армия',
-    onclick = function()
-      sampShowDialog(1387, '{9966cc}FBI Tools {ffffff}| Маскировка', 'Введите: причину', 'Отправить', '', 1)
-    end
-  },
-  {
-    title = 'МЧС',
-    onclick = function()
-      sampShowDialog(1388, '{9966cc}FBI Tools {ffffff}| Маскировка', 'Введите: причину', 'Отправить', '', 1)
-    end
-  },
-  {
-    title = 'Мэрия',
-    onclick = function()
-      sampShowDialog(1389, '{9966cc}FBI Tools {ffffff}| Маскировка', 'Введите: причину', 'Отправить', '', 1)
-    end
-  },
-  {
-    title = 'Автошкола',
-    onclick = function()
-      sampShowDialog(1390, '{9966cc}FBI Tools {ffffff}| Маскировка', 'Введите: причину', 'Отправить', '', 1)
-    end
-  },
-  {
-    title = 'News',
-    onclick = function()
-      sampShowDialog(1391, '{9966cc}FBI Tools {ffffff}| Маскировка', 'Введите: причину', 'Отправить', '', 1)
-    end
-  },
-  {
-    title = 'LCN',
-    onclick = function()
-      sampShowDialog(1392, '{9966cc}FBI Tools {ffffff}| Маскировка', 'Введите: причину', 'Отправить', '', 1)
-    end
-  },
-  {
-    title = 'Yakuza',
-    onclick = function()
-      sampShowDialog(1393, '{9966cc}FBI Tools {ffffff}| Маскировка', 'Введите: причину', 'Отправить', '', 1)
-    end
-  },
-  {
-    title = 'Russian Mafia',
-    onclick = function()
-      sampShowDialog(1394, '{9966cc}FBI Tools {ffffff}| Маскировка', 'Введите: причину', 'Отправить', '', 1)
-    end
-  },
-  {
-    title = 'Rifa',
-    onclick = function()
-      sampShowDialog(1395, '{9966cc}FBI Tools {ffffff}| Маскировка', 'Введите: причину', 'Отправить', '', 1)
-    end
-  },
-  {
-    title = 'Grove Street',
-    onclick = function()
-      sampShowDialog(1396, '{9966cc}FBI Tools {ffffff}| Маскировка', 'Введите: причину', 'Отправить', '', 1)
-    end
-  },
-  {
-    title = 'Ballas',
-    onclick = function()
-      sampShowDialog(1397, '{9966cc}FBI Tools {ffffff}| Маскировка', 'Введите: причину', 'Отправить', '', 1)
-    end
-  },
-  {
-    title = 'Vagos',
-    onclick = function()
-      sampShowDialog(1398, '{9966cc}FBI Tools {ffffff}| Маскировка', 'Введите: причину', 'Отправить', '', 1)
-    end
-  },
-  {
-    title = 'Aztec',
-    onclick = function()
-      sampShowDialog(1399, '{9966cc}FBI Tools {ffffff}| Маскировка', 'Введите: причину', 'Отправить', '', 1)
-    end
-  },
-  {
-    title = "Байкеры",
-    onclick = function()
-      sampShowDialog(1400, '{9966cc}FBI Tools {ffffff}| Маскировка', 'Введите: причину', 'Отправить', '', 1)
-    end
-  }
+local osnova = {
+	{
+		title = 'Лаборатория',
+		onclick = function()
+			local _, myid = sampGetPlayerIdByCharHandle(PLAYER_PED)
+			sampSendChat(("/r %s в сотрудника лаборатории."):format(cfg.main.male and 'Переоделся' or 'Переоделась'))
+	        wait(1200)
+	        sampSendChat("/rb "..myid)
+		end
+	},
+	{
+		title = 'Гражданский',
+		onclick = function()
+			mstype = 'гражданского'
+			sampShowDialog(1385, '{9966cc}FBI Tools {ffffff}| Маскировка', 'Введите: причину', '»', 'x', 1)
+		end
+	},
+	{
+		title = 'Полиция',
+		onclick = function()
+			mstype = 'полицейского'
+			sampShowDialog(1385, '{9966cc}FBI Tools {ffffff}| Маскировка', 'Введите: причину', '»', 'x', 1)
+		end
+	},
+	{
+		title = 'Армия',
+		onclick = function()
+			mstype = 'военного'
+			sampShowDialog(1385, '{9966cc}FBI Tools {ffffff}| Маскировка', 'Введите: причину', '»', 'x', 1)
+		end
+	},
+	{
+		title = 'МЧС',
+		onclick = function()
+			mstype = 'медика'
+			sampShowDialog(1385, '{9966cc}FBI Tools {ffffff}| Маскировка', 'Введите: причину', '»', 'x', 1)
+		end
+	},
+	{
+		title = 'Мэрия',
+		onclick = function()
+			mstype = 'сотрудника мэрии'
+			sampShowDialog(1385, '{9966cc}FBI Tools {ffffff}| Маскировка', 'Введите: причину', '»', 'x', 1)
+		end
+	},
+	{
+		title = 'Автошкола',
+		onclick = function()
+			mstype = 'работника автошколы'
+			sampShowDialog(1385, '{9966cc}FBI Tools {ffffff}| Маскировка', 'Введите: причину', '»', 'x', 1)
+		end
+	},
+	{
+		title = 'Новости',
+		onclick = function()
+			mstype = 'работника новостей'
+			sampShowDialog(1385, '{9966cc}FBI Tools {ffffff}| Маскировка', 'Введите: причину', '»', 'x', 1)
+		end
+	},
+	{
+		title = 'LCN',
+		ocnlick = function()
+			mstype = 'ЧПО LCN'
+			sampShowDialog(1385, '{9966cc}FBI Tools {ffffff}| Маскировка', 'Введите: причину', '»', 'x', 1)
+		end
+	},
+	{
+		title = 'Yakuza',
+		onclick = function()
+			mstype = 'ЧОП Yakuza'
+			sampShowDialog(1385, '{9966cc}FBI Tools {ffffff}| Маскировка', 'Введите: причину', '»', 'x', 1)
+		end
+	},
+	{
+		title = 'Russian Mafia',
+		onclick = function()
+			mstype = 'ЧОП Russian Mafia'
+			sampShowDialog(1385, '{9966cc}FBI Tools {ffffff}| Маскировка', 'Введите: причину', '»', 'x', 1)
+		end
+	},
+	{
+		title = 'Rifa',
+		onclick = function()
+			mstype = 'БК Rifa'
+			sampShowDialog(1385, '{9966cc}FBI Tools {ffffff}| Маскировка', 'Введите: причину', '»', 'x', 1)
+		end
+	},
+	{
+		title = 'Grove',
+		onclick = function()
+			mstype = 'БК Grove'
+			sampShowDialog(1385, '{9966cc}FBI Tools {ffffff}| Маскировка', 'Введите: причину', '»', 'x', 1)
+		end
+	},
+	{
+		title = 'Ballas',
+		onclick = function()
+			mstype = 'БК Ballas'
+			sampShowDialog(1385, '{9966cc}FBI Tools {ffffff}| Маскировка', 'Введите: причину', '»', 'x', 1)
+		end
+	},
+	{
+		title = 'Vagos',
+		onclick = function()
+			mstype = 'БК Vagos'
+			sampShowDialog(1385, '{9966cc}FBI Tools {ffffff}| Маскировка', 'Введите: причину', '»', 'x', 1)
+		end
+	},
+	{
+		title = 'Aztec',
+		onclick = function()
+			mstype = 'БК Aztec'
+			sampShowDialog(1385, '{9966cc}FBI Tools {ffffff}| Маскировка', 'Введите: причину', '»', 'x', 1)
+		end
+	},
+	{
+		title = 'Байкеры',
+		onclick = function()
+			mstype = 'байкеров'
+			sampShowDialog(1385, '{9966cc}FBI Tools {ffffff}| Маскировка', 'Введите: причину', '»', 'x', 1)
+		end
+	}
 }
+
 local fthelpsub =
 {
     {
@@ -3536,16 +3647,16 @@ function sp.onServerMessage(color, text)
     if nazhaloop then
         if text:match('Посылать объявление можно раз в 10 секунд!') then
             zaproop = true
-            ftext('Не удалось подать в ООП игрока {9966cc}'..nikk'{ffffff}. Повторить попытку?')
+            ftext('Не удалось подать в ООП игрока {9966cc}'..nikk..'{ffffff}. Повторить попытку?')
             ftext('Подтвердить: {9966cc}'..table.concat(rkeys.getKeysName(config_keys.oopda.v), " + ")..'{ffffff} | Отменить: {9966cc}'..table.concat(rkeys.getKeysName(config_keys.oopnet.v), " + "))
         end
         if color == -8224086 and text:find(nikk) then
-            dmoop = false
-            nikk = nil
-            zaproop = false
-            aroop = false
-            nazhaloop = false
-            ftext("Рассмотр дела отменен.", -1)
+			dmoop = false
+			nikk = nil
+			zaproop = false
+			aroop = false
+			nazhaloop = false
+			ftext("Рассмотр дела отменен.", -1)
         end
     end
     if (text:match('дело на имя .+ рассмотрению не подлежит, ООП') or text:match('дело .+ рассмотрению не подлежит %- ООП.')) and color == -8224086 then
@@ -3571,6 +3682,7 @@ function sp.onServerMessage(color, text)
     end
     if color == -1920073984 and (text:match('.+ .+%: .+') or text:match('%(%( .+ .+%: .+ %)%)')) then
         local colors = ("{%06X}"):format(bit.rshift(color, 8))
+		setClipboardText(colors)
         table.insert(radio, os.date(colors.."[%H:%M:%S] ") .. text)
     end
     if color == -3669760 and text:match('%[Wanted %d+: .+%] %[Сообщает%: .+%] %[.+%]') then
@@ -3627,7 +3739,7 @@ function sp.onServerMessage(color, text)
                 nikk = nik:gsub('_', ' ')
                 aroop = true
                 wait(3000)
-                ftext(string.format("Запретить рассмотр дела на имя %s", nikk:gsub('_', ' ')), -1)
+                ftext(string.format("Запретить рассмотр дела на имя {9966cc}%s", nikk:gsub('_', ' ')), -1)
                 ftext('Подтвердить: {9966cc}'..table.concat(rkeys.getKeysName(config_keys.oopda.v), " + ")..'{ffffff} | Отменить: {9966cc}'..table.concat(rkeys.getKeysName(config_keys.oopnet.v), " + "), -1)
             end)
         end
@@ -3639,7 +3751,7 @@ function sp.onServerMessage(color, text)
                 nikk = sampGetPlayerNickname(tdmg)
                 dmoop = true
                 wait(50)
-                ftext(string.format("Запретить рассмотр дела на имя %s", nikk:gsub('_', ' ')), -1)
+                ftext(string.format("Запретить рассмотр дела на имя {9966cc}%s", nikk:gsub('_', ' ')), -1)
                 ftext('Подтвердить: {9966cc}'..table.concat(rkeys.getKeysName(config_keys.oopda.v), " + ")..'{ffffff} | Отменить: {9966cc}'..table.concat(rkeys.getKeysName(config_keys.oopnet.v), " + "), -1)
             end)
         end
@@ -3764,6 +3876,13 @@ function sp.onServerMessage(color, text)
     end
 end
 function sp.onShowDialog(id, style, title, button1, button2, text)
+	if id == 50 and msda then
+		sampSendDialogResponse(id, 1, getMaskList(msvidat), _)
+		msid = nil
+		msda = false
+		msvidat = nil
+		return false
+	end
     if id == 1 and cfg.main.parolb and #cfg.main.parol >= 6 then
         sampSendDialogResponse(id, 1, _, cfg.main.parol)
         return false
@@ -3771,10 +3890,11 @@ function sp.onShowDialog(id, style, title, button1, button2, text)
     if id == 0 and checkstat then
         frak = text:match('.+Организация%:%s+(.+)%s+Ранг')
         rang = text:match('.+Ранг%:%s+(.+)%s+Работа')
-        sampCloseCurrentDialogWithButton(0)
         print(frak)
         print(rang)
         checkstat = false
+		sampSendDialogResponse(id, 1, _, _)
+		return false
     end
 end
 function sp.onSendGiveDamage(playerId, damage, weapon, bodypart)
@@ -3810,7 +3930,8 @@ local fbitools =
     offptrl = false,
     offwntd = false,
     tchat = false,
-    autocar = false
+    autocar = false,
+	strobs = true
   },
   commands =
   {
@@ -3995,6 +4116,8 @@ function main()
         checkStats()
     end
     update()
+	lua_thread.create(oopchat)
+	lua_thread.create(strobes)
     while true do wait(0)
         if #departament > 25 then table.remove(departament, 1) end
         if #radio > 25 then table.remove(radio, 1) end
@@ -4193,6 +4316,7 @@ function main()
                 local offwntdb = imgui.ImBool(cfg.main.offwntd)
                 local ticketb = imgui.ImBool(cfg.commands.ticket)
                 local tchatb = imgui.ImBool(cfg.main.tchat)
+				local strobbsb = imgui.ImBool(cfg.main.strobs)
                 local iScreenWidth, iScreenHeight = getScreenResolution()
                 imgui.SetNextWindowPos(imgui.ImVec2(iScreenWidth / 2, iScreenHeight / 2), imgui.Cond.FirstUseEver, imgui.ImVec2(15,6))
                 imgui.Begin(u8'Настройки##1', setwindows)
@@ -4222,6 +4346,7 @@ function main()
                     end
                     if imgui.ToggleButton(u8'Открывать чат на T', tchatb) then cfg.main.tchat = not cfg.main.tchat end; imgui.SameLine(); imgui.Text(u8 'Открывать чат на T')
                     if imgui.ToggleButton(u8 'Автоматически заводить авто', carb) then cfg.main.autocar = not cfg.main.autocar end; imgui.SameLine(); imgui.Text(u8 'Автоматически заводить авто')
+					if imgui.ToggleButton(u8 'Стробоскопы', strobbsb) then cfg.main.strobs = not cfg.main.strobs end; imgui.SameLine(); imgui.Text(u8 'Стробоскопы')
                     if imgui.InputInt(u8'Задержка в отыгровках', waitbuffer) then cfg.commands.zaderjka = waitbuffer.v end
                 end
                 if show == 2 then
@@ -4497,23 +4622,7 @@ function main()
                 submenus_show(pkmmenu(id), "{9966cc}FBI Tools {ffffff}| "..sampGetPlayerNickname(id).."["..id.."] ")
             end
         end
-        oopchat()
         local result, button, list, input = sampHasDialogRespond(1385)
-        local result1, button, list, input = sampHasDialogRespond(1386)
-        local result2, button, list, input = sampHasDialogRespond(1387)
-        local result3, button, list, input = sampHasDialogRespond(1388)
-        local result4, button, list, input = sampHasDialogRespond(1389)
-        local result5, button, list, input = sampHasDialogRespond(1390)
-        local result6, button, list, input = sampHasDialogRespond(1391)
-        local result7, button, list, input = sampHasDialogRespond(1392)
-        local result8, button, list, input = sampHasDialogRespond(1393)
-        local result9, button, list, input = sampHasDialogRespond(1394)
-        local result10, button, list, input = sampHasDialogRespond(1395)
-        local result11, button, list, input = sampHasDialogRespond(1396)
-        local result12, button, list, input = sampHasDialogRespond(1397)
-        local result13, button, list, input = sampHasDialogRespond(1398)
-        local result14, button, list, input = sampHasDialogRespond(1399)
-        local result15, button, list, input = sampHasDialogRespond(1400)
         local result16, button, list, input = sampHasDialogRespond(1401)
         local result17, button, list, input = sampHasDialogRespond(1765)
         local ooplresult, button, list, input = sampHasDialogRespond(2458)
@@ -4575,226 +4684,10 @@ function main()
         end
         if result then
             if button == 1 then
-                if cfg.main.male == true then
-                    sampSendChat("/r Переоделся в одежду гражданского. Причина: "..input)
-                    wait(1200)
-                    sampSendChat("/rb "..myid)
-                end
-                if cfg.main.male == false then
-                    sampSendChat("/r Переоделась в одежду гражданского. Причина: "..input)
-                    wait(1200)
-                    sampSendChat("/rb "..myid)
-                end
-            end
-        end
-        if result1 then
-            if button == 1 then
-                if cfg.main.male == true then
-                    sampSendChat("/r Переоделся в форму полицейского. Причина: "..input)
-                    wait(1200)
-                    sampSendChat("/rb "..myid)
-                end
-                if cfg.main.male == false then
-                    sampSendChat("/r Переоделась в форму полицейского. Причина: "..input)
-                    wait(1200)
-                    sampSendChat("/rb "..myid)
-                end
-            end
-        end
-        if result2 then
-            if button == 1 then
-                if cfg.main.male == true then
-                    sampSendChat("/r Переоделся в форму армейского. Причина: "..input)
-                    wait(1200)
-                    sampSendChat("/rb "..myid)
-                end
-                if cfg.main.male == false then
-                    sampSendChat("/r Переоделась в форму армейского. Причина: "..input)
-                    wait(1200)
-                    sampSendChat("/rb "..myid)
-                end
-            end
-        end
-        if result3 then
-            if button == 1 then
-                if cfg.main.male == true then
-                    sampSendChat("/r Переоделся в форму медика. Причина: "..input)
-                    wait(1200)
-                    sampSendChat("/rb "..myid)
-                end
-                if cfg.main.male == false then
-                    sampSendChat("/r Переоделась в форму медика. Причина: "..input)
-                    wait(1200)
-                    sampSendChat("/rb "..myid)
-                end
-            end
-        end
-        if result4 then
-            if button == 1 then
-                if cfg.main.male == true then
-                    sampSendChat("/r Переоделся в форму работника мэрии. Причина: "..input)
-                    wait(1200)
-                    sampSendChat("/rb "..myid)
-                end
-                if cfg.main.male == false then
-                    sampSendChat("/r Переоделась в форму работника мэрии. Причина: "..input)
-                    wait(1200)
-                    sampSendChat("/rb "..myid)
-                end
-            end
-        end
-        if result5 then
-            if button == 1 then
-                if cfg.main.male == true then
-                    sampSendChat("/r Переоделся в форму работника автошколы. Причина: "..input)
-                    wait(1200)
-                    sampSendChat("/rb "..myid)
-                end
-                if cfg.main.male == false then
-                    sampSendChat("/r Переоделась в форму работника автошколы. Причина: "..input)
-                    wait(1200)
-                    sampSendChat("/rb "..myid)
-                end
-            end
-        end
-        if result6 then
-            if button == 1 then
-                if cfg.main.male == true then
-                    sampSendChat("/r Переоделся в форму работника новостей. Причина: "..input)
-                    wait(1200)
-                    sampSendChat("/rb "..myid)
-                end
-                if cfg.main.male == false then
-                    sampSendChat("/r Переоделась в форму работника новостей. Причина: "..input)
-                    wait(1200)
-                    sampSendChat("/rb "..myid)
-                end
-            end
-        end
-        if result7 then
-            if button == 1 then
-                if cfg.main.male == true then
-                    sampSendChat("/r Переоделся в форму ЧОП LCN. Причина: "..input)
-                    wait(1200)
-                    sampSendChat("/rb "..myid)
-                end
-                if cfg.main.male == false then
-                    sampSendChat("/r Переоделась в форму ЧОП LCN. Причина: "..input)
-                    wait(1200)
-                    sampSendChat("/rb "..myid)
-                end
-            end
-        end
-        if result8 then
-            if button == 1 then
-                if cfg.main.male == true then
-                    sampSendChat("/r Переоделся в форму ЧОП Yakuza. Причина: "..input)
-                    wait(1200)
-                    sampSendChat("/rb "..myid)
-                end
-                if cfg.main.male == false then
-                    sampSendChat("/r Переоделась в форму ЧОП Yakuza. Причина: "..input)
-                    wait(1200)
-                    sampSendChat("/rb "..myid)
-                end
-            end
-        end
-        if result9 then
-            if button == 1 then
-                if cfg.main.male == true then
-                    sampSendChat("/r Переоделся в форму ЧОП РМ. Причина: "..input)
-                    wait(1200)
-                    sampSendChat("/rb "..myid)
-                end
-                if cfg.main.male == false then
-                    sampSendChat("/r Переоделась в форму ЧОП РМ. Причина: "..input)
-                    wait(1200)
-                    sampSendChat("/rb "..myid)
-                end
-            end
-        end
-        if result10 then
-            if button == 1 then
-                if cfg.main.male == true then
-                    sampSendChat("/r Переоделся в форму БК Rifa. Причина: "..input)
-                    wait(1200)
-                    sampSendChat("/rb "..myid)
-                end
-                if cfg.main.male == false then
-                    sampSendChat("/r Переоделась в форму БК Rifa. Причина: "..input)
-                    wait(1200)
-                    sampSendChat("/rb "..myid)
-                end
-            end
-        end
-        if result11 then
-            if button == 1 then
-                if cfg.main.male == true then
-                    sampSendChat("/r Переоделся в форму БК Grove. Причина: "..input)
-                    wait(1200)
-                    sampSendChat("/rb "..myid)
-                end
-                if cfg.main.male == false then
-                    sampSendChat("/r Переоделась в форму БК Grove. Причина: "..input)
-                    wait(1200)
-                    sampSendChat("/rb "..myid)
-                end
-            end
-        end
-        if result12 then
-            if button == 1 then
-                if cfg.main.male == true then
-                    sampSendChat("/r Переоделся в форму БК Ballas. Причина: "..input)
-                    wait(1200)
-                    sampSendChat("/rb "..myid)
-                end
-                if cfg.main.male == false then
-                    sampSendChat("/r Переоделась в форму БК Ballas. Причина: "..input)
-                    wait(1200)
-                    sampSendChat("/rb "..myid)
-                end
-            end
-        end
-        if result13 then
-            if button == 1 then
-                if cfg.main.male == true then
-                    sampSendChat("/r Переоделся в форму БК Vagos. Причина: "..input)
-                    wait(1200)
-                    sampSendChat("/rb "..myid)
-                end
-                if cfg.main.male == false then
-                    sampSendChat("/r Переоделась в форму БК Vagos. Причина: "..input)
-                    wait(1200)
-                    sampSendChat("/rb "..myid)
-                end
-            end
-        end
-        if result14 then
-            if button == 1 then
-                if cfg.main.male == true then
-                    sampSendChat("/r Переоделся в форму БК Aztec. Причина: "..input)
-                    wait(1200)
-                    sampSendChat("/rb "..myid)
-                end
-                if cfg.main.male == false then
-                    sampSendChat("/r Переоделся в форму БК Aztec. Причина: "..input)
-                    wait(1200)
-                    sampSendChat("/rb "..myid)
-                end
-            end
-        end
-        if result15 then
-            if button == 1 then
-                if cfg.main.male == true then
-                    sampSendChat("/r Переоделся в одежду байкеров. Причина: "..input)
-                    wait(1200)
-                    sampSendChat("/rb "..myid)
-                end
-                if cfg.main.male == false then
-                    sampSendChat("/r Переоделась в одежду байкеров. Причина: "..input)
-                    wait(1200)
-                    sampSendChat("/rb "..myid)
-                end
+				sampSendChat(("/r %s в форму %s. Причина: %s"):format(cfg.main.male and 'Переоделся' or 'Переоделась', mstype, input))
+				wait(1200)
+				sampSendChat("/rb "..myid)
+				mstype = ''
             end
         end
     end
@@ -5295,123 +5188,58 @@ function warn(pam)
     end
 end
 function ms(pam)
-    local _, myid = sampGetPlayerIdByCharHandle(PLAYER_PED)
-    if frak == 'FBI' then
-        if cfg.main.male == true then
-            if pam == "" or pam < "0" or pam > "3" or pam == nil then
-                ftext("Введите: /ms [Тип]", -1)
-                ftext("0 - Снять маскировку | 1 - Офис | 2 - Багажник | 3 - Сумка", -1)
-            elseif pam == "1" then
-                lua_thread.create(function()
-                    sampSendChat("/me снял с себя костюм агента и повесил на вешалку")
-                    wait(cfg.commands.zaderjka)
-                    sampSendChat("/me открыл ящик, после чего достал комплект маскировки")
-                    wait(cfg.commands.zaderjka)
-                    sampSendChat("/me надел на себя маскировку и закрыл ящик")
-                    wait(cfg.commands.zaderjka)
-                    sampSendChat("/do Агент в маскировке.")
-                    wait(100)
-                    submenus_show(osnova, "{9966cc}FBI Tools {ffffff}| Mask")
-                end)
-            elseif pam == "2" then
-                lua_thread.create(function()
-                    sampSendChat("/me открыл багажник автомобиля")
-                    wait(cfg.commands.zaderjka)
-                    sampSendChat("/me снял с себя костюм агента и убрал в багажник")
-                    wait(cfg.commands.zaderjka)
-                    sampSendChat("/me достал из багажника комплект маскировки и надел на себя")
-                    wait(cfg.commands.zaderjka)
-                    sampSendChat("/me закрыл багажник")
-                    wait(cfg.commands.zaderjka)
-                    sampSendChat("/do Агент в маскировке.")
-                    wait(100)
-                    submenus_show(osnova, "{9966cc}FBI Tools {ffffff}| Mask")
-                end)
-            elseif pam == "3" then
-                lua_thread.create(function()
-                    sampSendChat("/do На плече агента висит сумка.")
-                    wait(cfg.commands.zaderjka)
-                    sampSendChat("/me открыв сумку, снял костюм агента и убрал туда")
-                    wait(cfg.commands.zaderjka)
-                    sampSendChat("/me достал из сумки комплект маскировки и надел на себя")
-                    wait(cfg.commands.zaderjka)
-                    sampSendChat("/me закрыл сумку")
-                    wait(cfg.commands.zaderjka)
-                    sampSendChat("/do Агент в маскировке.")
-                    wait(100)
-                    submenus_show(osnova, "{9966cc}FBI Tools {ffffff}| Mask")
-                end)
-            elseif pam == "0" then
-                lua_thread.create(function()
-                    sampSendChat("/me снял с себя маскировку")
-                    wait(cfg.commands.zaderjka)
-                    sampSendChat("/me надел на себя костюм агента")
-                    wait(cfg.commands.zaderjka)
-                    sampSendChat("/r Переоделся в костюм агента")
-                    wait(cfg.commands.zaderjka)
-                    sampSendChat("/rb "..myid)
-                end)
-            end
-        end
-        if cfg.main.male == false then
-            if pam == "" or pam < "0" or pam > "3" or pam == nil then
-                ftext("Введите: /ms Тип", -1)
-                ftext("0 - Снять маскировку | 1 - Офис | 2 - Багажник | 3 - Сумка", -1)
-            elseif pam == "1" then
-                lua_thread.create(function()
-                    sampSendChat("/me сняла с себя костюм агента и повесила на вешалку")
-                    wait(cfg.commands.zaderjka)
-                    sampSendChat("/me открыла ящик, после чего достала комплект маскировки")
-                    wait(cfg.commands.zaderjka)
-                    sampSendChat("/me надела на себя маскировку и закрыла ящик")
-                    wait(cfg.commands.zaderjka)
-                    sampSendChat("/do Агент в маскировке.")
-                    wait(100)
-                    submenus_show(osnova, "{9966cc}FBI Tools {ffffff}| Mask")
-                end)
-            elseif pam == "2" then
-                lua_thread.create(function()
-                    sampSendChat("/me открыла багажник автомобиля")
-                    wait(cfg.commands.zaderjka)
-                    sampSendChat("/me сняла с себя костюм агента и убрала в багажник")
-                    wait(cfg.commands.zaderjka)
-                    sampSendChat("/me достала из багажника комплект маскировки и надела на себя")
-                    wait(cfg.commands.zaderjka)
-                    sampSendChat("/me закрыла багажник")
-                    wait(cfg.commands.zaderjka)
-                    sampSendChat("/do Агент в маскировке.")
-                    wait(100)
-                    submenus_show(osnova, "{9966cc}FBI Tools {ffffff}| Mask")
-                end)
-            elseif pam == "3" then
-                lua_thread.create(function()
-                    sampSendChat("/do На плече агента висит сумка.")
-                    wait(cfg.commands.zaderjka)
-                    sampSendChat("/me открыв сумку, сняла костюм агента и убрала туда")
-                    wait(cfg.commands.zaderjka)
-                    sampSendChat("/me достала из сумки комплект маскировки и надела на себя")
-                    wait(cfg.commands.zaderjka)
-                    sampSendChat("/me закрыла сумку")
-                    wait(cfg.commands.zaderjka)
-                    sampSendChat("/do Агент в маскировке.")
-                    wait(100)
-                    submenus_show(osnova, "{9966cc}FBI Tools {ffffff}| Mask")
-                end)
-            elseif pam == "0" then
-                lua_thread.create(function()
-                    sampSendChat("/me сняла с себя маскировку")
-                    wait(cfg.commands.zaderjka)
-                    sampSendChat("/me надела на себя костюм агента")
-                    wait(cfg.commands.zaderjka)
-                    sampSendChat("/r Переоделась в костюм агента")
-                    wait(cfg.commands.zaderjka)
-                    sampSendChat("/rb "..myid)
-                end)
-            end
-        end
-    else
-        ftext('Вы не сотрудник FBI')
-    end
+	lua_thread.create(function()
+		if frak == 'FBI' then
+			if pam == "" or pam < "0" or pam > "3" or pam == nil then
+				ftext("Введите: /ms [Тип]", -1)
+				ftext("0 - Снять маскировку | 1 - Офис | 2 - Багажник | 3 - Сумка", -1)
+			elseif pam == '1' then
+				sampSendChat(("/me %s с себя костюм агента и %s на вешалку"):format(cfg.main.male and 'снял' or 'сняла', cfg.main.male and 'повесил' or 'повесила'))
+				wait(cfg.commands.zaderjka)
+				sampSendChat(("/me %s ящик, после чего достал %s маскировки"):format(cfg.main.male and 'открыл' or 'открыла', cfg.main.male and 'достал' or 'достала'))
+				wait(cfg.commands.zaderjka)
+				sampSendChat(("/me %s на себя маскировку и %s ящик"):format(cfg.main.male and 'надел' or 'надела', cfg.main.male and 'закрыл' or 'закрыла'))
+				wait(cfg.commands.zaderjka)
+				sampSendChat("/do Агент в маскировке.")
+				wait(100)
+				submenus_show(osnova, "{9966cc}FBI Tools {ffffff}| Mask")
+			elseif pam == '2' then
+				sampSendChat(("/me %s багажник автомобиля"):format(cfg.main.male and 'открыл' or 'открыла'))
+				wait(cfg.commands.zaderjka)
+				sampSendChat(("/me %s с себя костюм агента и %s в багажник"):format(cfg.main.male and 'снял' or 'сняла', cfg.main.male and 'убрал' or 'убрала'))
+				wait(cfg.commands.zaderjka)
+				sampSendChat(("/me %s из багажника комплект маскировки и %s на себя"):format(cfg.main.male and 'достал' or 'достала', cfg.main.male and 'надел' or 'надела'))
+				wait(cfg.commands.zaderjka)
+				sampSendChat(("/me %s багажник"):format(cfg.main.male and 'закрыл' or 'закрыла'))
+				wait(cfg.commands.zaderjka)
+				sampSendChat("/do Агент в маскировке.")
+				wait(100)
+				submenus_show(osnova, "{9966cc}FBI Tools {ffffff}| Mask")
+			elseif pam == '3' then
+				sampSendChat("/do На плече агента висит сумка.")
+				wait(cfg.commands.zaderjka)
+				sampSendChat(("/me открыв сумку, %s костюм агента и %s туда"):format(cfg.main.male and 'снял' or 'сняла', cfg.main.male and 'убрал' or 'убрала'))
+				wait(cfg.commands.zaderjka)
+				sampSendChat(("/me %s из сумки комплект маскировки и %s на себя"):format(cfg.main.male and 'достал' or 'достала', cfg.main.male and 'надел' or 'надела'))
+				wait(cfg.commands.zaderjka)
+				sampSendChat(("/me %s сумку"):format(cfg.main.male and 'закрыл' or 'закрыла'))
+				wait(cfg.commands.zaderjka)
+				sampSendChat("/do Агент в маскировке.")
+				wait(100)
+				submenus_show(osnova, "{9966cc}FBI Tools {ffffff}| Mask")
+			elseif pam == '0' then
+				sampSendChat(("/me %s с себя маскировку"):format(cfg.main.male and 'снял' or 'сняла'))
+				wait(cfg.commands.zaderjka)
+				sampSendChat(("/me %s на себя костюм агента"):format(cfg.main.male and 'надел' or 'надела'))
+				wait(cfg.commands.zaderjka)
+				sampSendChat(("/r %s в костюм агента"):format(cfg.main.male and 'Переоделся' or 'Переоделась'))
+				wait(cfg.commands.zaderjka)
+				sampSendChat("/rb "..select(2, sampGetPlayerIdByCharHandle(PLAYER_PED)))
+			end
+		else
+			atext('Вы не сотрудник FBI')
+		end
+	end)
 end
 
 function ar(id)
@@ -6110,4 +5938,27 @@ function fnr()
         status = false
         vixodid = {}
 	end)
+end
+function strobes()
+	while true do -- Бесконечный цикл
+		if isCharInAnyCar(PLAYER_PED) and not isCharInAnyBoat(PLAYER_PED) and not isCharInFlyingVehicle(PLAYER_PED) and not isCharOnAnyBike(PLAYER_PED) and not isCharInAnyTrain(PLAYER_PED) then
+			if cfg.main.strobs then
+				local car = storeCarCharIsInNoSave(PLAYER_PED)
+				if doesVehicleExist(car) then
+					local veh_struct = getCarPointer(car) + 1440
+					if isCarSirenOn(car) then
+						callMethod(0x6C2100, veh_struct, 2, 1, 0, 1) -- Левая (0) выключена (1)
+						callMethod(0x6C2100, veh_struct, 2, 1, 1, 0) -- Правая (1) включена (0)
+						wait(300)
+						callMethod(0x6C2100, veh_struct, 2, 1, 0, 0) -- Левая (0) включена (0)
+						callMethod(0x6C2100, veh_struct, 2, 1, 1, 1) -- Правая (1) выключена (1)
+					else
+						callMethod(0x6C2100, veh_struct, 2, 1, 0, 0) -- Левая (0) включена (0)
+						callMethod(0x6C2100, veh_struct, 2, 1, 1, 0) -- Правая (1) включена (0)
+					end
+				end
+			end
+		end
+		wait(300)
+	end
 end
