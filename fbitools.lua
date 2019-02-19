@@ -1,5 +1,5 @@
 script_name('FBI Tools')
-script_version('2.3')
+script_version('2.4')
 script_author('Sesh Jefferson and Thomas Lawson') -- код биндера от DonHomka
 require 'lib.moonloader'
 require 'lib.sampfuncs'
@@ -2138,151 +2138,123 @@ function sumenu(args)
     }
 end
 function pkmmenu(id)
-    return
-    {
-      {
-        title = "{ffffff}» Надеть наручники",
-        onclick = function()
-          if cfg.main.male == true then
-            sampSendChat("/me заломал руки "..sampGetPlayerNickname(id).." и достал наручники")
-            wait(1200)
-            sampSendChat("/cuff "..id)
-          end
-          if cfg.main.male == false then
-            sampSendChat("/me заломала руки "..sampGetPlayerNickname(id).." и достала наручники")
-            wait(1200)
-            sampSendChat("/cuff "..id)
-          end
-        end
-      },
-      {
-        title = "{ffffff}» Вести за собой",
-        onclick = function()
-          if cfg.main.male == true then
-            sampSendChat("/me пристегнул один из концов наручников к себе, после чего повел за собой "..sampGetPlayerNickname(id))
-            wait(1200)
-            sampSendChat("/follow "..id)
-          end
-          if cfg.main.male == false then
-            sampSendChat("/me пристегнула один из концов наручников к себе, после чего повела за собой "..sampGetPlayerNickname(id))
-            wait(1200)
-            sampSendChat("/follow "..id)
-          end
-        end
-      },
-      {
-        title = "{ffffff}» Произвести обыск",
-        onclick = function()
-          if cfg.main.male == true then
-            sampSendChat("/me надев перчатки, провел руками по торсу")
-            wait(1200)
-            sampSendChat("/take "..id)
-          end
-          if cfg.main.male == false then
-            sampSendChat("/me надев перчатки, провела руками по торсу")
-            wait(1200)
-            sampSendChat("/take "..id)
-          end
-        end
-      },
-      {
-        title = "{ffffff}» Произвести арест",
-        onclick = function()
-          if cfg.main.male == true then
-            sampSendChat("/me достал ключи от камеры, открыв ее")
-            wait(cfg.commands.zaderjka)
-            sampSendChat("/me затолкнул "..sampGetPlayerNickname(id).." в камеру")
-            wait(cfg.commands.zaderjka)
-            sampSendChat("/arrest "..id)
-            wait(cfg.commands.zaderjka)
-            sampSendChat("/me закрыл камеру, убрав ключи в карман")
-          end
-          if cfg.main.male == false then
-            sampSendChat("/me достала ключи от камеры, открыв ее")
-            wait(cfg.commands.zaderjka)
-            sampSendChat("/me затолкнула "..sampGetPlayerNickname(id).." в камеру")
-            wait(cfg.commands.zaderjka)
-            sampSendChat("/arrest "..id)
-            wait(cfg.commands.zaderjka)
-            sampSendChat("/me закрыла камеру, убрав ключи в карман")
-          end
-        end
-      },
-      {
-        title = '{ffffff}» Снять наручники',
-        onclick = function()
-          if cfg.main.male == true then
-            sampSendChat("/me снял наручники с "..sampGetPlayerNickname(id))
-            wait(1200)
-            sampSendChat("/uncuff "..id)
-          end
-          if cfg.main.male == false then
-            sampSendChat("/me сняла наручники с "..sampGetPlayerNickname(id))
-            wait(1200)
-            sampSendChat("/uncuff "..id)
-          end
-        end
-      },
-      {
-        title = "{ffffff}» Выдать розыск за проникновение",
-        onclick = function()
-          sampSendChat("/su "..id.." 2 Проникновение на охр. территорию")
-        end
-      },
-      {
-        title = "{ffffff}» Выдать розыск за хранение наркотиков",
-        onclick = function()
-          sampSendChat("/su "..id.." 3 Хранение наркотиков")
-        end
-      },
-      {
-        title = "{ffffff}» Выдать розыск за хранение материалов",
-        onclick = function()
-          sampSendChat("/su "..id.." 3 Хранение материалов")
-        end
-      },
-      {
-        title = "{ffffff}» Выдать розыск за продажу наркотиков",
-        onclick = function()
-          if cfg.main.male == true then
-            sampSendChat("/su "..id.." 2 Продажа наркотиков")
-            wait(1200)
-            sampSendChat("/me заломал руки "..sampGetPlayerNickname(id).." и достал наручники")
-            wait(1200)
-            sampSendChat("/cuff "..id)
-          end
-          if cfg.main.male == false then
-            sampSendChat("/su "..id.." 2 Продажа наркотиков")
-            wait(1200)
-            sampSendChat("/me заломала руки "..sampGetPlayerNickname(id).." и достала наручники")
-            wait(1200)
-            sampSendChat("/cuff "..id)
-          end
-        end
-      },
-      {
-        title = "{ffffff}» Выдать розыск за продажу ключей от камеры",
-        onclick = function()
-          sampSendChat("/su "..id.." 6 Продажа ключей от камеры")
-        end
-      },
-      {
-        title = "{ffffff}» Выдать розыск за вооруженное нападение на ПО",
-        onclick = function()
-          sampSendChat("/su "..id.. " 6 Вооруженное нападение на ПО")
-        end
-      },
-      {
-        title = "{ffffff}» Выдать розыск",
-        onclick = function()
-          pID = tonumber(args)
-          submenus_show(sumenu(id), "{9966cc}FBI Tools {ffffff}| "..sampGetPlayerNickname(id).."["..id.."] ")
-        end
-      }
-    }
+	return
+	{
+		{
+			title = '{ffffff}» Надеть наручники',
+			onclick = function()
+				if sampIsPlayerConnected(id) then
+					sampSendChat(string.format('/me %s руки %s и %s наручники', cfg.main.male and 'заломал' or 'заломала', sampGetPlayerNickname(id), cfg.main.male and 'достал' or 'достала'))
+					wait(1200)
+					sampSendChat(string.format('/cuff %s', id))
+				end
+			end
+		},
+		{
+			title = "{ffffff}» Вести за собой",
+			onclick = function()
+				if sampIsPlayerConnected(id) then
+					sampSendChat(string.format('/me %s один из концов наручников к себе, после чего %s за собой %s', cfg.main.male and 'пристегнул' or 'пристегнула', cfg.main.male and 'повел' or 'повела', sampGetPlayerNickname(id)))
+					wait(1200)
+					sampSendChat(string.format('/follow %s', id))
+				end
+			end
+		},
+		{
+			title = "{ffffff}» Произвести обыск",
+			onclick = function()
+				if sampIsPlayerConnected(id) then
+					sampSendChat(string.format("/me надев перчатки, %s руками по торсу", cfg.main.male and 'провел' or 'провела'))
+					wait(1200)
+					sampSendChat(('/take %s'):format(id))
+				end
+			end
+		},
+		{
+			title = "{ffffff}» Произвести арест",
+			onclick = function()
+				if sampIsPlayerConnected(id) then
+					sampSendChat(('/me достав ключи от камеры %s ее'):format(cfg.main.male and 'открыл' or 'открыла'))
+					wait(cfg.commands.zaderjka)
+					sampSendChat(('/me %s %s в камеру'):format(cfg.main.male and 'затолкнул' or 'затолкнула', sampGetPlayerNickname(id)))
+					wait(cfg.commands.zaderjka)
+					sampSendChat(('/arrest %s'):format(id))
+					wait(cfg.commands.zaderjka)
+					sampSendChat(('/me закрыв камеру %s ключи в карман'):format(cfg.main.male and 'убрал' or 'убрала'))
+				end
+			end
+		},
+		{
+			title = '{ffffff}» Снять наручники',
+			onclick = function()
+				if sampIsPlayerConnected(id) then
+					sampSendChat(('/me %s наручники с %s'):format(cfg.main.male and 'снял' or 'сняла', sampGetPlayerNickname(id)))
+					wait(1200)
+					sampSendChat(('/uncuff %s'):format(id))
+				end
+			end
+		},
+		{
+			title = "{ffffff}» Выдать розыск за проникновение",
+			onclick = function()
+				if sampIsPlayerConnected(id) then
+					sampSendChat(("/su %s 2 Проникновение на охр. территорию"):format(id))
+				end
+			end
+		},
+		{
+			title = "{ffffff}» Выдать розыск за хранение наркотиков",
+			onclick = function()
+				if sampIsPlayerConnected(id) then
+					sampSendChat(("/su %s 3 Хранение наркотиков"):format(id))
+				end
+			end
+		},
+		{
+			title = "{ffffff}» Выдать розыск за хранение материалов",
+			onclick = function()
+				if sampIsPlayerConnected(id) then
+					sampSendChat(("/su %s 3 Хранение материалов"):format(id))
+				end
+			end
+		},
+		{
+			title = "{ffffff}» Выдать розыск за продажу наркотиков",
+			onclick = function()
+				if sampIsPlayerConnected(id) then
+					sampSendChat(('/su %s 2 Продажа наркотиков'):format(id))
+					wait(1200)
+					sampSendChat(("/me %s руки %s и %s наручники"):format(cfg.main.male and 'заломал' or 'заломала', sampGetPlayerNickname(id), cfg.main.male and 'достал' or 'достала'))
+				end
+			end
+		},
+		{
+			title = "{ffffff}» Выдать розыск за продажу ключей от камеры",
+			onclick = function()
+				if sampIsPlayerConnected(id) then
+					sampSendChat(("/su %s 6 Продажа ключей от камеры"):format(id))
+				end
+			end
+		},
+		{
+			title = "{ffffff}» Выдать розыск за вооруженное нападение на ПО",
+			onclick = function()
+				if sampIsPlayerConnected(id) then
+					sampSendChat(("/su %s 6 Вооруженное нападение на ПО"):format(id))
+				end
+			end
+		},
+		{
+			title = "{ffffff}» Выдать розыск",
+			onclick = function()
+				if sampIsPlayerConnected(id) then
+					submenus_show(sumenu(id), ('{9966cc}FBI Tools {ffffff}| %s[%s]'):format(sampGetPlayerNickname(id), id))
+				end
+			end
+		}
+	}
 end
 function commands()
-	sampRegisterChatCommand('test', function() sampAddChatMessage(' Глава CID Aleksey_Efimenko: Переоделся в костюм агента', 0x8D8DFF) end)
     sampRegisterChatCommand('fnr', fnr)
     sampRegisterChatCommand('fkv', fkv)
     sampRegisterChatCommand('ooplist', ooplist)
@@ -5236,7 +5208,7 @@ function ms(pam)
 				sampSendChat("/rb "..select(2, sampGetPlayerIdByCharHandle(PLAYER_PED)))
 			end
 		else
-			atext('Вы не сотрудник FBI')
+			ftext('Вы не сотрудник FBI')
 		end
 	end)
 end
