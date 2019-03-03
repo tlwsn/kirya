@@ -1,5 +1,5 @@
 script_name('FBI Tools')
-script_version('2.4')
+script_version('2.5')
 script_author('Sesh Jefferson and Thomas Lawson') -- код биндера от DonHomka
 require 'lib.moonloader'
 require 'lib.sampfuncs'
@@ -1103,6 +1103,14 @@ function ftext(message)
     sampAddChatMessage(string.format('%s %s', ctag, message), 0x9966CC)
 end
 --FUNCTIONS--
+function saveData(table, path)
+	if doesFileExist(path) then os.remove(path) end
+    local sfa = io.open(path, "w")
+    if sfa then
+        sfa:write(encodeJson(table))
+        sfa:close()
+    end
+end
 function update()
 	local fpath = os.getenv('TEMP') .. '\\ftulsupd.json'
 	downloadUrlToFile('https://raw.githubusercontent.com/WhackerH/kirya/master/ftulsupd.json', fpath, function(id, status, p1, p2)
@@ -3571,22 +3579,7 @@ else
 end
 function onScriptTerminate(scr)
     if scr == script.this then
-		if doesFileExist(fileb) then
-			os.remove(fileb)
-		end
-		local f = io.open(fileb, "w")
-		if f then
-			f:write(encodeJson(tBindList))
-			f:close()
-        end
-        if doesFileExist('moonloader/config/fbitools/keys.json') then
-            os.remove('moonloader/config/fbitools/keys.json')
-        end
-        local fa = io.open("moonloader/config/fbitools/keys.json", "w")
-        if fa then
-            fa:write(encodeJson(config_keys))
-            fa:close()
-        end
+		showCursor(false)
 	end
 end
 -------------
@@ -3854,8 +3847,8 @@ function sp.onShowDialog(id, style, title, button1, button2, text)
 		msvidat = nil
 		return false
 	end
-    if id == 1 and cfg.main.parolb and #cfg.main.parol >= 6 then
-        sampSendDialogResponse(id, 1, _, cfg.main.parol)
+    if id == 1 and cfg.main.parolb and #tostring(cfg.main.parol) >= 6 then
+        sampSendDialogResponse(id, 1, _, tostring(cfg.main.parol))
         return false
     end
     if id == 0 and checkstat then
@@ -3902,7 +3895,8 @@ local fbitools =
     offwntd = false,
     tchat = false,
     autocar = false,
-	strobs = true
+	strobs = true,
+	fixenb = false
   },
   commands =
   {
@@ -3955,6 +3949,7 @@ function main()
     end
     if not doesFileExist("moonloader/config/fbitools/keys.json") then
         local fa = io.open("moonloader/config/fbitools/keys.json", "w")
+		fa:write(encodeJson(config_keys))
         fa:close()
     else
         local fa = io.open("moonloader/config/fbitools/keys.json", 'r')
@@ -4081,10 +4076,10 @@ function main()
         end
     end)
     if not sampIsDialogActive() then
-        checkStats()
+        lua_thread.create(checkStats)
     else
         while sampIsDialogActive() do wait(0) end
-        checkStats()
+        lua_thread.create(checkStats)
     end
     update()
 	lua_thread.create(oopchat)
@@ -4095,7 +4090,8 @@ function main()
         if #wanted > 25 then table.remove(wanted, 1) end
         if #sms > 25 then table.remove(sms, 1) end
         infbar = imgui.ImBool(cfg.main.hud)
-        imgui.Process = mainwin.v or infbar.v or shpwindow.v or ykwindow.v or fpwindow.v or akwindow.v
+		fenb = imgui.ImBool(cfg.main.fixenb)
+        imgui.Process = mainwin.v or infbar.v or shpwindow.v or ykwindow.v or fpwindow.v or akwindow.v or fenb.v
         if sampIsDialogActive() == false and not isPauseMenuActive() and isPlayerPlaying(playerHandle) and sampIsChatInputActive() == false then
             if coordX ~= nil and coordY ~= nil then
                 cX, cY, cZ = getCharCoordinates(playerPed)
@@ -4124,7 +4120,28 @@ function main()
             imgui.PopStyleColor(3)
             return result
         end
+		function imgui.TextQuestion(text)
+		    imgui.TextDisabled('(?)')
+		    if imgui.IsItemHovered() then
+		        imgui.BeginTooltip()
+		        imgui.PushTextWrapPos(450)
+		        imgui.TextUnformatted(text)
+		        imgui.PopTextWrapPos()
+		        imgui.EndTooltip()
+		    end
+		end
         function imgui.OnDrawFrame()
+			if fenb.v then
+				imgui.ShowCursor = false
+                imgui.DisableInput = true
+				imgui.PushStyleColor(imgui.Col.WindowBg, imgui.ImVec4(0,0,0,0))
+				local iScreenWidth, iScreenHeight = getScreenResolution()
+                imgui.SetNextWindowPos(imgui.ImVec2(iScreenWidth / 2, iScreenHeight / 2), imgui.Cond.FirstUseEver, imgui.ImVec2(7, 3))
+				imgui.SetNextWindowSize(imgui.ImVec2(99999, 99999), imgui.Cond.FirstUseEver)
+				imgui.Begin('#fixenb', fenb, imgui.WindowFlags.NoResize + imgui.WindowFlags.NoCollapse + imgui.WindowFlags.NoTitleBar)
+				imgui.End()
+				imgui.PopStyleColor()
+			end
             if infbar.v then
                 imgui.ShowCursor = false
                 imgui.DisableInput = true
@@ -4173,256 +4190,6 @@ function main()
                 end
                 imgui.End()
             end
-            if bindkey.v then
-                local iScreenWidth, iScreenHeight = getScreenResolution()
-                imgui.SetNextWindowPos(imgui.ImVec2(iScreenWidth / 2, iScreenHeight / 2), imgui.Cond.FirstUseEver, imgui.ImVec2(7, 3))
-                imgui.Begin(u8 '', bindkey, imgui.WindowFlags.NoResize, imgui.WindowFlags.NoCollapse)
-                imgui.Text(u8 'Используйте ключи биндера для более удобного использования биндера')
-                imgui.Text(u8 'Пример: /su {targetid} 6 Вооруженное нападение на ПО')
-                imgui.Separator()
-                imgui.Text(u8 '{myid} - ID вашего персонажа')
-                imgui.Text(u8 '{myrpnick} - РП ник вашего персонажа')
-                imgui.Text(u8 '{naparnik} - Ваши напарники')
-                imgui.Text(u8 '{kv} - Ваш текущий квадрат')
-                imgui.Text(u8 '{targetid} - ID игрока на которого вы целитесь')
-                imgui.Text(u8 '{targetrpnick} - РП ник игрока на которого вы целитесь')
-                imgui.Text(u8 '{smsid} - Последний ID того, кто вам написал в SMS')
-                imgui.Text(u8 '{smstoid} - Последний ID того, кому вы написали в SMS')
-                imgui.Text(u8 '{megafid} - ID игрока, за которым была начата погоня')
-                imgui.Text(u8 '{rang} - Ваше звание')
-                imgui.Text(u8 '{frak} - Ваша фракция')
-                imgui.Text(u8 '{f6} - Отправить сообщение в чат через эмуляцию чата (использовать в самом начале)')
-                imgui.End()
-            end
-            if bMainWindow.v then
-                imgui.LockPlayer = true
-                imgui.ShowCursor = true
-                imgui.DisableInput = false
-                local iScreenWidth, iScreenHeight = getScreenResolution()
-                imgui.SetNextWindowPos(imgui.ImVec2(iScreenWidth / 2, iScreenHeight / 2), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
-                imgui.SetNextWindowSize(imgui.ImVec2(1000, 525), imgui.Cond.FirstUseEver)
-                imgui.Begin(u8("FBI Tools | Биндер##main"), bMainWindow, imgui.WindowFlags.NoCollapse + imgui.WindowFlags.NoResize)
-                imgui.Text(u8'Для корректной работы биндера рекомендуется перезагрузить скрипт после изменения настроек биндера.')
-                imgui.Separator()
-                imgui.BeginChild("##bindlist", imgui.ImVec2(995, 442))
-                for k, v in ipairs(tBindList) do
-                    if hk.HotKey("##HK" .. k, v, tLastKeys, 100) then
-                        if not rkeys.isHotKeyDefined(v.v) then
-                            if rkeys.isHotKeyDefined(tLastKeys.v) then
-                                rkeys.unRegisterHotKey(tLastKeys.v)
-                            end
-                            rkeys.registerHotKey(v.v, true, onHotKey)
-                        end
-                    end
-                    imgui.SameLine()
-                    if tEditData.id ~= k then
-                        local sText = v.text:gsub("%[enter%]$", "")
-                        imgui.BeginChild("##cliclzone" .. k, imgui.ImVec2(500, 21))
-                        imgui.AlignTextToFramePadding()
-                        if sText:len() > 0 then
-                            imgui.Text(u8(sText))
-                        else
-                            imgui.TextDisabled(u8("Пустое сообщение ..."))
-                        end
-                        imgui.EndChild()
-                        if imgui.IsItemClicked() then
-                            sInputEdit.v = sText:len() > 0 and u8(sText) or ""
-                            bIsEnterEdit.v = string.match(v.text, "(.)%[enter%]$") ~= nil
-                            tEditData.id = k
-                            tEditData.inputActve = true
-                        end
-                    else
-                        local btimeb = imgui.ImInt(v.time)
-                        imgui.PushAllowKeyboardFocus(false)
-                        imgui.PushItemWidth(500)
-                        local save = imgui.InputText("##Edit" .. k, sInputEdit, imgui.InputTextFlags.EnterReturnsTrue)
-                        imgui.PopItemWidth()
-                        imgui.PopAllowKeyboardFocus()
-                        imgui.SameLine()
-                        imgui.Checkbox(u8("Ввод") .. "##editCH" .. k, bIsEnterEdit)
-                        imgui.SameLine()
-                        imgui.PushItemWidth(50)
-                        if imgui.InputInt(u8'Задержка', btimeb, 0) then v.time = btimeb.v end
-                        imgui.PopItemWidth()
-                        if save then
-                            tBindList[tEditData.id].text = u8:decode(sInputEdit.v) .. (bIsEnterEdit.v and "[enter]" or "")
-                            tEditData.id = -1
-                        end
-                        if tEditData.inputActve then
-                            tEditData.inputActve = false
-                            imgui.SetKeyboardFocusHere(-1)
-                        end
-                    end
-                end
-                imgui.EndChild()
-                imgui.Separator()
-                if imgui.Button(u8"Добавить клавишу") then
-                    tBindList[#tBindList + 1] = {text = "", v = {}, time = 0}
-                end
-                imgui.SameLine()
-                if imgui.Button(u8 'Ключи') then
-                    bindkey.v = not bindkey.v
-                end
-                imgui.End()
-            end
-            if setwindows.v then
-                imgui.DisableInput = false
-                local cput =  imgui.ImBool(cfg.commands.cput)
-                local ceject = imgui.ImBool(cfg.commands.ceject)
-                local ftazer = imgui.ImBool(cfg.commands.ftazer)
-                local deject = imgui.ImBool(cfg.commands.deject)
-                local kmdcb = imgui.ImBool(cfg.commands.kmdctime)
-                local carb = imgui.ImBool(cfg.main.autocar)
-                local stateb = imgui.ImBool(cfg.main.male)
-                local tagf = imgui.ImBuffer(u8(cfg.main.tar), 256)
-                local parolf = imgui.ImBuffer(u8(cfg.main.parol), 256)
-                local tagb = imgui.ImBool(cfg.main.tarb)
-                local xcord = imgui.ImInt(cfg.main.posX)
-                local ycord = imgui.ImInt(cfg.main.posY)
-                local clistbuffer = imgui.ImInt(cfg.main.clist)
-                local waitbuffer = imgui.ImInt(cfg.commands.zaderjka)
-                local clistb = imgui.ImBool(cfg.main.clistb)
-                local parolb = imgui.ImBool(cfg.main.parolb)
-                local offptrlb = imgui.ImBool(cfg.main.offptrl)
-                local offwntdb = imgui.ImBool(cfg.main.offwntd)
-                local ticketb = imgui.ImBool(cfg.commands.ticket)
-                local tchatb = imgui.ImBool(cfg.main.tchat)
-				local strobbsb = imgui.ImBool(cfg.main.strobs)
-                local iScreenWidth, iScreenHeight = getScreenResolution()
-                imgui.SetNextWindowPos(imgui.ImVec2(iScreenWidth / 2, iScreenHeight / 2), imgui.Cond.FirstUseEver, imgui.ImVec2(15,6))
-                imgui.Begin(u8'Настройки##1', setwindows)
-                imgui.BeginChild('##set', imgui.ImVec2(140, 400), true)
-                if imgui.Selectable(u8'Основные') then show = 1 end
-                if imgui.Selectable(u8'Команды') then show = 2 end
-                if imgui.Selectable(u8'Клавиши') then show = 3 end
-                imgui.EndChild()
-                imgui.SameLine()
-                imgui.BeginChild('##set1', imgui.ImVec2(800, 400), true)
-                if show == 1 then
-                    if imgui.ToggleButton(u8'Скрывать сообщения о начале преследования', offptrlb) then cfg.main.offptrl = not cfg.main.offptrl end; imgui.SameLine(); imgui.Text(u8 'Скрывать сообщения о начале преследования')
-                    if imgui.ToggleButton(u8'Скрывать сообщения о выдаче розыска', offwntdb) then cfg.main.offwntd = not cfg.main.offwntd end; imgui.SameLine(); imgui.Text(u8 'Скрывать сообщения о выдаче розыска')
-                    if imgui.ToggleButton(u8'Мужские отыгровки', stateb) then cfg.main.male = not cfg.main.male end; imgui.SameLine(); imgui.Text(u8 'Мужские отыгровки')
-                    if imgui.ToggleButton(u8'Использовать автотег', tagb) then cfg.main.tarb = not cfg.main.tarb end; imgui.SameLine(); imgui.Text(u8 'Использовать автотег')
-                    if tagb.v then
-                        if imgui.InputText(u8'Введите ваш Тег.', tagf) then cfg.main.tar = u8:decode(tagf.v) end
-                    end
-                    if imgui.ToggleButton(u8'Использовать авто логин', parolb) then cfg.main.parolb = not cfg.main.parolb end; imgui.SameLine(); imgui.Text(u8 'Использовать авто логин')
-                    if parolb.v then
-                        if imgui.InputText(u8'Введите ваш пароль.', parolf, imgui.InputTextFlags.Password) then cfg.main.parol = u8:decode(parolf.v) end
-                        if imgui.Button(u8'Узнать пароль') then ftext('Ваш пароль: {9966cc}'..cfg.main.parol) end
-                    end
-                    if imgui.ToggleButton(u8'Использовать автоклист', clistb) then cfg.main.clistb = not cfg.main.clistb end; imgui.SameLine(); imgui.Text(u8 'Использовать автоклист')
-                    if clistb.v then
-                        if imgui.SliderInt(u8"Выберите значение клиста", clistbuffer, 0, 33) then cfg.main.clist = clistbuffer.v end
-                    end
-                    if imgui.ToggleButton(u8'Открывать чат на T', tchatb) then cfg.main.tchat = not cfg.main.tchat end; imgui.SameLine(); imgui.Text(u8 'Открывать чат на T')
-                    if imgui.ToggleButton(u8 'Автоматически заводить авто', carb) then cfg.main.autocar = not cfg.main.autocar end; imgui.SameLine(); imgui.Text(u8 'Автоматически заводить авто')
-					if imgui.ToggleButton(u8 'Стробоскопы', strobbsb) then cfg.main.strobs = not cfg.main.strobs end; imgui.SameLine(); imgui.Text(u8 'Стробоскопы')
-                    if imgui.InputInt(u8'Задержка в отыгровках', waitbuffer) then cfg.commands.zaderjka = waitbuffer.v end
-                end
-                if show == 2 then
-                    if imgui.ToggleButton(u8('Отыгровка /cput'), cput) then cfg.commands.cput = not cfg.commands.cput end; imgui.SameLine(); imgui.Text(u8 'Отыгровка /cput')
-                    if imgui.ToggleButton(u8('Отыгровка /ceject'), ceject) then cfg.commands.ceject = not cfg.commands.ceject end; imgui.SameLine(); imgui.Text(u8 'Отыгровка /ceject')
-                    if imgui.ToggleButton(u8('Отыгровка /ftazer'), ftazer) then cfg.commands.ftazer = not cfg.commands.ftazer end; imgui.SameLine(); imgui.Text(u8 'Отыгровка /ftazer')
-                    if imgui.ToggleButton(u8('Отыгровка /deject'), deject) then cfg.commands.deject = not cfg.commands.deject end; imgui.SameLine(); imgui.Text(u8 'Отыгровка /deject')
-                    if imgui.ToggleButton(u8('Отыгровка /ticket'), ticketb) then cfg.commands.ticket = not cfg.commands.ticket end; imgui.SameLine(); imgui.Text(u8 'Отыгровка /ticket')
-                    if imgui.ToggleButton(u8('Использовать /time F8 при /kmdc'), kmdcb) then cfg.commands.kmdctime = not cfg.commands.kmdctime end; imgui.SameLine(); imgui.Text(u8 'Использовать /time F8 при /kmdc')
-                end
-                if show == 3 then
-                    if imgui.HotKey(u8'##Клавиша быстрого тазера', config_keys.tazerkey, tLastKeys, 100) then
-                        rkeys.changeHotKey(tazerbind, config_keys.tazerkey.v)
-                        ftext('Клавиша успешно изменена. Старое значение: '.. table.concat(rkeys.getKeysName(tLastKeys.v), " + ") .. ' | Новое значение: '.. table.concat(rkeys.getKeysName(config_keys.tazerkey.v), " + "))
-                    end
-                    imgui.SameLine()
-                    imgui.Text(u8'Клавиша быстрого тазера')
-                    if imgui.HotKey('##fastmenu', config_keys.fastmenukey, tLastKeys, 100) then
-                        rkeys.changeHotKey(fastmenubind, config_keys.fastmenukey.v)
-                        ftext('Клавиша успешно изменена. Старое значение: '.. table.concat(rkeys.getKeysName(tLastKeys.v), " + ") .. ' | Новое значение: '.. table.concat(rkeys.getKeysName(config_keys.fastmenukey.v), " + "))
-                    end
-                    imgui.SameLine()
-                    imgui.Text(u8('Клавиша быстрого меню'))
-                    if imgui.HotKey('##oopda', config_keys.oopda, tLastKeys, 100) then
-                        rkeys.changeHotKey(oopdabind, config_keys.oopda.v)
-                        ftext('Клавиша успешно изменена. Старое значение: '.. table.concat(rkeys.getKeysName(tLastKeys.v), " + ") .. ' | Новое значение: '.. table.concat(rkeys.getKeysName(config_keys.oopda.v), " + "))
-                    end
-                    imgui.SameLine()
-                    imgui.Text(u8('Клавиша подтверждения'))
-                    if imgui.HotKey('##oopnet', config_keys.oopnet, tLastKeys, 100) then
-                        rkeys.changeHotKey(oopnetbind, config_keys.oopnet.v)
-                        ftext('Клавиша успешно изменена. Старое значение: '.. table.concat(rkeys.getKeysName(tLastKeys.v), " + ") .. ' | Новое значение: '.. table.concat(rkeys.getKeysName(config_keys.oopnet.v), " + "))
-                    end
-                    imgui.SameLine()
-                    imgui.Text(u8('Клавиша отмены'))
-                    if imgui.HotKey('##megaf', config_keys.megafkey, tLastKeys, 100) then
-                        rkeys.changeHotKey(megafbind, config_keys.megafkey.v)
-                        ftext('Клавиша успешно изменена. Старое значение: '.. table.concat(rkeys.getKeysName(tLastKeys.v), " + ") .. ' | Новое значение: '.. table.concat(rkeys.getKeysName(config_keys.megafkey.v), " + "))
-                    end
-                    imgui.SameLine()
-                    imgui.Text(u8('Клавиша мегафона'))
-                    if imgui.HotKey('##dkld', config_keys.dkldkey, tLastKeys, 100) then
-                        rkeys.changeHotKey(dkldbind, config_keys.dkldkey.v)
-                        ftext('Клавиша успешно изменена. Старое значение: '.. table.concat(rkeys.getKeysName(tLastKeys.v), " + ") .. ' | Новое значение: '.. table.concat(rkeys.getKeysName(config_keys.dkldkey.v), " + "))
-                    end
-                    imgui.SameLine()
-                    imgui.Text(u8('Клавиша доклада'))
-                    if imgui.HotKey('##cuff', config_keys.cuffkey, tLastKeys, 100) then
-                        rkeys.changeHotKey(cuffbind, config_keys.cuffkey.v)
-                        ftext('Клавиша успешно изменена. Старое значение: '.. table.concat(rkeys.getKeysName(tLastKeys.v), " + ") .. ' | Новое значение: '.. table.concat(rkeys.getKeysName(config_keys.cuffkey.v), " + "))
-                    end
-                    imgui.SameLine()
-                    imgui.Text(u8('Надеть наручники на преступника'))
-                    if imgui.HotKey('##uncuff', config_keys.uncuffkey, tLastKeys, 100) then
-                        rkeys.changeHotKey(uncuffbind, config_keys.uncuffkey.v)
-                        ftext('Клавиша успешно изменена. Старое значение: '.. table.concat(rkeys.getKeysName(tLastKeys.v), " + ") .. ' | Новое значение: '.. table.concat(rkeys.getKeysName(config_keys.uncuffkey.v), " + "))
-                    end
-                    imgui.SameLine()
-                    imgui.Text(u8('Снять наручники'))
-                    if imgui.HotKey('##follow', config_keys.followkey, tLastKeys, 100) then
-                        rkeys.changeHotKey(followbind, config_keys.followkey.v)
-                        ftext('Клавиша успешно изменена. Старое значение: '.. table.concat(rkeys.getKeysName(tLastKeys.v), " + ") .. ' | Новое значение: '.. table.concat(rkeys.getKeysName(config_keys.followkey.v), " + "))
-                    end
-                    imgui.SameLine()
-                    imgui.Text(u8('Вести преступника за собой'))
-                    if imgui.HotKey('##cput', config_keys.cputkey, tLastKeys, 100) then
-                        rkeys.changeHotKey(cputbind, config_keys.cputkey.v)
-                        ftext('Клавиша успешно изменена. Старое значение: '.. table.concat(rkeys.getKeysName(tLastKeys.v), " + ") .. ' | Новое значение: '.. table.concat(rkeys.getKeysName(config_keys.cputkey.v), " + "))
-                    end
-                    imgui.SameLine()
-                    imgui.Text(u8('Посадить преступника в авто'))
-                    if imgui.HotKey('##ceject', config_keys.cejectkey, tLastKeys, 100) then
-                        rkeys.changeHotKey(cejectbind, config_keys.cejectkey.v)
-                        ftext('Клавиша успешно изменена. Старое значение: '.. table.concat(rkeys.getKeysName(tLastKeys.v), " + ") .. ' | Новое значение: '.. table.concat(rkeys.getKeysName(config_keys.cejectkey.v), " + "))
-                    end
-                    imgui.SameLine()
-                    imgui.Text(u8('Высадить преступника в участок'))
-                    if imgui.HotKey('##take', config_keys.takekey, tLastKeys, 100) then
-                        rkeys.changeHotKey(takebind, config_keys.takekey.v)
-                        ftext('Клавиша успешно изменена. Старое значение: '.. table.concat(rkeys.getKeysName(tLastKeys.v), " + ") .. ' | Новое значение: '.. table.concat(rkeys.getKeysName(config_keys.takekey.v), " + "))
-                    end
-                    imgui.SameLine()
-                    imgui.Text(u8('Обыскать преступника'))
-                    if imgui.HotKey('##arrest', config_keys.arrestkey, tLastKeys, 100) then
-                        rkeys.changeHotKey(arrestbind, config_keys.arrestkey.v)
-                        ftext('Клавиша успешно изменена. Старое значение: '.. table.concat(rkeys.getKeysName(tLastKeys.v), " + ") .. ' | Новое значение: '.. table.concat(rkeys.getKeysName(config_keys.arrestkey.v), " + "))
-                    end
-                    imgui.SameLine()
-                    imgui.Text(u8('Арестовать преступника'))
-                    if imgui.HotKey('##deject', config_keys.dejectkey, tLastKeys, 100) then
-                        rkeys.changeHotKey(dejectbind, config_keys.dejectkey.v)
-                        ftext('Клавиша успешно изменена. Старое значение: '.. table.concat(rkeys.getKeysName(tLastKeys.v), " + ") .. ' | Новое значение: '.. table.concat(rkeys.getKeysName(config_keys.dejectkey.v), " + "))
-                    end
-                    imgui.SameLine()
-                    imgui.Text(u8('Вытащить преступника из авто'))
-                    if imgui.HotKey('##siren', config_keys.sirenkey, tLastKeys, 100) then
-                        rkeys.changeHotKey(sirenbind, config_keys.sirenkey.v)
-                        ftext('Клавиша успешно изменена. Старое значение: '.. table.concat(rkeys.getKeysName(tLastKeys.v), " + ") .. ' | Новое значение: '.. table.concat(rkeys.getKeysName(config_keys.sirenkey.v), " + "))
-                    end
-                    imgui.SameLine()
-                    imgui.Text(u8('Включить / выключить сирену на авто'))
-                end
-                imgui.EndChild()
-                imgui.End()
-            end
             if mainwin.v then
                 imgui.DisableInput = false
                 imgui.LockPlayer = true
@@ -4463,6 +4230,273 @@ function main()
                     thisScript():reload()
                 end
                 imgui.End()
+				if bMainWindow.v then
+	                imgui.LockPlayer = true
+	                imgui.ShowCursor = true
+	                imgui.DisableInput = false
+	                local iScreenWidth, iScreenHeight = getScreenResolution()
+	                imgui.SetNextWindowPos(imgui.ImVec2(iScreenWidth / 2, iScreenHeight / 2), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
+	                imgui.SetNextWindowSize(imgui.ImVec2(1000, 525), imgui.Cond.FirstUseEver)
+	                imgui.Begin(u8("FBI Tools | Биндер##main"), bMainWindow, imgui.WindowFlags.NoCollapse + imgui.WindowFlags.NoResize)
+	                imgui.Text(u8'Для корректной работы биндера рекомендуется перезагрузить скрипт после изменения настроек биндера.')
+	                imgui.Separator()
+	                imgui.BeginChild("##bindlist", imgui.ImVec2(995, 442))
+	                for k, v in ipairs(tBindList) do
+	                    if hk.HotKey("##HK" .. k, v, tLastKeys, 100) then
+	                        if not rkeys.isHotKeyDefined(v.v) then
+	                            if rkeys.isHotKeyDefined(tLastKeys.v) then
+	                                rkeys.unRegisterHotKey(tLastKeys.v)
+	                            end
+	                            rkeys.registerHotKey(v.v, true, onHotKey)
+	                        end
+	                    end
+	                    imgui.SameLine()
+	                    if tEditData.id ~= k then
+	                        local sText = v.text:gsub("%[enter%]$", "")
+	                        imgui.BeginChild("##cliclzone" .. k, imgui.ImVec2(500, 21))
+	                        imgui.AlignTextToFramePadding()
+	                        if sText:len() > 0 then
+	                            imgui.Text(u8(sText))
+	                        else
+	                            imgui.TextDisabled(u8("Пустое сообщение ..."))
+	                        end
+	                        imgui.EndChild()
+	                        if imgui.IsItemClicked() then
+	                            sInputEdit.v = sText:len() > 0 and u8(sText) or ""
+	                            bIsEnterEdit.v = string.match(v.text, "(.)%[enter%]$") ~= nil
+	                            tEditData.id = k
+	                            tEditData.inputActve = true
+	                        end
+	                    else
+	                        local btimeb = imgui.ImInt(v.time)
+	                        imgui.PushAllowKeyboardFocus(false)
+	                        imgui.PushItemWidth(500)
+	                        local save = imgui.InputText("##Edit" .. k, sInputEdit, imgui.InputTextFlags.EnterReturnsTrue)
+	                        imgui.PopItemWidth()
+	                        imgui.PopAllowKeyboardFocus()
+	                        imgui.SameLine()
+	                        imgui.Checkbox(u8("Ввод") .. "##editCH" .. k, bIsEnterEdit)
+	                        imgui.SameLine()
+	                        imgui.PushItemWidth(50)
+	                        if imgui.InputInt(u8'Задержка', btimeb, 0) then v.time = btimeb.v end
+	                        imgui.PopItemWidth()
+	                        if save then
+	                            tBindList[tEditData.id].text = u8:decode(sInputEdit.v) .. (bIsEnterEdit.v and "[enter]" or "")
+	                            tEditData.id = -1
+								saveData(tBindList, fileb)
+	                        end
+	                        if tEditData.inputActve then
+	                            tEditData.inputActve = false
+	                            imgui.SetKeyboardFocusHere(-1)
+	                        end
+	                    end
+	                end
+	                imgui.EndChild()
+	                imgui.Separator()
+	                if imgui.Button(u8"Добавить клавишу") then
+	                    tBindList[#tBindList + 1] = {text = "", v = {}, time = 0}
+	                end
+	                imgui.SameLine()
+	                if imgui.Button(u8 'Ключи') then
+	                    bindkey.v = not bindkey.v
+	                end
+	                imgui.End()
+					if bindkey.v then
+		                local iScreenWidth, iScreenHeight = getScreenResolution()
+		                imgui.SetNextWindowPos(imgui.ImVec2(iScreenWidth / 2, iScreenHeight / 2), imgui.Cond.FirstUseEver, imgui.ImVec2(7, 3))
+		                imgui.Begin(u8 '', bindkey, imgui.WindowFlags.NoResize, imgui.WindowFlags.NoCollapse)
+		                imgui.Text(u8 'Используйте ключи биндера для более удобного использования биндера')
+		                imgui.Text(u8 'Пример: /su {targetid} 6 Вооруженное нападение на ПО')
+		                imgui.Separator()
+		                imgui.Text(u8 '{myid} - ID вашего персонажа')
+		                imgui.Text(u8 '{myrpnick} - РП ник вашего персонажа')
+		                imgui.Text(u8 '{naparnik} - Ваши напарники')
+		                imgui.Text(u8 '{kv} - Ваш текущий квадрат')
+		                imgui.Text(u8 '{targetid} - ID игрока на которого вы целитесь')
+		                imgui.Text(u8 '{targetrpnick} - РП ник игрока на которого вы целитесь')
+		                imgui.Text(u8 '{smsid} - Последний ID того, кто вам написал в SMS')
+		                imgui.Text(u8 '{smstoid} - Последний ID того, кому вы написали в SMS')
+		                imgui.Text(u8 '{megafid} - ID игрока, за которым была начата погоня')
+		                imgui.Text(u8 '{rang} - Ваше звание')
+		                imgui.Text(u8 '{frak} - Ваша фракция')
+		                imgui.Text(u8 '{f6} - Отправить сообщение в чат через эмуляцию чата (использовать в самом начале)')
+		                imgui.End()
+		            end
+	            end
+				if setwindows.v then
+	                imgui.DisableInput = false
+	                local cput =  imgui.ImBool(cfg.commands.cput)
+	                local ceject = imgui.ImBool(cfg.commands.ceject)
+	                local ftazer = imgui.ImBool(cfg.commands.ftazer)
+	                local deject = imgui.ImBool(cfg.commands.deject)
+	                local kmdcb = imgui.ImBool(cfg.commands.kmdctime)
+	                local carb = imgui.ImBool(cfg.main.autocar)
+	                local stateb = imgui.ImBool(cfg.main.male)
+	                local tagf = imgui.ImBuffer(u8(cfg.main.tar), 256)
+	                local parolf = imgui.ImBuffer(u8(cfg.main.parol), 256)
+	                local tagb = imgui.ImBool(cfg.main.tarb)
+	                local xcord = imgui.ImInt(cfg.main.posX)
+	                local ycord = imgui.ImInt(cfg.main.posY)
+	                local clistbuffer = imgui.ImInt(cfg.main.clist)
+	                local waitbuffer = imgui.ImInt(cfg.commands.zaderjka)
+	                local clistb = imgui.ImBool(cfg.main.clistb)
+	                local parolb = imgui.ImBool(cfg.main.parolb)
+	                local offptrlb = imgui.ImBool(cfg.main.offptrl)
+	                local offwntdb = imgui.ImBool(cfg.main.offwntd)
+	                local ticketb = imgui.ImBool(cfg.commands.ticket)
+	                local tchatb = imgui.ImBool(cfg.main.tchat)
+					local strobbsb = imgui.ImBool(cfg.main.strobs)
+	                local iScreenWidth, iScreenHeight = getScreenResolution()
+	                imgui.SetNextWindowPos(imgui.ImVec2(iScreenWidth / 2, iScreenHeight / 2), imgui.Cond.FirstUseEver, imgui.ImVec2(15,6))
+	                imgui.Begin(u8'Настройки##1', setwindows)
+	                imgui.BeginChild('##set', imgui.ImVec2(140, 400), true)
+	                if imgui.Selectable(u8'Основные') then show = 1 end
+	                if imgui.Selectable(u8'Команды') then show = 2 end
+	                if imgui.Selectable(u8'Клавиши') then show = 3 end
+	                imgui.EndChild()
+	                imgui.SameLine()
+	                imgui.BeginChild('##set1', imgui.ImVec2(800, 400), true)
+	                if show == 1 then
+	                    if imgui.ToggleButton(u8'Скрывать сообщения о начале преследования', offptrlb) then cfg.main.offptrl = not cfg.main.offptrl end; imgui.SameLine(); imgui.Text(u8 'Скрывать сообщения о начале преследования')
+	                    if imgui.ToggleButton(u8'Скрывать сообщения о выдаче розыска', offwntdb) then cfg.main.offwntd = not cfg.main.offwntd end; imgui.SameLine(); imgui.Text(u8 'Скрывать сообщения о выдаче розыска')
+	                    if imgui.ToggleButton(u8'Мужские отыгровки', stateb) then cfg.main.male = not cfg.main.male end; imgui.SameLine(); imgui.Text(u8 'Мужские отыгровки')
+	                    if imgui.ToggleButton(u8'Использовать автотег', tagb) then cfg.main.tarb = not cfg.main.tarb end; imgui.SameLine(); imgui.Text(u8 'Использовать автотег')
+	                    if tagb.v then
+	                        if imgui.InputText(u8'Введите ваш Тег.', tagf) then cfg.main.tar = u8:decode(tagf.v) end
+	                    end
+	                    if imgui.ToggleButton(u8'Использовать авто логин', parolb) then cfg.main.parolb = not cfg.main.parolb end; imgui.SameLine(); imgui.Text(u8 'Использовать авто логин')
+	                    if parolb.v then
+	                        if imgui.InputText(u8'Введите ваш пароль.', parolf, imgui.InputTextFlags.Password) then cfg.main.parol = u8:decode(parolf.v) end
+	                        if imgui.Button(u8'Узнать пароль') then ftext('Ваш пароль: {9966cc}'..cfg.main.parol) end
+	                    end
+	                    if imgui.ToggleButton(u8'Использовать автоклист', clistb) then cfg.main.clistb = not cfg.main.clistb end; imgui.SameLine(); imgui.Text(u8 'Использовать автоклист')
+	                    if clistb.v then
+	                        if imgui.SliderInt(u8"Выберите значение клиста", clistbuffer, 0, 33) then cfg.main.clist = clistbuffer.v end
+	                    end
+	                    if imgui.ToggleButton(u8'Открывать чат на T', tchatb) then cfg.main.tchat = not cfg.main.tchat end; imgui.SameLine(); imgui.Text(u8 'Открывать чат на T')
+	                    if imgui.ToggleButton(u8 'Автоматически заводить авто', carb) then cfg.main.autocar = not cfg.main.autocar end; imgui.SameLine(); imgui.Text(u8 'Автоматически заводить авто')
+						if imgui.ToggleButton(u8 'Стробоскопы', strobbsb) then cfg.main.strobs = not cfg.main.strobs end; imgui.SameLine(); imgui.Text(u8 'Стробоскопы')
+						if imgui.ToggleButton(u8 'Поддержка ENB', fenb) then cfg.main.fixenb = not cfg.main.fixenb end; imgui.SameLine(); imgui.Text(u8 'Поддержка ENB'); imgui.SameLine() imgui.TextQuestion(u8 'Не рекомендуется использовать эту функцию если у вас не установленно ENB\nПосле применения функции закройте и откройте это окно введя команду /ft\nПримечание: Не нажимайте по пустому месту на экране во время включенной функции одновременно с открытым меню скрипта, в ином случае меню придется закрыть и открыть вновь введя команду /ft')
+	                    if imgui.InputInt(u8'Задержка в отыгровках', waitbuffer) then cfg.commands.zaderjka = waitbuffer.v end
+	                end
+	                if show == 2 then
+	                    if imgui.ToggleButton(u8('Отыгровка /cput'), cput) then cfg.commands.cput = not cfg.commands.cput end; imgui.SameLine(); imgui.Text(u8 'Отыгровка /cput')
+	                    if imgui.ToggleButton(u8('Отыгровка /ceject'), ceject) then cfg.commands.ceject = not cfg.commands.ceject end; imgui.SameLine(); imgui.Text(u8 'Отыгровка /ceject')
+	                    if imgui.ToggleButton(u8('Отыгровка /ftazer'), ftazer) then cfg.commands.ftazer = not cfg.commands.ftazer end; imgui.SameLine(); imgui.Text(u8 'Отыгровка /ftazer')
+	                    if imgui.ToggleButton(u8('Отыгровка /deject'), deject) then cfg.commands.deject = not cfg.commands.deject end; imgui.SameLine(); imgui.Text(u8 'Отыгровка /deject')
+	                    if imgui.ToggleButton(u8('Отыгровка /ticket'), ticketb) then cfg.commands.ticket = not cfg.commands.ticket end; imgui.SameLine(); imgui.Text(u8 'Отыгровка /ticket')
+	                    if imgui.ToggleButton(u8('Использовать /time F8 при /kmdc'), kmdcb) then cfg.commands.kmdctime = not cfg.commands.kmdctime end; imgui.SameLine(); imgui.Text(u8 'Использовать /time F8 при /kmdc')
+	                end
+	                if show == 3 then
+	                    if imgui.HotKey(u8'##Клавиша быстрого тазера', config_keys.tazerkey, tLastKeys, 100) then
+	                        rkeys.changeHotKey(tazerbind, config_keys.tazerkey.v)
+	                        ftext('Клавиша успешно изменена. Старое значение: '.. table.concat(rkeys.getKeysName(tLastKeys.v), " + ") .. ' | Новое значение: '.. table.concat(rkeys.getKeysName(config_keys.tazerkey.v), " + "))
+							saveData(config_keys, 'moonloader/config/fbitools/keys.json')
+	                    end
+	                    imgui.SameLine()
+	                    imgui.Text(u8'Клавиша быстрого тазера')
+	                    if imgui.HotKey('##fastmenu', config_keys.fastmenukey, tLastKeys, 100) then
+	                        rkeys.changeHotKey(fastmenubind, config_keys.fastmenukey.v)
+	                        ftext('Клавиша успешно изменена. Старое значение: '.. table.concat(rkeys.getKeysName(tLastKeys.v), " + ") .. ' | Новое значение: '.. table.concat(rkeys.getKeysName(config_keys.fastmenukey.v), " + "))
+							saveData(config_keys, 'moonloader/config/fbitools/keys.json')
+	                    end
+	                    imgui.SameLine()
+	                    imgui.Text(u8('Клавиша быстрого меню'))
+	                    if imgui.HotKey('##oopda', config_keys.oopda, tLastKeys, 100) then
+	                        rkeys.changeHotKey(oopdabind, config_keys.oopda.v)
+	                        ftext('Клавиша успешно изменена. Старое значение: '.. table.concat(rkeys.getKeysName(tLastKeys.v), " + ") .. ' | Новое значение: '.. table.concat(rkeys.getKeysName(config_keys.oopda.v), " + "))
+							saveData(config_keys, 'moonloader/config/fbitools/keys.json')
+	                    end
+	                    imgui.SameLine()
+	                    imgui.Text(u8('Клавиша подтверждения'))
+	                    if imgui.HotKey('##oopnet', config_keys.oopnet, tLastKeys, 100) then
+	                        rkeys.changeHotKey(oopnetbind, config_keys.oopnet.v)
+	                        ftext('Клавиша успешно изменена. Старое значение: '.. table.concat(rkeys.getKeysName(tLastKeys.v), " + ") .. ' | Новое значение: '.. table.concat(rkeys.getKeysName(config_keys.oopnet.v), " + "))
+							saveData(config_keys, 'moonloader/config/fbitools/keys.json')
+	                    end
+	                    imgui.SameLine()
+	                    imgui.Text(u8('Клавиша отмены'))
+	                    if imgui.HotKey('##megaf', config_keys.megafkey, tLastKeys, 100) then
+	                        rkeys.changeHotKey(megafbind, config_keys.megafkey.v)
+	                        ftext('Клавиша успешно изменена. Старое значение: '.. table.concat(rkeys.getKeysName(tLastKeys.v), " + ") .. ' | Новое значение: '.. table.concat(rkeys.getKeysName(config_keys.megafkey.v), " + "))
+							saveData(config_keys, 'moonloader/config/fbitools/keys.json')
+	                    end
+	                    imgui.SameLine()
+	                    imgui.Text(u8('Клавиша мегафона'))
+	                    if imgui.HotKey('##dkld', config_keys.dkldkey, tLastKeys, 100) then
+	                        rkeys.changeHotKey(dkldbind, config_keys.dkldkey.v)
+	                        ftext('Клавиша успешно изменена. Старое значение: '.. table.concat(rkeys.getKeysName(tLastKeys.v), " + ") .. ' | Новое значение: '.. table.concat(rkeys.getKeysName(config_keys.dkldkey.v), " + "))
+							saveData(config_keys, 'moonloader/config/fbitools/keys.json')
+	                    end
+	                    imgui.SameLine()
+	                    imgui.Text(u8('Клавиша доклада'))
+	                    if imgui.HotKey('##cuff', config_keys.cuffkey, tLastKeys, 100) then
+	                        rkeys.changeHotKey(cuffbind, config_keys.cuffkey.v)
+	                        ftext('Клавиша успешно изменена. Старое значение: '.. table.concat(rkeys.getKeysName(tLastKeys.v), " + ") .. ' | Новое значение: '.. table.concat(rkeys.getKeysName(config_keys.cuffkey.v), " + "))
+							saveData(config_keys, 'moonloader/config/fbitools/keys.json')
+	                    end
+	                    imgui.SameLine()
+	                    imgui.Text(u8('Надеть наручники на преступника'))
+	                    if imgui.HotKey('##uncuff', config_keys.uncuffkey, tLastKeys, 100) then
+	                        rkeys.changeHotKey(uncuffbind, config_keys.uncuffkey.v)
+	                        ftext('Клавиша успешно изменена. Старое значение: '.. table.concat(rkeys.getKeysName(tLastKeys.v), " + ") .. ' | Новое значение: '.. table.concat(rkeys.getKeysName(config_keys.uncuffkey.v), " + "))
+							saveData(config_keys, 'moonloader/config/fbitools/keys.json')
+	                    end
+	                    imgui.SameLine()
+	                    imgui.Text(u8('Снять наручники'))
+	                    if imgui.HotKey('##follow', config_keys.followkey, tLastKeys, 100) then
+	                        rkeys.changeHotKey(followbind, config_keys.followkey.v)
+	                        ftext('Клавиша успешно изменена. Старое значение: '.. table.concat(rkeys.getKeysName(tLastKeys.v), " + ") .. ' | Новое значение: '.. table.concat(rkeys.getKeysName(config_keys.followkey.v), " + "))
+							saveData(config_keys, 'moonloader/config/fbitools/keys.json')
+	                    end
+	                    imgui.SameLine()
+	                    imgui.Text(u8('Вести преступника за собой'))
+	                    if imgui.HotKey('##cput', config_keys.cputkey, tLastKeys, 100) then
+	                        rkeys.changeHotKey(cputbind, config_keys.cputkey.v)
+	                        ftext('Клавиша успешно изменена. Старое значение: '.. table.concat(rkeys.getKeysName(tLastKeys.v), " + ") .. ' | Новое значение: '.. table.concat(rkeys.getKeysName(config_keys.cputkey.v), " + "))
+							saveData(config_keys, 'moonloader/config/fbitools/keys.json')
+	                    end
+	                    imgui.SameLine()
+	                    imgui.Text(u8('Посадить преступника в авто'))
+	                    if imgui.HotKey('##ceject', config_keys.cejectkey, tLastKeys, 100) then
+	                        rkeys.changeHotKey(cejectbind, config_keys.cejectkey.v)
+	                        ftext('Клавиша успешно изменена. Старое значение: '.. table.concat(rkeys.getKeysName(tLastKeys.v), " + ") .. ' | Новое значение: '.. table.concat(rkeys.getKeysName(config_keys.cejectkey.v), " + "))
+							saveData(config_keys, 'moonloader/config/fbitools/keys.json')
+	                    end
+	                    imgui.SameLine()
+	                    imgui.Text(u8('Высадить преступника в участок'))
+	                    if imgui.HotKey('##take', config_keys.takekey, tLastKeys, 100) then
+	                        rkeys.changeHotKey(takebind, config_keys.takekey.v)
+	                        ftext('Клавиша успешно изменена. Старое значение: '.. table.concat(rkeys.getKeysName(tLastKeys.v), " + ") .. ' | Новое значение: '.. table.concat(rkeys.getKeysName(config_keys.takekey.v), " + "))
+							saveData(config_keys, 'moonloader/config/fbitools/keys.json')
+	                    end
+	                    imgui.SameLine()
+	                    imgui.Text(u8('Обыскать преступника'))
+	                    if imgui.HotKey('##arrest', config_keys.arrestkey, tLastKeys, 100) then
+	                        rkeys.changeHotKey(arrestbind, config_keys.arrestkey.v)
+	                        ftext('Клавиша успешно изменена. Старое значение: '.. table.concat(rkeys.getKeysName(tLastKeys.v), " + ") .. ' | Новое значение: '.. table.concat(rkeys.getKeysName(config_keys.arrestkey.v), " + "))
+							saveData(config_keys, 'moonloader/config/fbitools/keys.json')
+	                    end
+	                    imgui.SameLine()
+	                    imgui.Text(u8('Арестовать преступника'))
+	                    if imgui.HotKey('##deject', config_keys.dejectkey, tLastKeys, 100) then
+	                        rkeys.changeHotKey(dejectbind, config_keys.dejectkey.v)
+	                        ftext('Клавиша успешно изменена. Старое значение: '.. table.concat(rkeys.getKeysName(tLastKeys.v), " + ") .. ' | Новое значение: '.. table.concat(rkeys.getKeysName(config_keys.dejectkey.v), " + "))
+							saveData(config_keys, 'moonloader/config/fbitools/keys.json')
+	                    end
+	                    imgui.SameLine()
+	                    imgui.Text(u8('Вытащить преступника из авто'))
+	                    if imgui.HotKey('##siren', config_keys.sirenkey, tLastKeys, 100) then
+	                        rkeys.changeHotKey(sirenbind, config_keys.sirenkey.v)
+	                        ftext('Клавиша успешно изменена. Старое значение: '.. table.concat(rkeys.getKeysName(tLastKeys.v), " + ") .. ' | Новое значение: '.. table.concat(rkeys.getKeysName(config_keys.sirenkey.v), " + "))
+							saveData(config_keys, 'moonloader/config/fbitools/keys.json')
+	                    end
+	                    imgui.SameLine()
+	                    imgui.Text(u8('Включить / выключить сирену на авто'))
+	                end
+	                imgui.EndChild()
+	                imgui.End()
+	            end
             end
             if shpwindow.v then
                 imgui.DisableInput = false
