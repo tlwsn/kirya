@@ -1,5 +1,5 @@
 script_name('FBI Tools')
-script_version('2.5')
+script_version('2.6')
 script_author('Sesh Jefferson and Thomas Lawson') -- код биндера от DonHomka
 require 'lib.moonloader'
 require 'lib.sampfuncs'
@@ -1182,8 +1182,9 @@ checkstat = false
 function checkStats()
     checkstat = true
     sampSendChat('/stats')
-    while checkstat do wait(0) end
-    sampCloseCurrentDialogWithButton(1)
+	local chtime = os.clock() + 20
+    while checkstat or chtime < os.clock() do wait(0) end
+	local chtime = nil
     if rang == nil and frak == nil then
         ftext('Не удалось определить статистику персонажа. Повторить попытку?', -1)
         ftext('Подтвердить: {9966cc}'..table.concat(rkeys.getKeysName(config_keys.oopda.v), " + ")..'{ffffff} | Отменить: {9966cc}'..table.concat(rkeys.getKeysName(config_keys.oopnet.v), " + "), -1)
@@ -2309,12 +2310,6 @@ function commands()
     sampRegisterChatCommand('mcheck', mcheck)
     sampRegisterChatCommand('z', ssuz)
     sampfuncsRegisterConsoleCommand('gppc', function() print(getCharCoordinates(PLAYER_PED)) end)
-    sampRegisterChatCommand('yk', function() ykwindow.v = not ykwindow.v end)
-    sampRegisterChatCommand('fp', function() fpwindow.v = not fpwindow.v end)
-    if sampIsChatCommandDefined('ak') then sampUnregisterChatCommand('ak') end
-    sampRegisterChatCommand('ak', function() akwindow.v = not akwindow.v end)
-    sampRegisterChatCommand('shp',function() shpwindow.v = not shpwindow.v end)
-    sampRegisterChatCommand('ft', function() mainwin.v = not mainwin.v end)
     sampRegisterChatCommand('hudpos', function()
         if cfg.main.hud then
             if not changetextpos then
@@ -4009,6 +4004,12 @@ function main()
     imgui.HotKey = require('imgui_addons').HotKey
     imgui.ToggleButton = require('imgui_addons').ToggleButton
     apply_custom_style()
+    sampRegisterChatCommand('yk', function() ykwindow.v = not ykwindow.v end)
+    sampRegisterChatCommand('fp', function() fpwindow.v = not fpwindow.v end)
+    if sampIsChatCommandDefined('ak') then sampUnregisterChatCommand('ak') end
+    sampRegisterChatCommand('ak', function() akwindow.v = not akwindow.v end)
+    sampRegisterChatCommand('shp',function() shpwindow.v = not shpwindow.v end)
+    sampRegisterChatCommand('ft', function() mainwin.v = not mainwin.v end)
     Sphere.createSphere(-1984.6375732422, 106.85540008545, 27.42943572998, 50.0)-- -1984.6375732422 106.85540008545 27.42943572998 -- АВСФ [1]
     Sphere.createSphere(-2055.283203125, -84.472702026367, 35.064281463623, 50.0)-- -2055.283203125 -84.472702026367 35.064281463623 -- АШ [2]
     Sphere.createSphere(-1521.4412841797, 503.20678710938, 6.7215604782104, 40.0)-- -1521.4412841797 503.20678710938 6.7215604782104 -- СФа [3]
@@ -4333,7 +4334,7 @@ function main()
 	                local carb = imgui.ImBool(cfg.main.autocar)
 	                local stateb = imgui.ImBool(cfg.main.male)
 	                local tagf = imgui.ImBuffer(u8(cfg.main.tar), 256)
-	                local parolf = imgui.ImBuffer(u8(cfg.main.parol), 256)
+	                local parolf = imgui.ImBuffer(u8(tostring(cfg.main.parol)), 256)
 	                local tagb = imgui.ImBool(cfg.main.tarb)
 	                local xcord = imgui.ImInt(cfg.main.posX)
 	                local ycord = imgui.ImInt(cfg.main.posY)
