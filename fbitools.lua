@@ -4249,7 +4249,8 @@ function main()
 	                                rkeys.unRegisterHotKey(tLastKeys.v)
 	                            end
 	                            rkeys.registerHotKey(v.v, true, onHotKey)
-	                        end
+                            end
+                            saveData(tBindList, fileb)
 	                    end
 	                    imgui.SameLine()
 	                    if tEditData.id ~= k then
