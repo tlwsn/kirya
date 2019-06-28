@@ -1,6 +1,6 @@
 script_name("FBI Tools")
 script_authors("Thomas Lawson, Sesh Jefferson")
-script_version(3)
+script_version(3.1)
 
 require 'lib.moonloader'
 require 'lib.sampfuncs'
@@ -32,6 +32,7 @@ if limgui then
     bMainWindow     = imgui.ImBool(false)
     bindkey         = imgui.ImBool(false)
     cmdwind         = imgui.ImBool(false)
+    memw            = imgui.ImBool(false)
     sInputEdit      = imgui.ImBuffer(256)
     bIsEnterEdit    = imgui.ImBool(false)
     local show      = 1
@@ -67,7 +68,8 @@ local cfg =
         tchat = false,
         autocar = false,
         strobs = true,
-        megaf = true
+        megaf = true,
+        autobp = false
     },
     commands = {
         cput = true,
@@ -109,14 +111,10 @@ local changetextpos = false
 local opyatstat = false
 local gmegafhandle = nil
 local gmegafid = -1
-local gmegaflvl = nil
-local gmegaffrak = nil
-local gmegafcar = nil
 local targetid = -1
 local smsid = -1
 local smstoid = -1
-local nikk = nil
-local ttt = nil
+local mcid = -1
 local vixodid = {}
 local ooplistt = {}
 local tLastKeys = {}
@@ -127,11 +125,11 @@ local wanted = {}
 local incar = {}
 local suz = {}
 local show = 1
-local zid = nil
+local autoBP = 0
 local checkstat = false
 local fileb = getWorkingDirectory() .. "\\config\\fbitools.bind"
-local players1 = {'{ffffff}Ник\t{ffffff}Ранг'}
-local players2 = {'{ffffff}Ник\t{ffffff}Ранг\t{ffffff}Статус'}
+local tMembers = {}
+local Player = {}
 local tBindList = {}
 local fthelp = {
     {
@@ -1550,12 +1548,12 @@ function onHotKey(id, keys)
                             local bIsF6 = string.match(line, "^{f6}(.+)") ~= nil
                             if not bIsEnter then
                                 if bIsF6 then
-                                    sampProcessChatInput(line:gsub("{f6}", ""):gsub('{myid}', select(2, sampGetPlayerIdByCharHandle(PLAYER_PED))):gsub('{kv}', kvadrat()):gsub('{targetid}', targetid):gsub('{targetrpnick}', sampGetPlayerNicknameForBinder(targetid):gsub('_', ' ')):gsub('{naparnik}', naparnik()):gsub('{myrpnick}', sampGetPlayerNickname(select(2, sampGetPlayerIdByCharHandle(PLAYER_PED))):gsub('_', ' ')):gsub('{smsid}', smsid):gsub('{smstoid}', smstoid):gsub('{rang}', rang):gsub('{frak}', frak):gsub('{megafid}', gmegafid))
+                                    sampProcessChatInput(line:gsub("{f6}", ""):gsub('{myid}', select(2, sampGetPlayerIdByCharHandle(PLAYER_PED))):gsub('{kv}', kvadrat()):gsub('{targetid}', targetid):gsub('{targetrpnick}', sampGetPlayerNicknameForBinder(targetid):gsub('_', ' ')):gsub('{naparnik}', naparnik()):gsub('{myrpnick}', sampGetPlayerNickname(select(2, sampGetPlayerIdByCharHandle(PLAYER_PED))):gsub('_', ' ')):gsub('{smsid}', smsid):gsub('{smstoid}', smstoid):gsub('{rang}', rang):gsub('{frak}', frak):gsub('{megafid}', gmegafid):gsub("{dl}", mcid))
                                 else
-                                    sampSendChat(line:gsub('{myid}', select(2, sampGetPlayerIdByCharHandle(PLAYER_PED))):gsub('{kv}', kvadrat()):gsub('{targetid}', targetid):gsub('{targetrpnick}', sampGetPlayerNicknameForBinder(targetid):gsub('_', ' ')):gsub('{naparnik}', naparnik()):gsub('{myrpnick}', sampGetPlayerNickname(select(2, sampGetPlayerIdByCharHandle(PLAYER_PED))):gsub('_', ' ')):gsub('{smsid}', smsid):gsub('{smstoid}', smstoid):gsub('{rang}', rang):gsub('{frak}', frak):gsub('{megafid}', gmegafid))
+                                    sampSendChat(line:gsub('{myid}', select(2, sampGetPlayerIdByCharHandle(PLAYER_PED))):gsub('{kv}', kvadrat()):gsub('{targetid}', targetid):gsub('{targetrpnick}', sampGetPlayerNicknameForBinder(targetid):gsub('_', ' ')):gsub('{naparnik}', naparnik()):gsub('{myrpnick}', sampGetPlayerNickname(select(2, sampGetPlayerIdByCharHandle(PLAYER_PED))):gsub('_', ' ')):gsub('{smsid}', smsid):gsub('{smstoid}', smstoid):gsub('{rang}', rang):gsub('{frak}', frak):gsub('{megafid}', gmegafid):gsub("{dl}", mcid))
                                 end
                             else
-                                sampSetChatInputText(line:gsub("{noe}", ""):gsub('{myid}', select(2, sampGetPlayerIdByCharHandle(PLAYER_PED))):gsub('{kv}', kvadrat()):gsub('{targetid}', targetid):gsub('{targetrpnick}', sampGetPlayerNicknameForBinder(targetid):gsub('_', ' ')):gsub('{naparnik}', naparnik()):gsub('{myrpnick}', sampGetPlayerNickname(select(2, sampGetPlayerIdByCharHandle(PLAYER_PED))):gsub('_', ' ')):gsub('{smsid}', smsid):gsub('{smstoid}', smstoid):gsub('{rang}', rang):gsub('{frak}', frak):gsub('{megafid}', gmegafid))
+                                sampSetChatInputText(line:gsub("{noe}", ""):gsub('{myid}', select(2, sampGetPlayerIdByCharHandle(PLAYER_PED))):gsub('{kv}', kvadrat()):gsub('{targetid}', targetid):gsub('{targetrpnick}', sampGetPlayerNicknameForBinder(targetid):gsub('_', ' ')):gsub('{naparnik}', naparnik()):gsub('{myrpnick}', sampGetPlayerNickname(select(2, sampGetPlayerIdByCharHandle(PLAYER_PED))):gsub('_', ' ')):gsub('{smsid}', smsid):gsub('{smstoid}', smstoid):gsub('{rang}', rang):gsub('{frak}', frak):gsub('{megafid}', gmegafid):gsub("{dl}", mcid))
                                 sampSetChatInputEnabled(true)
                             end
                         end
@@ -2754,7 +2752,7 @@ if limgui then
             imgui.Separator()
             imgui.BeginChild("uuupdate", imgui.ImVec2(690, 200))
             for line in ttt:gmatch('[^\r\n]+') do
-                imgui.Text(line)
+                imgui.TextWrapped(line)
             end
             imgui.EndChild()
             imgui.Separator()
@@ -2794,7 +2792,7 @@ if limgui then
             if imgui.Button(u8'Настройки скрипта', btn_size) then
                 setwindows.v = not setwindows.v
             end
-            if imgui.Button(u8 'Сообщить о ошибке / баге', btn_size) then lua_thread.create(function() sendReport('hello') end) end
+            if imgui.Button(u8 'Сообщить о ошибке / баге', btn_size) then os.execute('explorer "https://vk.me/fbitools"') end
             if canupdate then if imgui.Button(u8 '[!] Доступно обновление скрипта [!]', btn_size) then updwindows.v = not updwindows.v end end
             if imgui.CollapsingHeader(u8 'Действия со скриптом', btn_size) then
                 if imgui.Button(u8'Перезагрузить скрипт', btn_size) then
@@ -2865,6 +2863,7 @@ if limgui then
                             imgui.Text(u8 '{megafid} - ID игрока, за которым была начата погоня | '..gmegafid)
                             imgui.Text(u8 '{rang} - Ваше звание | '..u8(rang))
                             imgui.Text(u8 '{frak} - Ваша фракция | '..u8(frak))
+                            imgui.Text(u8 '{dl} - ID авто, в котором вы сидите | '..mcid)
                             imgui.Text(u8 '{f6} - Отправить сообщение в чат через эмуляцию чата (использовать в самом начале)')
                             imgui.Text(u8 '{noe} - Оставить сообщение в полле ввода а не отправлять его в чат (использовать в самом начале)')
                             imgui.Text(u8 '{wait:sek} - Задержка между строками, где sek - кол-во миллисекунд. Пример: {wait:2000} - задержка 2 секунды. (использовать отдельно на новой строчке)')
@@ -2926,6 +2925,7 @@ if limgui then
                 local strobbsb = imgui.ImBool(cfg.main.strobs)
                 local megafb = imgui.ImBool(cfg.main.megaf)
                 local infbarb = imgui.ImBool(cfg.main.hud)
+                local autobpb = imgui.ImBool(cfg.main.autobp)
                 local iScreenWidth, iScreenHeight = getScreenResolution()
                 imgui.SetNextWindowPos(imgui.ImVec2(iScreenWidth / 2, iScreenHeight / 2), imgui.Cond.FirstUseEver, imgui.ImVec2(15,6))
                 imgui.Begin(u8'Настройки##1', setwindows, imgui.WindowFlags.NoResize)
@@ -2966,6 +2966,7 @@ if limgui then
                     if imadd.ToggleButton(u8 'Автоматически заводить авто', carb) then cfg.main.autocar = carb.v end saveData(cfg, 'moonloader/config/fbitools/config.json'); imgui.SameLine(); imgui.Text(u8 'Автоматически заводить авто')
                     if imadd.ToggleButton(u8 'Стробоскопы', strobbsb) then cfg.main.strobs = strobbsb.v end saveData(cfg, 'moonloader/config/fbitools/config.json'); imgui.SameLine(); imgui.Text(u8 'Стробоскопы')
                     if imadd.ToggleButton(u8'Расширенный мегафон', megafb) then cfg.main.megaf = megafb.v end saveData(cfg, 'moonloader/config/fbitools/config.json'); imgui.SameLine(); imgui.Text(u8 'Расширенный мегафон')
+                    if imadd.ToggleButton(u8 'Автобп', autobpb) then cfg.main.autobp = autobpb.v end saveData(cfg, 'moonloader/config/fbitools/config.json'); imgui.SameLine(); imgui.Text(u8 'Автоматически брать боеприпасы')
                     if imgui.InputInt(u8'Задержка в отыгровках', waitbuffer) then cfg.commands.zaderjka = waitbuffer.v saveData(cfg, 'moonloader/config/fbitools/config.json') end
                 end
                 if show == 2 then
@@ -3088,7 +3089,6 @@ if limgui then
             end
         end
         if shpwindow.v then
-            imgui.LockPlayer = true
             imgui.ShowCursor = true
             local iScreenWidth, iScreenHeight = getScreenResolution()
             imgui.SetNextWindowPos(imgui.ImVec2(iScreenWidth / 2, iScreenHeight / 2), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
@@ -3100,7 +3100,6 @@ if limgui then
             imgui.End()
         end
         if akwindow.v then
-            imgui.LockPlayer = true
             imgui.ShowCursor = true
             local iScreenWidth, iScreenHeight = getScreenResolution()
             imgui.SetNextWindowPos(imgui.ImVec2(iScreenWidth / 2, iScreenHeight / 2), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
@@ -3112,7 +3111,6 @@ if limgui then
             imgui.End()
         end
         if fpwindow.v then
-            imgui.LockPlayer = true
             imgui.ShowCursor = true
             local iScreenWidth, iScreenHeight = getScreenResolution()
             imgui.SetNextWindowPos(imgui.ImVec2(iScreenWidth / 2, iScreenHeight / 2), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
@@ -3124,7 +3122,6 @@ if limgui then
             imgui.End()
         end
         if ykwindow.v then
-            imgui.LockPlayer = true
             imgui.ShowCursor = true
             local iScreenWidth, iScreenHeight = getScreenResolution()
             imgui.SetNextWindowPos(imgui.ImVec2(iScreenWidth / 2, iScreenHeight / 2), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
@@ -3133,6 +3130,57 @@ if limgui then
             for line in io.lines('moonloader\\fbitools\\yk.txt') do
                 imgui.TextWrapped(u8(line))
             end
+            imgui.End()
+        end
+        if memw.v then
+            imgui.ShowCursor = true
+            local sw, sh = getScreenResolution()
+            --imgui.SetWindowPos('##' .. thisScript().name, imgui.ImVec2(sw/2 - imgui.GetWindowSize().x/2, sh/2 - imgui.GetWindowSize().y/2))
+            --imgui.SetWindowSize('##' .. thisScript().name, imgui.ImVec2(670, 500))
+            imgui.SetNextWindowPos(imgui.ImVec2(sw / 2, sh / 2), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
+            imgui.SetNextWindowSize(imgui.ImVec2(670, 330), imgui.Cond.FirstUseEver)
+            imgui.Begin(u8('FBI Tools | Список сотрудников [Всего: %s]'):format(#tMembers), memw)
+            imgui.BeginChild('##1', imgui.ImVec2(670, 300))
+            imgui.Columns(5, _)
+            imgui.SetColumnWidth(-1, 180) imgui.Text(u8 'Ник игрока'); imgui.NextColumn()
+            imgui.SetColumnWidth(-1, 190) imgui.Text(u8 'Должность');  imgui.NextColumn()
+            imgui.SetColumnWidth(-1, 80) imgui.Text(u8 'Статус') imgui.NextColumn()
+            imgui.SetColumnWidth(-1, 120) imgui.Text(u8 'Дата приема') imgui.NextColumn() 
+            imgui.SetColumnWidth(-1, 70) imgui.Text(u8 'AFK') imgui.NextColumn() 
+            imgui.Separator()
+            for _, v in ipairs(tMembers) do
+                imgui.TextColored(imgui.ImVec4(getColor(v.id)), u8('%s[%s]'):format(v.nickname, v.id))
+                if imgui.IsItemHovered() then
+                    imgui.BeginTooltip();
+                    imgui.PushTextWrapPos(450.0);
+                    imgui.TextColored(imgui.ImVec4(getColor(v.id)), u8("%s\nУровень: %s"):format(v.nickname, sampGetPlayerScore(v.id)))
+                    imgui.PopTextWrapPos();
+                    imgui.EndTooltip();
+                end
+                imgui.NextColumn()
+                imgui.Text(('%s [%s]'):format(v.sRang, v.iRang))
+                imgui.NextColumn()
+                if v.status ~= u8("На работе") then
+                    imgui.TextColored(imgui.ImVec4(0.80, 0.00, 0.00, 1.00), v.status);
+                else
+                    imgui.TextColored(imgui.ImVec4(0.00, 0.80, 0.00, 1.00), v.status);
+                end
+                imgui.NextColumn()
+                imgui.Text(v.invite)
+                imgui.NextColumn()
+                if v.sec ~= 0 then
+                    if v.sec < 360 then 
+                        imgui.TextColored(getColorForSeconds(v.sec), tostring(v.sec .. u8(' сек.')));
+                    else
+                        imgui.TextColored(getColorForSeconds(v.sec), tostring("360+" .. u8(' сек.')));
+                    end
+                else
+                    imgui.TextColored(imgui.ImVec4(0.00, 0.80, 0.00, 1.00), u8("Нет"));
+                end
+                imgui.NextColumn()
+            end
+            imgui.Columns(1)
+            imgui.EndChild()
             imgui.End()
         end
     end
@@ -3293,20 +3341,27 @@ if lsampev then
             end
         end
         if status then
-            if text:match('ID: .+ | .+: .+ %- .+') and not fstatus then
-                gosmb = true
-                local id, nick, mrang, stat = text:match('ID: (%d+) | (.+): (.+) %- (.+)')
-                local color = ("%06X"):format(bit.band(sampGetPlayerColor(id), 0xFFFFFF))
-                local nmrang = mrang:match('.+%[(%d+)%]')
-                if stat:find('Выходной') and tonumber(nmrang) < 11 then
-                    table.insert(vixodid, id)
+            if text:find("ID: %d+ | .+ | %g+: .+%[%d+%] %- %{......%}.+%{......%}") then
+                if not text:find("AFK") then
+                    local id, invDate, nickname, sRang, iRang, status = text:match("ID: (%d+) | (.+) | (%g+): (.+)%[(%d+)%] %- %{.+%}(.+)%{.+%}")
+                    table.insert(tMembers, Player:new(id, sRang, iRang, status, invDate, false, 0, nickname))
+                else
+                    local id, invDate, nickname, sRang, iRang, status, sec = text:match("ID: (%d+) | (.+) | (%g+): (.+)%[(%d+)%] %- %{.+%}(.+)%{.+%} | %{.+%}%[AFK%]: (%d+).+")
+                    table.insert(tMembers, Player:new(id, sRang, iRang, status, invDate, true, sec, nickname))
                 end
-                table.insert(players2, string.format('{'..color..'}%s [%s]{ffffff}\t%s\t%s', nick, id, mrang, stat))
+                return false
+            end
+            if text:find("ID: %d+ | .+ | %g+: .+%[%d+%]") then
+                if not text:find("AFK") then
+                    local id, invDate, nickname, sRang, iRang = text:match("ID: (%d+) | (.+) | (%g+): (.+)%[(%d+)%]")
+                    table.insert(tMembers, Player:new(id, sRang, iRang, "Недоступно", invDate, false, 0, nickname))
+                else
+                    local id, invDate, nickname, sRang, iRang, sec = text:match("ID: (%d+) | (.+) | (%g+): (.+)%[(%d+)%] | %{.+%}%[AFK%]: (%d+).+")
+                    table.insert(tMembers, Player:new(id, sRang, iRang, "Недоступно", invDate, true, sec, nickname))
+                end
                 return false
             end
             if text:match('Всего: %d+ человек') then
-                local count = text:match('Всего: (%d+) человек')
-                gcount = count
                 gotovo = true
                 return false
             end
@@ -3314,13 +3369,6 @@ if lsampev then
                 return false
             end
             if color == 647175338 then
-                return false
-            end
-            if text:match('ID: .+ | .+: .+') and not fstatus then
-                krimemb = true
-                local id, nick, rang = text:match('ID: (%d+) | (.+): (.+)')
-                local color = ("%06X"):format(bit.band(sampGetPlayerColor(id), 0xFFFFFF))
-                table.insert(players1, string.format('{'..color..'}%s [%s]{ffffff}\t%s', nick, id, rang))
                 return false
             end
         end
@@ -3432,6 +3480,37 @@ if lsampev then
             checkstat = false
             sampSendDialogResponse(id, 1, _, _)
             return false
+        end
+        if cfg.main.autobp == true and id == 5225 then
+            --[[lua_thread.create(function()
+                wait(250)
+                if autoBP == 6 and repeatgun then
+                    autoBP = 0
+                    sampCloseCurrentDialogWithButton(0)
+                    repeatgun = false
+                    return
+                elseif autoBP == 6 and not repeatgun then
+                    autoBP = 0
+                    repeatgun = true
+                    return
+                end
+                sampSendDialogResponse(5225, 1, autoBP, "")
+                autoBP = autoBP + 1
+                if autoBP == 2 then autoBP = 3 end
+                return
+            end)]]
+            local guns = {0, 0, 1, 1, 3, 3, 4, 4, 5, 5}
+            lua_thread.create(function()
+                wait(250)
+                if autoBP == #guns + 1 then
+                    autoBP = 1
+                    sampCloseCurrentDialogWithButton(0)
+                    return
+                end
+                sampSendDialogResponse(5225, 1, guns[autoBP], "")
+                autoBP = autoBP + 1
+                return
+            end)
         end
     end
 
@@ -3787,6 +3866,7 @@ function main()
         if file then
             cfg = decodeJson(file:read('*a'))
             if cfg.main.megaf == nil then cfg.main.megaf = true end
+            if cfg.main.autobp == nil then cfg.main.autobp = false end
         end
     end
     saveData(cfg, 'moonloader/config/fbitools/config.json')
@@ -3830,6 +3910,7 @@ function main()
     repeat wait(0) until isSampAvailable()
     ftext(script.this.name..' успешно загружен. Введите: /ft что бы получить дополнительную информацию.')
     ftext('Авторы: '..table.concat(script.this.authors))
+    print(("%s v%s: Успешно загружен"):format(script.this.name, script.this.version))
     libs()
     registerCommands()
     registerSphere()
@@ -3863,8 +3944,16 @@ function main()
                 end
             end
             if wparam == key.VK_ESCAPE then
-                if mainw.v then mainw.v = false consumeWindowMessage(true, true) end
-                if imegaf.v then imegaf.v = false consumeWindowMessage(true, true) end
+                if not sampIsChatInputActive() and not sampIsDialogActive() and not sampIsScoreboardOpen() then
+                    if mainw.v then mainw.v = false consumeWindowMessage(true, true) end
+                    if imegaf.v then imegaf.v = false consumeWindowMessage(true, true) end
+                    if shpwindow.v then shpwindow.v = false consumeWindowMessage(true, true) end
+                    if ykwindow.v then ykwindow.v = false consumeWindowMessage(true, true) end
+                    if fpwindow.v then fpwindow.v = false consumeWindowMessage(true, true) end
+                    if akwindow.v then akwindow.v = false consumeWindowMessage(true, true) end
+                    if updwindows.v then updwindows.v = false consumeWindowMessage(true, true) end
+                    if memw.v then memw.v = false consumeWindowMessage(true, true) end
+                end
             end
         end
     end)
@@ -3875,13 +3964,14 @@ function main()
         lua_thread.create(checkStats)
     end
     while true do wait(0)
+        if isCharInAnyCar(PLAYER_PED) then mcid = select(2, sampGetVehicleIdByCarHandle(storeCarCharIsInNoSave(PLAYER_PED))) end
         if gmegafid == nil then gmegafid = -1 end
         if #departament > 25 then table.remove(departament, 1) end
         if #radio > 25 then table.remove(radio, 1) end
         if #wanted > 25 then table.remove(wanted, 1) end
         if #sms > 25 then table.remove(sms, 1) end
         infbar = imgui.ImBool(cfg.main.hud)
-        imgui.Process = infbar.v or mainw.v or shpwindow.v or ykwindow.v or fpwindow.v or akwindow.v or updwindows.v or imegaf.v
+        imgui.Process = infbar.v or mainw.v or shpwindow.v or ykwindow.v or fpwindow.v or akwindow.v or updwindows.v or imegaf.v or memw.v
         local myskin = getCharModel(PLAYER_PED)
         if myskin == 280 or myskin == 265 or myskin == 266 or myskin == 267 or myskin == 281 or myskin == 282 or myskin == 288 or myskin == 284 or myskin == 285 or myskin == 304 or myskin == 305 or myskin == 306 or myskin == 307 or myskin == 309 or myskin == 283 or myskin == 286 or myskin == 287 or myskin == 252 or myskin == 279 or myskin == 163 or myskin == 164 or myskin == 165 or myskin == 166 then
             rabden = true
@@ -4446,22 +4536,32 @@ function fak(pam)
 end
 
 function dmb()
-	lua_thread.create(function()
-		status = true
-		sampSendChat('/members')
-		while not gotovo do wait(0) end
-		if gosmb then
-			sampShowDialog(716, "{ffffff}В сети: "..gcount.." | {ae433d}Организация", table.concat(players2, "\n"), "x", _, 5)
-		elseif krimemb then
-			sampShowDialog(716, "{ffffff}В сети: "..gcount.." | {ae433d}Организация", table.concat(players1, "\n"), "x", _, 5)
-		end
-		gosmb = false
-		krimemb = false
-		gotovo = false
-		status = false
-		players2 = {'{ffffff}Ник\t{ffffff}Ранг\t{ffffff}Статус'}
-		players1 = {'{ffffff}Ник\t{ffffff}Ранг'}
-		gcount = nil
+    lua_thread.create(function()
+        if sampIsDialogActive() then
+            if sampIsDialogClientside() then
+                tMembers = {}
+                status = true
+                sampSendChat('/members')
+                while not gotovo do wait(0) end
+                memw.v = true
+                gosmb = false
+                krimemb = false
+                gotovo = false
+                status = false
+                gcount = nil
+            end
+        else
+            tMembers = {}
+            status = true
+            sampSendChat('/members')
+            while not gotovo do wait(0) end
+            memw.v = true
+            gosmb = false
+            krimemb = false
+            gotovo = false
+            status = false
+            gcount = nil
+        end
 	end)
 end
 
@@ -4974,8 +5074,6 @@ function fnr()
             sampSendChat('/sms '..v..' На работу')
             wait(1400)
         end
-        players2 = {'{ffffff}Ник\t{ffffff}Ранг\t{ffffff}Статус'}
-		players1 = {'{ffffff}Ник\t{ffffff}Ранг'}
 		gotovo = false
         status = false
         vixodid = {}
@@ -5006,3 +5104,46 @@ function strobes()
 	end
 end
 function screen() local memory = require 'memory' memory.setuint8(sampGetBase() + 0x119CBC, 1) end
+
+function Player:new(id, sRang, iRang, status, invite, afk, sec, nick)
+	local obj = {
+		id = id,
+		nickname = nick,
+		iRang = tonumber(iRang),
+		sRang = u8(sRang),
+		status = u8(status),
+		invite = invite,
+		afk = afk,
+		sec = tonumber(sec)
+	}
+
+	setmetatable(obj, self)
+	self.__index = self
+
+	return obj
+end
+function getColorForSeconds(sec)
+	if sec > 0 and sec <= 50 then
+		return imgui.ImVec4(1, 1, 0, 1)
+	elseif sec > 50 and sec <= 100 then
+		return imgui.ImVec4(1, 159/255, 32/255, 1)
+	elseif sec > 100 and sec <= 200 then
+		return imgui.ImVec4(1, 93/255, 24/255, 1)
+	elseif sec > 200 and sec <= 300 then
+		return imgui.ImVec4(1, 43/255, 43/255, 1)
+	elseif sec > 300 then
+		return imgui.ImVec4(1, 0, 0, 1)
+	end
+end
+function getColor(ID)
+	PlayerColor = sampGetPlayerColor(ID)
+	a, r, g, b = explode_argb(PlayerColor)
+	return r/255, g/255, b/255, 1
+end
+function explode_argb(argb)
+    local a = bit.band(bit.rshift(argb, 24), 0xFF)
+    local r = bit.band(bit.rshift(argb, 16), 0xFF)
+    local g = bit.band(bit.rshift(argb, 8), 0xFF)
+    local b = bit.band(argb, 0xFF)
+    return a, r, g, b
+end
