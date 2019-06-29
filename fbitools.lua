@@ -1,6 +1,6 @@
 script_name("FBI Tools")
 script_authors("Thomas Lawson, Sesh Jefferson")
-script_version(3.1)
+script_version(3.2)
 
 require 'lib.moonloader'
 require 'lib.sampfuncs'
@@ -19,32 +19,6 @@ local gk                    = require 'game.keys'
 local encoding              = require 'encoding'
 encoding.default = 'CP1251'
 u8 = encoding.UTF8
-
-if limgui then 
-    mainw           = imgui.ImBool(false)
-    setwindows      = imgui.ImBool(false)
-    shpwindow       = imgui.ImBool(false)
-    ykwindow        = imgui.ImBool(false)
-    fpwindow        = imgui.ImBool(false)
-    akwindow        = imgui.ImBool(false)
-    pozivn          = imgui.ImBool(false)
-    updwindows      = imgui.ImBool(false)
-    bMainWindow     = imgui.ImBool(false)
-    bindkey         = imgui.ImBool(false)
-    cmdwind         = imgui.ImBool(false)
-    memw            = imgui.ImBool(false)
-    sInputEdit      = imgui.ImBuffer(256)
-    bIsEnterEdit    = imgui.ImBool(false)
-    local show      = 1
-    piew            = imgui.ImBool(false)
-    imegaf          = imgui.ImBool(false)
-    bindname        = imgui.ImBuffer(256)
-    bindtext        = imgui.ImBuffer(10240)
-end
-
-function ftext(text)
-    sampAddChatMessage((' %s | {ffffff}%s'):format(script.this.name, text),0x9966CC)
-end
 
 local cfg =
 {
@@ -79,8 +53,47 @@ local cfg =
         zaderjka = 1400,
         ticket = true,
         kmdctime = true
+    },
+    autobp = {
+        deagle = true,
+        dvadeagle = true,
+        shot = true,
+        dvashot = true,
+        smg = true,
+        dvasmg = true,
+        m4 = true,
+        dvam4 = true,
+        rifle = true,
+        dvarifle = true,
+        armour = true,
+        spec = true
     }
 }
+
+if limgui then 
+    mainw           = imgui.ImBool(false)
+    setwindows      = imgui.ImBool(false)
+    shpwindow       = imgui.ImBool(false)
+    ykwindow        = imgui.ImBool(false)
+    fpwindow        = imgui.ImBool(false)
+    akwindow        = imgui.ImBool(false)
+    pozivn          = imgui.ImBool(false)
+    updwindows      = imgui.ImBool(false)
+    bMainWindow     = imgui.ImBool(false)
+    bindkey         = imgui.ImBool(false)
+    cmdwind         = imgui.ImBool(false)
+    memw            = imgui.ImBool(false)
+    sInputEdit      = imgui.ImBuffer(256)
+    bIsEnterEdit    = imgui.ImBool(false)
+    piew            = imgui.ImBool(false)
+    imegaf          = imgui.ImBool(false)
+    bindname        = imgui.ImBuffer(256)
+    bindtext        = imgui.ImBuffer(10240)
+end
+
+function ftext(text)
+    sampAddChatMessage((' %s | {ffffff}%s'):format(script.this.name, text),0x9966CC)
+end
 
 local config_keys = {
     oopda = { v = {key.VK_F12}},
@@ -125,7 +138,7 @@ local wanted = {}
 local incar = {}
 local suz = {}
 local show = 1
-local autoBP = 0
+local autoBP = 1
 local checkstat = false
 local fileb = getWorkingDirectory() .. "\\config\\fbitools.bind"
 local tMembers = {}
@@ -216,6 +229,11 @@ local fthelp = {
         cmd = '/ar',
         desc = 'Попросить разрешение на въезд на военную территорию в волну департамента',
         use = '/ar [армия(1 - LVA, 2 - SFA)]'
+    },
+    {
+        cmd = '/pr',
+        desc = 'Правила миранды',
+        use = '/pr'
     },
     {
         cmd = '/kmdc',
@@ -1887,7 +1905,8 @@ function update()
                     if tonumber(thisScript().version) < tonumber(info.latest) then
                         ftext('Обнаружено обновление {9966cc}FBI Tools{ffffff}. Для обновления нажмите кнопку в окошке.')
                         ftext('Примечание: Если у вас не появилось окошко введите {9966cc}/ft')
-					    updwindows.v = true
+                        updwindows.v = true
+                        canupdate = true
                     else
                         print('Обновлений скрипта не обнаружено. Приятной игры.')
                         update = false
@@ -2488,7 +2507,15 @@ function pkmmenu(id)
 					sampSendChat(('/uncuff %s'):format(id))
 				end
 			end
-		},
+        },
+        {
+            title = "{ffffff}» Снять маску",
+            onclick = function()
+                if sampIsPlayerConnected(id) then
+                    sampSendChat(("/offmask %s"):format(id))
+                end
+            end
+        },
 		{
 			title = "{ffffff}» Выдать розыск за проникновение",
 			onclick = function()
@@ -2901,31 +2928,45 @@ if limgui then
                 imgui.End()
             end
             if setwindows.v then
+                --
+                cput            = imgui.ImBool(cfg.commands.cput)
+                ceject          = imgui.ImBool(cfg.commands.ceject)
+                ftazer          = imgui.ImBool(cfg.commands.ftazer)
+                deject          = imgui.ImBool(cfg.commands.deject)
+                kmdcb           = imgui.ImBool(cfg.commands.kmdctime)
+                carb            = imgui.ImBool(cfg.main.autocar)
+                stateb          = imgui.ImBool(cfg.main.male)
+                tagf            = imgui.ImBuffer(u8(cfg.main.tar), 256)
+                parolf          = imgui.ImBuffer(u8(tostring(cfg.main.parol)), 256)
+                tagb            = imgui.ImBool(cfg.main.tarb)
+                xcord           = imgui.ImInt(cfg.main.posX)
+                ycord           = imgui.ImInt(cfg.main.posY)
+                clistbuffer     = imgui.ImInt(cfg.main.clist)
+                waitbuffer      = imgui.ImInt(cfg.commands.zaderjka)
+                clistb          = imgui.ImBool(cfg.main.clistb)
+                parolb          = imgui.ImBool(cfg.main.parolb)
+                offptrlb        = imgui.ImBool(cfg.main.offptrl)
+                offwntdb        = imgui.ImBool(cfg.main.offwntd)
+                ticketb         = imgui.ImBool(cfg.commands.ticket)
+                tchatb          = imgui.ImBool(cfg.main.tchat)
+                strobbsb        = imgui.ImBool(cfg.main.strobs)
+                megafb          = imgui.ImBool(cfg.main.megaf)
+                infbarb         = imgui.ImBool(cfg.main.hud)
+                autobpb         = imgui.ImBool(cfg.main.autobp)
+                deagleb         = imgui.ImBool(cfg.autobp.deagle)
+                shotb           = imgui.ImBool(cfg.autobp.shot)
+                smgb            = imgui.ImBool(cfg.autobp.smg)
+                m4b             = imgui.ImBool(cfg.autobp.m4)
+                rifleb          = imgui.ImBool(cfg.autobp.rifle)
+                armourb         = imgui.ImBool(cfg.autobp.armour)
+                specb           = imgui.ImBool(cfg.autobp.spec)
+                dvadeagleb      = imgui.ImBool(cfg.autobp.dvadeagle)
+                dvashotb        = imgui.ImBool(cfg.autobp.dvashot)
+                dvasmgb         = imgui.ImBool(cfg.autobp.dvasmg)
+                dvam4b          = imgui.ImBool(cfg.autobp.dvam4)
+                dvarifleb       = imgui.ImBool(cfg.autobp.dvarifle)
+                --
                 imgui.LockPlayer = true
-                local cput =  imgui.ImBool(cfg.commands.cput)
-                local ceject = imgui.ImBool(cfg.commands.ceject)
-                local ftazer = imgui.ImBool(cfg.commands.ftazer)
-                local deject = imgui.ImBool(cfg.commands.deject)
-                local kmdcb = imgui.ImBool(cfg.commands.kmdctime)
-                local carb = imgui.ImBool(cfg.main.autocar)
-                local stateb = imgui.ImBool(cfg.main.male)
-                local tagf = imgui.ImBuffer(u8(cfg.main.tar), 256)
-                local parolf = imgui.ImBuffer(u8(tostring(cfg.main.parol)), 256)
-                local tagb = imgui.ImBool(cfg.main.tarb)
-                local xcord = imgui.ImInt(cfg.main.posX)
-                local ycord = imgui.ImInt(cfg.main.posY)
-                local clistbuffer = imgui.ImInt(cfg.main.clist)
-                local waitbuffer = imgui.ImInt(cfg.commands.zaderjka)
-                local clistb = imgui.ImBool(cfg.main.clistb)
-                local parolb = imgui.ImBool(cfg.main.parolb)
-                local offptrlb = imgui.ImBool(cfg.main.offptrl)
-                local offwntdb = imgui.ImBool(cfg.main.offwntd)
-                local ticketb = imgui.ImBool(cfg.commands.ticket)
-                local tchatb = imgui.ImBool(cfg.main.tchat)
-                local strobbsb = imgui.ImBool(cfg.main.strobs)
-                local megafb = imgui.ImBool(cfg.main.megaf)
-                local infbarb = imgui.ImBool(cfg.main.hud)
-                local autobpb = imgui.ImBool(cfg.main.autobp)
                 local iScreenWidth, iScreenHeight = getScreenResolution()
                 imgui.SetNextWindowPos(imgui.ImVec2(iScreenWidth / 2, iScreenHeight / 2), imgui.Cond.FirstUseEver, imgui.ImVec2(15,6))
                 imgui.Begin(u8'Настройки##1', setwindows, imgui.WindowFlags.NoResize)
@@ -2933,6 +2974,7 @@ if limgui then
                 if imgui.Selectable(u8'Основные', show == 1) then show = 1 end
                 if imgui.Selectable(u8'Команды', show == 2) then show = 2 end
                 if imgui.Selectable(u8'Клавиши', show == 3) then show = 3 end
+                if imgui.Selectable(u8'Авто-БП', show == 4) then show = 4 end
                 imgui.EndChild()
                 imgui.SameLine()
                 imgui.BeginChild('##set1', imgui.ImVec2(800, 400), true)
@@ -2966,7 +3008,6 @@ if limgui then
                     if imadd.ToggleButton(u8 'Автоматически заводить авто', carb) then cfg.main.autocar = carb.v end saveData(cfg, 'moonloader/config/fbitools/config.json'); imgui.SameLine(); imgui.Text(u8 'Автоматически заводить авто')
                     if imadd.ToggleButton(u8 'Стробоскопы', strobbsb) then cfg.main.strobs = strobbsb.v end saveData(cfg, 'moonloader/config/fbitools/config.json'); imgui.SameLine(); imgui.Text(u8 'Стробоскопы')
                     if imadd.ToggleButton(u8'Расширенный мегафон', megafb) then cfg.main.megaf = megafb.v end saveData(cfg, 'moonloader/config/fbitools/config.json'); imgui.SameLine(); imgui.Text(u8 'Расширенный мегафон')
-                    if imadd.ToggleButton(u8 'Автобп', autobpb) then cfg.main.autobp = autobpb.v end saveData(cfg, 'moonloader/config/fbitools/config.json'); imgui.SameLine(); imgui.Text(u8 'Автоматически брать боеприпасы')
                     if imgui.InputInt(u8'Задержка в отыгровках', waitbuffer) then cfg.commands.zaderjka = waitbuffer.v saveData(cfg, 'moonloader/config/fbitools/config.json') end
                 end
                 if show == 2 then
@@ -3083,6 +3124,35 @@ if limgui then
                     end
                     imgui.SameLine()
                     imgui.Text(u8('Включить / выключить сирену на авто'))
+                elseif show == 4 then
+                    if imadd.ToggleButton(u8 'Автобп', autobpb) then cfg.main.autobp = autobpb.v end saveData(cfg, 'moonloader/config/fbitools/config.json'); imgui.SameLine(); imgui.Text(u8 'Автоматически брать боеприпасы')
+                    if imgui.Checkbox(u8 "Desert Eagle", deagleb) then cfg.autobp.deagle = deagleb.v saveData(cfg, 'moonloader/config/fbitools/config.json') end
+                    if deagleb.v then
+                        imgui.SameLine(110)
+                        if imgui.Checkbox(u8 'Два компекта##1', dvadeagleb) then cfg.autobp.dvadeagle = dvadeagleb.v saveData(cfg, 'moonloader/config/fbitools/config.json') end
+                    end
+                    if imgui.Checkbox(u8 "Shotgun", shotb) then cfg.autobp.shot = shotb.v saveData(cfg, 'moonloader/config/fbitools/config.json') end
+                    if shotb.v then
+                        imgui.SameLine(110)
+                        if imgui.Checkbox(u8 'Два компекта##2', dvashotb) then cfg.autobp.dvashot = dvashotb.v saveData(cfg, 'moonloader/config/fbitools/config.json') end
+                    end
+                    if imgui.Checkbox(u8 "SMG", smgb) then cfg.autobp.smg = smgb.v saveData(cfg, 'moonloader/config/fbitools/config.json') end
+                    if smgb.v then
+                        imgui.SameLine(110)
+                        if imgui.Checkbox(u8 'Два компекта##3', dvasmgb) then cfg.autobp.dvasmg = dvasmgb.v saveData(cfg, 'moonloader/config/fbitools/config.json') end
+                    end
+                    if imgui.Checkbox(u8 "M4A1", m4b) then cfg.autobp.m4 = m4b.v saveData(cfg, 'moonloader/config/fbitools/config.json') end
+                    if m4b.v then
+                        imgui.SameLine(110)
+                        if imgui.Checkbox(u8 'Два компекта##4', dvam4b) then cfg.autobp.dvam4 = dvam4b.v saveData(cfg, 'moonloader/config/fbitools/config.json') end
+                    end
+                    if imgui.Checkbox(u8 "Rifle", rifleb) then cfg.autobp.rifle = rifleb.v saveData(cfg, 'moonloader/config/fbitools/config.json') end
+                    if rifleb.v then
+                        imgui.SameLine(110)
+                        if imgui.Checkbox(u8 'Два компекта##5', dvarifleb) then cfg.autobp.dvarifle = dvarifleb.v saveData(cfg, 'moonloader/config/fbitools/config.json') end
+                    end
+                    if imgui.Checkbox(u8 "Броня", armourb) then cfg.autobp.armour = armourb.v saveData(cfg, 'moonloader/config/fbitools/config.json') end 
+                    if imgui.Checkbox(u8 "Спец. оружие", specb)then cfg.autobp.spec = specb.v saveData(cfg, 'moonloader/config/fbitools/config.json') end
                 end
                 imgui.EndChild()
                 imgui.End()
@@ -3499,7 +3569,7 @@ if lsampev then
                 if autoBP == 2 then autoBP = 3 end
                 return
             end)]]
-            local guns = {0, 0, 1, 1, 3, 3, 4, 4, 5, 5}
+            local guns = getCompl()
             lua_thread.create(function()
                 wait(250)
                 if autoBP == #guns + 1 then
@@ -3587,7 +3657,7 @@ function registerCommands()
     sampRegisterChatCommand('df', df)
     sampRegisterChatCommand('mcheck', mcheck)
     sampRegisterChatCommand('z', ssuz)
-    sampfuncsRegisterConsoleCommand('gppc', function() print(getCharCoordinates(PLAYER_PED)) end)
+    sampRegisterChatCommand("pr", pr)
     sampfuncsRegisterConsoleCommand('gppc', function()
         local mxx, myy, mzz = getCharCoordinates(PLAYER_PED)
         print(string.format('%s, %s, %s', mxx, myy, mzz))
@@ -3867,6 +3937,21 @@ function main()
             cfg = decodeJson(file:read('*a'))
             if cfg.main.megaf == nil then cfg.main.megaf = true end
             if cfg.main.autobp == nil then cfg.main.autobp = false end
+            if cfg.autobp == nil then cfg.autobp = {
+                deagle = true,
+                dvadeagle = true,
+                shot = true,
+                dvashot = true,
+                smg = true,
+                dvasmg = true,
+                m4 = true,
+                dvam4 = true,
+                rifle = true,
+                dvarifle = true,
+                armour = true,
+                spec = true
+            }
+            end
         end
     end
     saveData(cfg, 'moonloader/config/fbitools/config.json')
@@ -4656,23 +4741,55 @@ end
 function dkld()
     if isCharInAnyCar(PLAYER_PED) then
         if post ~= 7 and post ~= 12 and post ~= 13 and post ~= 14 and post ~= 18 and post ~= 21 and post ~= 22 and post ~= 23 and post ~= 24 and post ~= 25 and post ~= 26 and post ~= 27 and post ~= 28 and post ~= 29 and post ~= 30 and post ~= 31 then
-            if frak == 'LSPD' then
-                if not cfg.main.tarb  then
-                    sampSendChat('/r Патруль г. Лос-Сантос. '..naparnik())
-                else
-                    sampSendChat('/r ['..cfg.main.tar..']: Патруль г. Лос-Сантос. '..naparnik())
+            if getCarSpeed(storeCarCharIsInNoSave(PLAYER_PED)) > 0 then
+                if frak == 'LSPD' then
+                    if not cfg.main.tarb  then
+                        sampSendChat('/r Патруль г. Лос-Сантос. '..naparnik())
+                    else
+                        sampSendChat('/r ['..cfg.main.tar..']: Патруль г. Лос-Сантос. '..naparnik())
+                    end
+                elseif frak == 'SFPD' then
+                    if not cfg.main.tarb then
+                        sampSendChat('/r Патруль г. Сан-Фиерро. '..naparnik())
+                    else
+                        sampSendChat('/r ['..cfg.main.tar..']: Патруль г. Сан-Фиерро. '..naparnik())
+                    end
+                elseif frak == 'LVPD' then
+                    if not cfg.main.tarb then
+                        sampSendChat('/r Патруль г. Лас-Вентурас. '..naparnik())
+                    else
+                        sampSendChat('/r ['..cfg.main.tar..']: Патруль г. Лас-Вентурас. '..naparnik())
+                    end
                 end
-            elseif frak == 'SFPD' then
-                if not cfg.main.tarb then
-                    sampSendChat('/r Патруль г. Сан-Фиерро. '..naparnik())
+            else
+                if post ~= nil then
+                    if getNameSphere(post) ~= nil then
+                        if not cfg.main.tarb then
+                            sampSendChat('/r Пост: '..getNameSphere(post)..'. '..naparnik())
+                        else
+                            sampSendChat('/r ['..cfg.main.tar..']: Пост: '..getNameSphere(post)..'. '..naparnik())
+                        end
+                    end
                 else
-                    sampSendChat('/r ['..cfg.main.tar..']: Патруль г. Сан-Фиерро. '..naparnik())
-                end
-            elseif frak == 'LVPD' then
-                if not cfg.main.tarb then
-                    sampSendChat('/r Патруль г. Лас-Вентурас. '..naparnik())
-                else
-                    sampSendChat('/r ['..cfg.main.tar..']: Патруль г. Лас-Вентурас. '..naparnik())
+                    if frak == 'LSPD' then
+                        if not cfg.main.tarb  then
+                            sampSendChat('/r Патруль г. Лос-Сантос. '..naparnik())
+                        else
+                            sampSendChat('/r ['..cfg.main.tar..']: Патруль г. Лос-Сантос. '..naparnik())
+                        end
+                    elseif frak == 'SFPD' then
+                        if not cfg.main.tarb then
+                            sampSendChat('/r Патруль г. Сан-Фиерро. '..naparnik())
+                        else
+                            sampSendChat('/r ['..cfg.main.tar..']: Патруль г. Сан-Фиерро. '..naparnik())
+                        end
+                    elseif frak == 'LVPD' then
+                        if not cfg.main.tarb then
+                            sampSendChat('/r Патруль г. Лас-Вентурас. '..naparnik())
+                        else
+                            sampSendChat('/r ['..cfg.main.tar..']: Патруль г. Лас-Вентурас. '..naparnik())
+                        end
+                    end
                 end
             end
         end
@@ -4782,19 +4899,12 @@ function dkld()
         end)
     end
     if not isCharInAnyCar(PLAYER_PED) then
-        if post ~= nil and post ~= 8 then
+        if post ~= nil then
             if getNameSphere(post) ~= nil then
                 if not cfg.main.tarb then
                     sampSendChat('/r Пост: '..getNameSphere(post)..'. '..naparnik())
                 else
                     sampSendChat('/r ['..cfg.main.tar..']: Пост: '..getNameSphere(post)..'. '..naparnik())
-                end
-                if post == 8 then
-                    if not cfg.main.tarb then
-                        sampSendChat('/r Пост: '..getNameSphere(post)..'. '..naparnik())
-                    else
-                        sampSendChat('/r ['..cfg.main.tar..']: Пост: '..getNameSphere(post)..'. '..naparnik())
-                    end
                 end
             end
         end
@@ -5146,4 +5256,39 @@ function explode_argb(argb)
     local g = bit.band(bit.rshift(argb, 8), 0xFF)
     local b = bit.band(argb, 0xFF)
     return a, r, g, b
+end
+
+function pr()
+    lua_thread.create(function()
+        sampSendChat("Вы арестованы, у вас есть право хранить молчание. Всё, что вы скажете, может и будет использовано против вас в суде.")
+        wait(cfg.commands.zaderjka)
+        sampSendChat("У вас есть право на адвоката и на один телефонный звонок. Вам понятны ваши права?")
+    end)
+end
+
+function getCompl()
+    local t = {}
+    if cfg.autobp.armour then table.insert(t, 5) end
+    if cfg.autobp.spec then table.insert(t, 6) end
+    if cfg.autobp.deagle then 
+        table.insert(t, 0)
+        if cfg.autobp.dvadeagle then table.insert(t, 0) end
+    end
+    if cfg.autobp.shot then 
+        table.insert(t, 1)
+        if cfg.autobp.dvashot then table.insert(t, 1) end
+    end
+    if cfg.autobp.smg then 
+        table.insert(t, 2)
+        if cfg.autobp.dvasmg then table.insert(t, 2) end
+    end
+    if cfg.autobp.m4 then 
+        table.insert(t, 3)
+        if cfg.autobp.dvam4 then table.insert(t, 3) end
+    end
+    if cfg.autobp.rifle then 
+        table.insert(t, 4)
+        if cfg.autobp.dvarifle then table.insert(t, 4) end
+    end
+    return t
 end
