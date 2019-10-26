@@ -1,6 +1,6 @@
 script_name("FBI Tools")
 script_authors("Thomas Lawson, Sesh Jefferson")
-script_version(3.3)
+script_version(3.31)
 
 require 'lib.moonloader'
 require 'lib.sampfuncs'
@@ -1752,25 +1752,6 @@ function onHotKey(id, keys)
             if sKeys == tostring(table.concat(v.v, " ")) then
                 local tostr = tostring(v.text)
                 if tostr:len() > 0 then
-                    local keys = {
-                        ["{f6}"] = "",
-                        ["{noe}"] = "",
-                        ["{myid}"] = select(2, sampGetPlayerIdByCharHandle(PLAYER_PED)),
-                        ["{kv}"] = kvadrat(),
-                        ["{targetid}"] = targetid,
-                        ["{targetrpnick}"] = sampGetPlayerNicknameForBinder(targetid):gsub('_', ' '),
-                        ["{naparnik}"] = naparnik(),
-                        ["{myrpnick}"] = sampGetPlayerNickname(select(2, sampGetPlayerIdByCharHandle(PLAYER_PED))):gsub("_", " "),
-                        ["{smsid}"] = smsid,
-                        ["{smstoid}"] = smstoid,
-                        ["{rang}"] = rang,
-                        ["{frak}"] = frak,
-                        ["{megafid}"] = gmegafid,
-                        ["{dl}"] = mcid
-                    }
-                    for k1, v1 in pairs(keys) do
-                        tostr = tostr:gsub(k1, v1)
-                    end
                     for line in tostr:gmatch('[^\r\n]+') do
                         if line:match("^{wait%:%d+}$") then
                             wait(line:match("^%{wait%:(%d+)}$"))
@@ -1779,6 +1760,26 @@ function onHotKey(id, keys)
                         else
                             local bIsEnter = string.match(line, "^{noe}(.+)") ~= nil
                             local bIsF6 = string.match(line, "^{f6}(.+)") ~= nil
+                            local keys = {
+                                ["{f6}"] = "",
+                                ["{noe}"] = "",
+                                ["{myid}"] = select(2, sampGetPlayerIdByCharHandle(PLAYER_PED)),
+                                ["{kv}"] = kvadrat(),
+                                ["{targetid}"] = targetid,
+                                ["{targetrpnick}"] = sampGetPlayerNicknameForBinder(targetid):gsub('_', ' '),
+                                ["{naparnik}"] = naparnik(),
+                                ["{myrpnick}"] = sampGetPlayerNickname(select(2, sampGetPlayerIdByCharHandle(PLAYER_PED))):gsub("_", " "),
+                                ["{smsid}"] = smsid,
+                                ["{smstoid}"] = smstoid,
+                                ["{rang}"] = rang,
+                                ["{frak}"] = frak,
+                                ["{megafid}"] = gmegafid,
+                                ["{dl}"] = mcid
+                            }
+                            for k1, v1 in pairs(keys) do
+                                line = line:gsub(k1, v1)
+                            end
+
                             if not bIsEnter then
                                 if bIsF6 then
                                     sampProcessChatInput(line)
@@ -6291,33 +6292,45 @@ function registerCommandsBinder()
                     end
                     ftext("¬ведите: /"..v.cmd.." "..paramtext, -1)
                 else
-                    local keys = {
-                        ["{f6}"] = "",
-                        ["{noe}"] = "",
-                        ["{myid}"] = select(2, sampGetPlayerIdByCharHandle(PLAYER_PED)),
-                        ["{kv}"] = kvadrat(),
-                        ["{targetid}"] = targetid,
-                        ["{targetrpnick}"] = sampGetPlayerNicknameForBinder(targetid):gsub('_', ' '),
-                        ["{naparnik}"] = naparnik(),
-                        ["{myrpnick}"] = sampGetPlayerNickname(select(2, sampGetPlayerIdByCharHandle(PLAYER_PED))):gsub("_", " "),
-                        ["{smsid}"] = smsid,
-                        ["{smstoid}"] = smstoid,
-                        ["{rang}"] = rang,
-                        ["{frak}"] = frak,
-                        ["{megafid}"] = gmegafid,
-                        ["{dl}"] = mcid
-                    }
-                    for i = 1, v.params do
-                        keys["{param:"..i.."}"] = params[i]
-                    end
-                    for k1, v1 in pairs(keys) do
-                        cmdtext = cmdtext:gsub(k1, v1)
-                    end
                     for line in cmdtext:gmatch('[^\r\n]+') do
-                        if line:match("{wait:%d+}") then
-                            wait(line:match("{wait:(%d+)}"))
+
+                        if line:match("^{wait%:%d+}$") then
+                            wait(line:match("^%{wait%:(%d+)}$"))
+                        elseif line:match("^{screen}$") then
+                            screen()
                         else
-                            sampSendChat(line)
+                            local bIsEnter = string.match(line, "^{noe}(.+)") ~= nil
+                            local bIsF6 = string.match(line, "^{f6}(.+)") ~= nil
+                            local keys = {
+                                ["{f6}"] = "",
+                                ["{noe}"] = "",
+                                ["{myid}"] = select(2, sampGetPlayerIdByCharHandle(PLAYER_PED)),
+                                ["{kv}"] = kvadrat(),
+                                ["{targetid}"] = targetid,
+                                ["{targetrpnick}"] = sampGetPlayerNicknameForBinder(targetid):gsub('_', ' '),
+                                ["{naparnik}"] = naparnik(),
+                                ["{myrpnick}"] = sampGetPlayerNickname(select(2, sampGetPlayerIdByCharHandle(PLAYER_PED))):gsub("_", " "),
+                                ["{smsid}"] = smsid,
+                                ["{smstoid}"] = smstoid,
+                                ["{rang}"] = rang,
+                                ["{frak}"] = frak,
+                                ["{megafid}"] = gmegafid,
+                                ["{dl}"] = mcid
+                            }
+                            for k1, v1 in pairs(keys) do
+                                line = line:gsub(k1, v1)
+                            end
+
+                            if not bIsEnter then
+                                if bIsF6 then
+                                    sampProcessChatInput(line)
+                                else
+                                    sampSendChat(line)
+                                end
+                            else
+                                sampSetChatInputText(line)
+                                sampSetChatInputEnabled(true)
+                            end
                         end
                     end
                 end
