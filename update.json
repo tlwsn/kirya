@@ -16,7 +16,7 @@
   — Фикс биндера"
     },
     "test":{
-        "latest":3,
+        "latest":4,
         "updateurl":"https://raw.githubusercontent.com/WhackerH/kirya/master/fbitoolstest.luac",
         "access":true
     }
