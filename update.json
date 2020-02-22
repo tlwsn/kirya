@@ -24,8 +24,8 @@
  — Исправлена загрузка УК / АК / ФП"
     },
     "test":{
-        "latest":1,
-        "updateurl":"https://raw.githubusercontent.com/WhackerH/kirya/master/fbitoolstest.luac",
-        "access":false
+        "latest":2,
+        "updateurl":"https://raw.githubusercontent.com/WhackerH/kirya/master/fbitoolstest.lua",
+        "access":true
     }
 }
