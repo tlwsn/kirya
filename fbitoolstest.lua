@@ -2464,7 +2464,7 @@ function libs()
         
         for k, v in pairs(direct) do if not doesDirectoryExist("moonloader/lib/"..v) then createDirectory("moonloader/lib/"..v) end end
         for k, v in pairs(files) do
-            local v1
+            local v1 = v
             if v:match("lib/.+") then v1 = v:match("lib/(.+)") end
             print('https://raw.githubusercontent.com/WhackerH/kirya/master/lib/'..v1)
             local download_status = 'proccess'
