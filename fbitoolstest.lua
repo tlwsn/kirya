@@ -1,7 +1,7 @@
 script_name("FBI Tools")
 script_authors("Thomas Lawson, Sesh Jefferson, Edward Franklin")
 script_version(3.33)
-local test_version = 2
+local test_version = 3
 
 require 'lib.moonloader'
 require 'lib.sampfuncs'
@@ -35,6 +35,21 @@ local request_data = {
     updated = 0,
     last_request = os.time(),
     last_online = os.time()
+}
+
+local shpora = {
+    {
+        name = "УК",
+        text = ""
+    },
+    {
+        name = "АК",
+        text = ""
+    },
+    {
+        name = "ФП",
+        text = ""
+    }
 }
 
 local cfg =
@@ -93,10 +108,6 @@ sInfo = {
 if limgui then 
     mainw           = imgui.ImBool(false)
     setwindows      = imgui.ImBool(false)
-    shpwindow       = imgui.ImBool(false)
-    ykwindow        = imgui.ImBool(false)
-    fpwindow        = imgui.ImBool(false)
-    akwindow        = imgui.ImBool(false)
     pozivn          = imgui.ImBool(false)
     updwindows      = imgui.ImBool(false)
     bMainWindow     = imgui.ImBool(false)
@@ -115,6 +126,12 @@ if limgui then
     postcoords      = imgui.ImFloat3(0,0,0)
     rpedit          = imgui.ImBool(false)
     otigtext        = imgui.ImBuffer(10240)
+    shpwin          = imgui.ImBool(false)
+    shpint          = imgui.ImInt(0)
+    shpname         = imgui.ImBuffer(256)
+    shpbuff         = imgui.ImBuffer(50960)
+    shpedit         = imgui.ImBool(false)
+    shpsearch       = imgui.ImBuffer(256)
     vars = {
         menuselect  = 0,
         mainwindow  = imgui.ImBool(false),
@@ -301,46 +318,6 @@ local fthelp = {
         cmd = '/blg',
         desc = 'Выразить благодарность по волне департамента',
         use = "/blg [id] [фракция] [причина]"
-    },
-    {
-        cmd = '/yk',
-        desc = "Открыть шпору УК (Текст шпоры можно изменить в файле moonloader/fbitools/yk.txt)",
-        use = "/yk"
-    },
-    {
-        cmd = '/ak',
-        desc = "Открыть шпору АК (Текст шпоры можно изменить в файле moonloader/fbitools/ak.txt)",
-        use = "/ak"
-    },
-    {
-        cmd = '/fp',
-        desc = "Открыть шпору ФП (Текст шпоры можно изменить в файле moonloader/fbitools/fp.txt)",
-        use = "/fp"
-    },
-    {
-        cmd = '/shp',
-        desc = "Открыть шпору (Текст шпоры можно изменить в файле moonloader/fbitools/shp.txt)",
-        use = "/shp"
-    },
-    {
-        cmd = '/fyk',
-        desc = 'Поиск по шпоре УК',
-        use = '/fyk [текст]'
-    },
-    {
-        cmd = '/fak',
-        desc = 'Поиск по шпоре АК',
-        use = '/fak [текст]'
-    },
-    {
-        cmd = '/ffp',
-        desc = 'Поиск по шпоре ФП',
-        use = '/ffp [текст]'
-    },
-    {
-        cmd = '/fshp',
-        desc = 'Поиск по шпоре',
-        use = '/fshp [текст]'
     },
     {
         cmd = '/fst',
@@ -2509,7 +2486,7 @@ function checkStats()
     end
 end
 
-function filesf()
+--[[function filesf()
     local files = {"ak", "yk", "fp"}
     for k, v in pairs(files) do
         if not doesFileExist('moonloader/fbitools/'..v..'.txt') then
@@ -2535,7 +2512,7 @@ function filesf()
         file:close()
     end
     if not doesFileExist('moonloader/fbitools/mcheck.txt') then io.open("moonloader/fbitools/mcheck.txt", "w"):close() end
-end
+end]]
 
 function suf()
     if not doesFileExist('moonloader/fbitools/su.txt') then
@@ -3635,6 +3612,7 @@ if limgui then
             if imgui.Button(u8 'Команды скрипта', btn_size) then cmdwind.v = not cmdwind.v end
             if imgui.Button(u8 'Настройки скрипта', btn_size) then setwindows.v = not setwindows.v end
             if imgui.Button(u8 'Редактор постов', btn_size) then editpost.v = not editpost.v end
+            if imgui.Button(u8 "Шпоры", btn_size) then shpwin.v = not shpwin.v end
             if imgui.Button(u8 'Сообщить о ошибке / баге', btn_size) then os.execute('explorer "https://vk.me/fbitools"') end
             if canupdate then if imgui.Button(u8 '[!] Доступно обновление скрипта [!]', btn_size) then updwindows.v = not updwindows.v end end
             if imgui.CollapsingHeader(u8 'Действия со скриптом', btn_size) then
@@ -3647,6 +3625,103 @@ if limgui then
             end
             if trash.ftoosid then imgui.Text(u8("Ваш уникальный ид: "..trash.ftoosid)) end
             imgui.End()
+
+            if shpwin.v then
+                local shpori = {u8("Не выбрано")}
+
+                imgui.SetNextWindowSize(imgui.ImVec2(800, 500), imgui.Cond.FirstUseEver)
+                imgui.SetNextWindowPos(imgui.ImVec2(x/2, y/2), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
+                imgui.Begin(u8 "FBI Tools | Шпоры", shpwin)
+
+                for k, v in pairs(shpora) do
+                    table.insert(shpori, u8(v.name))
+                end
+                table.insert(shpori, u8("Добавить новую"))
+
+                if imgui.Combo(u8 "Выберите шпору", shpint, shpori) then
+                    if shpint.v ~= 0 then
+                        if shpint.v ~= #shpori - 1 then
+                            shpname.v = u8(shpora[shpint.v].name)
+                            shpbuff.v = u8(shpora[shpint.v].text)
+                            shpedit.v = false
+                        else
+                            shpname.v = ""
+                            shpbuff.v = ""
+                            shpedit.v = true
+                        end
+                    end
+                end
+
+                if shpint.v ~= 0 then       
+                    if not shpedit.v then
+                        if imgui.Button(u8 "Редактировать") then shpedit.v = true end
+                        imgui.Separator()
+                        imgui.InputText(u8 "Поиск по шпоре", shpsearch)
+                        for line in shpbuff.v:gmatch('[^\r\n]+') do
+                            if shpsearch.v:len() > 0 then
+                                if string.rlower(line):find(string.rlower(shpsearch.v)) then
+                                    imgui.TextWrapped(line)
+                                    if imgui.IsItemClicked() then
+                                        sampSetChatInputText(u8:decode(line))
+                                        sampSetChatInputEnabled(true)
+                                    end
+                                end
+                            else
+                                imgui.TextWrapped(line)
+                                if imgui.IsItemClicked() then
+                                    sampSetChatInputText(u8:decode(line))
+                                    sampSetChatInputEnabled(true)
+                                end
+                            end
+                        end
+                    end
+
+                    if shpedit.v then
+                        imgui.Text(u8 "Введите название шпоры")
+                        imgui.Spacing()
+                        imgui.InputText(u8 "##Введите название шпоры", shpname)
+                        imgui.NewLine()
+                        imgui.Text(u8 "Введите текст шпоры")
+                        imgui.Spacing()
+                        imgui.InputTextMultiline(u8 "##Введите текст шпоры", shpbuff, imgui.ImVec2(783, 325))
+
+                        local size
+                        if shpint.v == #shpori - 1 then size = imgui.ImVec2(imgui.GetWindowWidth() / 2 - 10, 20)  else size = imgui.ImVec2(imgui.GetWindowWidth() / 3 - 8.3, 20)end
+                        if imgui.Button(u8 "Сохранить##шпоры", size) then
+                            if u8:decode(shpname.v):len() > 0 then
+                                if shpint.v ~= #shpori - 1 then
+                                    shpora[shpint.v].name = u8:decode(shpname.v)
+                                    shpora[shpint.v].text = u8:decode(shpbuff.v)
+                                    shpedit.v = false
+                                else
+                                    table.insert(shpora, {name = u8:decode(shpname.v), text = u8:decode(shpbuff.v)})
+                                end
+                                saveData(shpora, "moonloader/config/fbitools/shpori.json")
+                            else
+                                notf.addNotification("Вы не ввели название шпоры", 4, 3)
+                            end
+                        end
+                        imgui.SameLine()
+
+                        if imgui.Button(u8 "Отмена##шпора", size) then
+                            shpedit.v = false
+                        end
+
+                        if shpint.v ~= #shpori - 1 then
+                            imgui.SameLine()
+                            if imgui.Button(u8 "Удалить##шпора", size) then                       
+                                table.remove(shpora, shpint.v)
+                                shpint.v = 0
+                                shpedit.v = false
+                                saveData(shpora, "moonloader/config/fbitools/shpori.json")
+                            end
+                        end
+                    end
+
+                end
+
+                imgui.End()
+            end
 
             if editpost.v then
                 imgui.SetNextWindowSize(imgui.ImVec2(600, 500), imgui.Cond.FirstUseEver)
@@ -4492,50 +4567,6 @@ if limgui then
             end
 
         end
-        if shpwindow.v then
-            imgui.ShowCursor = true
-            local iScreenWidth, iScreenHeight = getScreenResolution()
-            imgui.SetNextWindowPos(imgui.ImVec2(iScreenWidth / 2, iScreenHeight / 2), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
-            imgui.SetNextWindowSize(imgui.ImVec2(iScreenWidth/2, iScreenHeight / 2), imgui.Cond.FirstUseEver)
-            imgui.Begin(u8(script.this.name..' | Шпора'), shpwindow)
-            for line in io.lines('moonloader\\fbitools\\shp.txt') do
-                imgui.TextWrapped(u8(line))
-            end
-            imgui.End()
-        end
-        if akwindow.v then
-            imgui.ShowCursor = true
-            local iScreenWidth, iScreenHeight = getScreenResolution()
-            imgui.SetNextWindowPos(imgui.ImVec2(iScreenWidth / 2, iScreenHeight / 2), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
-            imgui.SetNextWindowSize(imgui.ImVec2(iScreenWidth/2, iScreenHeight / 2), imgui.Cond.FirstUseEver)
-            imgui.Begin(u8(script.this.name..' | Административный кодекс'), akwindow)
-            for line in io.lines('moonloader\\fbitools\\ak.txt') do
-                imgui.TextWrapped(u8(line))
-            end
-            imgui.End()
-        end
-        if fpwindow.v then
-            imgui.ShowCursor = true
-            local iScreenWidth, iScreenHeight = getScreenResolution()
-            imgui.SetNextWindowPos(imgui.ImVec2(iScreenWidth / 2, iScreenHeight / 2), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
-            imgui.SetNextWindowSize(imgui.ImVec2(iScreenWidth/2, iScreenHeight / 2), imgui.Cond.FirstUseEver)
-            imgui.Begin(u8(script.this.name..' | Федеральное постановление'), fpwindow)
-            for line in io.lines('moonloader\\fbitools\\fp.txt') do
-                imgui.TextWrapped(u8(line))
-            end
-            imgui.End()
-        end
-        if ykwindow.v then
-            imgui.ShowCursor = true
-            local iScreenWidth, iScreenHeight = getScreenResolution()
-            imgui.SetNextWindowPos(imgui.ImVec2(iScreenWidth / 2, iScreenHeight / 2), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
-            imgui.SetNextWindowSize(imgui.ImVec2(iScreenWidth/2, iScreenHeight / 2), imgui.Cond.FirstUseEver)
-            imgui.Begin(u8(script.this.name..' | Уголовный кодекс'), ykwindow)
-            for line in io.lines('moonloader\\fbitools\\yk.txt') do
-                imgui.TextWrapped(u8(line))
-            end
-            imgui.End()
-        end
         if memw.v then
             imgui.ShowCursor = true
             local sw, sh = getScreenResolution()
@@ -4984,13 +5015,6 @@ if lsampev then
         end
         if cfg.main.autobp == true and id == 20054 then
             if cfg.autopbguns == nil then cfg.autopbguns = {true,true,false,true,true,true,false} end
-            -- deagle 21 патрон, 2 раза = 42 патрона (ID:24, Slot:2)
-            -- shotgun 30 патрон, 2 раза = 60 патрон (ID:25, Slot:3)
-            -- mp5 90 патрон, 2 раза = 180 патрон (ID:29, Slot:4)
-            -- m4a1 150 патрон, 2 раза = 300 патрон (ID:31, Slot:5)
-            -- rifle 30 патрон, 2 раза = 60 патрон (ID:33, Slot:6)
-            -- броня 100 хп (ID: 46, Slot: 11)
-            -- спец оружие - парашют
             local guninfo = {
               { id = 24, ammo = 21, rep = 1, slot = 3 },
               { id = 25, ammo = 30, rep = 1, slot = 4 },
@@ -5017,8 +5041,6 @@ if lsampev then
                         end
                     else
                         local weapon, ammo, model = getCharWeaponInSlot(PLAYER_PED, guninfo[i].slot)
-                        -- dtext(('Ammo: %d | Guninfo: %d'):format(ammo, guninfo[i].ammo))
-                        -- dtext(('Weapon: %d | Guninfo: %d'):format(weapon, guninfo[i].id))
                         if cfg.autopbguns[i] == true and (guninfo[i].id ~= weapon or ammo <= guninfo[i].ammo) then
                             wait(250)
                             sampSendDialogResponse(id, 1, i - 1, "")
@@ -5089,10 +5111,6 @@ function registerCommands()
     if sampIsChatCommandDefined('rt') then sampUnregisterChatCommand('rt') end
     if sampIsChatCommandDefined('fst') then sampUnregisterChatCommand('fst') end
     if sampIsChatCommandDefined('fsw') then sampUnregisterChatCommand('fsw') end
-    if sampIsChatCommandDefined('fshp') then sampUnregisterChatCommand('fshp') end
-    if sampIsChatCommandDefined('fyk') then sampUnregisterChatCommand('fyk') end
-    if sampIsChatCommandDefined('ffp') then sampUnregisterChatCommand('ffp') end
-    if sampIsChatCommandDefined('fak') then sampUnregisterChatCommand('fak') end
     if sampIsChatCommandDefined('dmb') then sampUnregisterChatCommand('dmb') end
     if sampIsChatCommandDefined('dkld') then sampUnregisterChatCommand('dkld') end
     if sampIsChatCommandDefined('fvz') then sampUnregisterChatCommand('fvz') end
@@ -5125,10 +5143,6 @@ function registerCommands()
         sampRegisterChatCommand('warn', warn)
         sampRegisterChatCommand('ms', ms)
         sampRegisterChatCommand('ar', ar)
-        sampRegisterChatCommand('fshp', fshp)
-        sampRegisterChatCommand('fyk', fyk)
-        sampRegisterChatCommand('ffp', ffp)
-        sampRegisterChatCommand('fak', fak)
         sampRegisterChatCommand('dkld', dkld)
         sampRegisterChatCommand('fvz', fvz)
         sampRegisterChatCommand('fbd', fbd)
@@ -5139,10 +5153,6 @@ function registerCommands()
     end
     if cfg.main.group == 'ПД/ФБР' or cfg.main.group == 'Мэрия' then sampRegisterChatCommand('ooplist', ooplist) end
     sampRegisterChatCommand('fnr', fnr)
-    sampRegisterChatCommand('yk', function() ykwindow.v = not ykwindow.v end)
-    sampRegisterChatCommand('fp', function() fpwindow.v = not fpwindow.v end)
-    sampRegisterChatCommand('ak', function() akwindow.v = not akwindow.v end)
-    sampRegisterChatCommand('shp',function() shpwindow.v = not shpwindow.v end)
     sampRegisterChatCommand('ft', function() mainw.v = not mainw.v end)
     sampRegisterChatCommand('dlog', dlog)
     sampRegisterChatCommand('rlog', rlog)
@@ -5544,6 +5554,16 @@ function main()
             }
         }
     end
+
+    if doesFileExist("moonloader/config/fbitools/shpori.json") then
+        local file = io.open("moonloader/config/fbitools/shpori.json", "r")
+        if file then
+            shpora = decodeJson(file:read("*a"))
+            file:close()
+        end
+    end
+    saveData(shpora, "moonloader/config/fbitools/shpori.json")
+
     saveData(tBindList, fileb)
     repeat wait(0) until isSampAvailable()
     ftext(script.this.name..' успешно загружен. Введите: /ft что бы получить дополнительную информацию.')
@@ -5588,7 +5608,7 @@ function main()
         ftext("Загружены настройки для группы: {9966CC}"..cfg.main.group) 
     end
     update()
-    filesf()
+    --filesf()
     suf()
     apply_custom_style()
     lua_thread.create(oopchat)
@@ -5602,15 +5622,11 @@ function main()
     saveData(tBindList, fileb)
     addEventHandler("onWindowMessage", function (msg, wparam, lparam)
         if msg == 0x100 or msg == 0x101 then
-            if wparam == key.VK_ESCAPE and (mainw.v or imegaf.v or shpwindow.v or ykwindow.v or fpwindow.v or akwindow.v or updwindows.v or memw.v) and not isPauseMenuActive() then
+            if wparam == key.VK_ESCAPE and (mainw.v or imegaf.v or updwindows.v or memw.v) and not isPauseMenuActive() and not sampIsDialogActive() and not isSampfuncsConsoleActive() and not sampIsChatInputActive() then
                 consumeWindowMessage(true, false)
                 if msg == 0x101 then
                     mainw.v = false
                     imegaf.v = false
-                    shpwindow.v = false
-                    ykwindow.v = false
-                    fpwindow.v = false
-                    akwindow.v = false
                     updwindows.v = false
                     memw.v = false
                 end
@@ -5636,7 +5652,7 @@ function main()
         if #sms > 25 then table.remove(sms, 1) end
         infbar = imgui.ImBool(cfg.main.hud)
         local myid = select(2, sampGetPlayerIdByCharHandle(PLAYER_PED))
-        imgui.Process = infbar.v or mainw.v or shpwindow.v or ykwindow.v or fpwindow.v or akwindow.v or updwindows.v or imegaf.v or memw.v
+        imgui.Process = infbar.v or mainw.v or updwindows.v or imegaf.v or memw.v
         local myskin = getCharModel(PLAYER_PED)
 
         if cfg.main.group == 'ПД/ФБР' then if sampGetFraktionBySkin(myid) == 'Полиция' or sampGetFraktionBySkin(myid) == 'FBI' then rabden = true else rabden = false end
@@ -6165,61 +6181,6 @@ function patch_samp_time_set(enable)
     elseif enable == false and default ~= nil then
         writeMemory(sampGetBase() + 0x9C0A0, 4, default, true)
         default = nil
-    end
-end
-
-function fshp(pam)
-    if #pam ~= 0 then
-        local f = io.open('moonloader\\fbitools\\shp.txt')
-        for line in f:lines() do
-            if string.find(line, pam) or string.rlower(line):find(pam) or string.rupper(line):find(pam) then
-                sampAddChatMessage(' '..line, -1)
-            end
-        end
-        f:close()
-    else
-        ftext('Введите /fshp [текст]')
-    end
-end
-function fyk(pam)
-    if #pam ~= 0 then
-        local f = io.open('moonloader\\fbitools\\yk.txt')
-        for line in f:lines() do
-            if string.find(line, pam) or string.rlower(line):find(pam) or string.rupper(line):find(pam) then
-                sampAddChatMessage(' '..line, -1)
-            end
-        end
-        f:close()
-    else
-        ftext('Введите /fyk [текст]')
-    end
-end
-
-function ffp(pam)
-    if #pam ~= 0 then
-        local f = io.open('moonloader\\fbitools\\fp.txt')
-        for line in f:lines() do
-            if string.find(line, pam) or string.rlower(line):find(pam) or string.rupper(line):find(pam) then
-                sampAddChatMessage(' '..line, -1)
-            end
-        end
-        f:close()
-    else
-        ftext('Введите /ffp [текст]')
-    end
-end
-
-function fak(pam)
-    if #pam ~= 0 then
-        local f = io.open('moonloader\\fbitools\\ak.txt')
-        for line in f:lines() do
-            if string.find(line, pam) or string.rlower(line):find(pam) or string.rupper(line):find(pam) then
-                sampAddChatMessage(' '..line, -1)
-            end
-        end
-        f:close()
-    else
-        ftext('Введите /fak [текст]')
     end
 end
 
@@ -7151,7 +7112,7 @@ function sendDataToServer_Timer(time)
               end
               -- Members фракции
               if request_data.updated ~= 0 and request_data.last_request < os.time() - time and request_data.updated > os.time() - time * 2 then
-                local data = ("fraction=%s&online=%s&updated=%s&protect=%s"):format(frak, request_data.members, request_data.updated, "b2e57db6d17b9d81f7f6efc5b85126c2")
+                local data = ("fraction=%s&online=%s&updated=%s&protect=%s&server=%s"):format(frak, request_data.members, request_data.updated, "b2e57db6d17b9d81f7f6efc5b85126c2", select(1, sampGetCurrentServerAddress())..":"..select(2, sampGetCurrentServerAddress()))
                 request_data.updated = 0
                 request_data.last_request = os.time()
                 httpRequest("https://sfahelper.herokuapp.com/members", data, function(response, code, headers, status) end)
