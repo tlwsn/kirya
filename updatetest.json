@@ -1,0 +1,12 @@
+{
+    "global":{
+        "latest":4.1,
+        "updateurl":"https://raw.githubusercontent.com/WhackerH/kirya/master/fbitoolstest.luac",
+        "updlist": "я пукнул"
+    },
+    "test":{
+        "latest":1,
+        "updateurl":"https://raw.githubusercontent.com/WhackerH/kirya/master/fbitoolstest.lua",
+        "access":false
+    }
+}
