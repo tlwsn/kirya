@@ -1,8 +1,8 @@
 {
     "global":{
-        "latest":4.31,
+        "latest":4.32,
         "updateurl":"https://raw.githubusercontent.com/tlwsn/kirya/master/fbitools.luac",
-        "updlist": "4.31: — Полностью исправлен /spy"
+        "updlist": "4.32: — Полностью исправлен /spy"
     },
     "test":{
         "latest":1,
