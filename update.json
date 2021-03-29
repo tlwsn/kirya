@@ -2,7 +2,7 @@
     "global":{
         "latest":4.32,
         "updateurl":"https://raw.githubusercontent.com/tlwsn/kirya/master/fbitools.luac",
-        "updlist": "4.32: — Полностью исправлен /spy"
+        "updlist": "4.35: — Фикс Авто-БП\n— Прослушка телефона для ФБР\n— Мини-передатчик для ФБР\n— Перекрас еще нескольких сообщений в чате"
     },
     "test":{
         "latest":1,
